@@ -16,10 +16,11 @@ type AuthService interface {
 
 type authService struct {
 	authRepo repositories.AuthRepository
+	otpRepo repositories.OTPRepositories
 }
 
-func NewAuthService(authRepo repositories.AuthRepository) AuthService {
-	return &authService{authRepo}
+func NewAuthService(authRepo repositories.AuthRepository, otpRepo repositories.OTPRepositories) AuthService {
+	return &authService{authRepo, otpRepo}
 }
 
 func (s *authService) Register(newUser models.User) error {
@@ -40,10 +41,14 @@ func (s *authService) Register(newUser models.User) error {
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	}
 
+	if err := s.otpRepo.Create(otp); err != nil{
+		return err
+	}
+
 	subject := "Email Verification"
 
 	frontendURL := os.Getenv("FRONTEND_URL")
-	verificationLink := fmt.Sprintf("%s/en/activation?token=%s", frontendURL,otp.UUID)
+	verificationLink := fmt.Sprintf("%s/en/activation?token=%s", frontendURL, otp.UUID)
 
 	body := fmt.Sprintf(`
 		<html>
@@ -65,5 +70,17 @@ func (s *authService) Register(newUser models.User) error {
 	}
 
 	return nil
-
 }
+
+func (s *authService) VerifyUser(user *models.User, otpUUID string) error {
+	if err := s.authRepo.VerifyUser(user); err != nil {
+		return err
+	}
+
+	if err := s.otpRepo.MarkUsed(otpUUID); err != nil {
+		return err
+	}
+
+	return nil
+}
+

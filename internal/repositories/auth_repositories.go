@@ -9,6 +9,7 @@ type AuthRepository interface {
 	Register(user models.User) error
 	FindByEmail(email string) (*models.User, error)
 	UpdatePassword(user *models.User) error
+	VerifyUser(user *models.User) error
 }
 
 type authRepository struct {
@@ -36,6 +37,13 @@ func (r *authRepository) FindByEmail(email string) (*models.User, error) {
 
 func (r *authRepository) UpdatePassword(user *models.User) error {
 	if err := r.db.Model(user).Update("password", user.Password).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *authRepository) VerifyUser(user *models.User) error {
+	if err := r.db.Model(user).Update("isVerified", true).Error; err != nil {
 		return err
 	}
 	return nil
