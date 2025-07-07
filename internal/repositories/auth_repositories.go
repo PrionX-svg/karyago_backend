@@ -7,6 +7,8 @@ import (
 
 type AuthRepository interface {
 	Register(user models.User) error
+	FindByEmail(email string) (*models.User, error)
+	UpdatePassword(user *models.User) error
 }
 
 type authRepository struct {
