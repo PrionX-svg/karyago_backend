@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hris_backend/database"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,9 +10,11 @@ import (
 func main() {
 	app := fiber.New()
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
+	database.Connect()
+
+	if err := database.MigrateAll(database.DB); err != nil {
+		log.Fatal("Migration failed:", err)
+	}
 
 	log.Fatal(app.Listen(":3000"))
 }
