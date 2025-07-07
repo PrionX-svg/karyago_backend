@@ -1,13 +1,15 @@
 package database
 
 import (
-	"gorm.io/gorm"
 	"hris_backend/internal/models"
+	"log"
 )
 
-func MigrateAll(db *gorm.DB) error {
-	return db.AutoMigrate(
-		&models.User{},
-		&models.Role{},
-	)
+func MigrationAll() {
+	err := DB.AutoMigrate(&models.User{}, &models.Role{})
+	if err != nil {
+		log.Fatal("Migration failed:", err)
+	}
+
+	SeedRoles(DB)
 }

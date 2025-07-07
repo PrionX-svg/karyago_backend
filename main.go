@@ -12,9 +12,7 @@ func main() {
 
 	database.Connect()
 
-	if err := database.MigrateAll(database.DB); err != nil {
-		log.Fatal("Migration failed:", err)
-	}
+	database.MigrationAll()
 
 	log.Fatal(app.Listen(":8080"))
 }
