@@ -16,5 +16,5 @@ func main() {
 		log.Fatal("Migration failed:", err)
 	}
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(":8080"))
 }
