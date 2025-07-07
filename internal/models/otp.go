@@ -12,6 +12,7 @@ type OTP struct {
 	Code      string    `gorm:"type:varchar(10);not null" json:"code"`
 	Purpose   string    `gorm:"type:varchar(50);index;not null" json:"purpose"` // login, register, reset_password, withdraw, etc
 	IsUsed    bool      `gorm:"default:false" json:"is_used"`
+	ExpiresAt time.Time `json:"-"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
 	CreatedBy uint      `gorm:"not null" json:"-"`
 	ModifyAt  time.Time `gorm:"autoUpdateTime" json:"-"`

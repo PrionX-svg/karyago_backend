@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"hris_backend/internal/models"
 	"gorm.io/gorm"
+	"hris_backend/internal/models"
 )
 
 type AuthRepository interface {
@@ -26,18 +26,17 @@ func (r *authRepository) Register(user models.User) error {
 	return nil
 }
 
-func (r* authRepository) FindByEmail(email string) (*models.User, error)  {
+func (r *authRepository) FindByEmail(email string) (*models.User, error) {
 	var user models.User
-	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil{
-		return nil,err
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
 	}
 	return &user, nil
 }
 
-func (r* authRepository) UpdatePassword(user *models.User) error {
-	if err := r.db.Model(user).Update("password", user.Password).Error; err != nil{
+func (r *authRepository) UpdatePassword(user *models.User) error {
+	if err := r.db.Model(user).Update("password", user.Password).Error; err != nil {
 		return err
 	}
 	return nil
 }
-
