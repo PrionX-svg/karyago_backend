@@ -12,6 +12,7 @@ import (
 )
 
 type AuthService interface {
+	Register(newUser models.User) error
 }
 
 type authService struct {
