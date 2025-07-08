@@ -6,8 +6,8 @@ import (
 	"hris_backend/database"
 	"hris_backend/pkg"
 	"hris_backend/routes/auth"
-	"hris_backend/routes/role"
 	"hris_backend/routes/company"
+	"hris_backend/routes/role"
 	"time"
 )
 
