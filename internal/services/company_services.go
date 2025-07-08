@@ -3,12 +3,16 @@ package services
 import (
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
+	"hris_backend/internal/request"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
+var validate = validator.New()
+
 type CompanyServices interface {
-	Create(company *models.Company) error
+	Create(request request.CompanyReq) (models.Company, error)
 }
 
 type companyServices struct {
@@ -19,10 +23,23 @@ func NewCompanyService(companyRepo repositories.CompanyRepositories) CompanyServ
 	return &companyServices{companyRepo}
 }
 
-func (s *companyServices) Create(company *models.Company) (error){
-	company.UUID = uuid.NewString()
-	if err := s.companyRepo.Create(company); err != nil{
-		return err
+func (s *companyServices) Create(request request.CompanyReq) (models.Company, error){
+	if err := validate.Struct(request); err != nil{
+		return models.Company{}, err
+	}	
+
+	newCompany := models.Company{
+		UUID: uuid.NewString(),
+		UserId: request.UserId,
+		Name: request.Name,
+		Logo: request.Logo,
+		Address: request.Address,
+		Email: request.Email,
+		Phone: request.Phone,
 	}
-	return nil
+
+	if err := s.companyRepo.Create(&newCompany); err != nil{
+		return models.Company{},err
+	}
+	return newCompany,nil
 } 

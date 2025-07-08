@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"hris_backend/internal/models"
+	"hris_backend/internal/request"
 	"hris_backend/internal/services"
 	"hris_backend/pkg"
 
@@ -22,12 +22,13 @@ func NewCompanyHandler(companyServices services.CompanyServices) CompanyHandler 
 }
 
 func (h *companyHandler) Create(c * fiber.Ctx) error {
-	var newCompany models.Company
-	if err := c.BodyParser(&newCompany); err != nil{
+	var request request.CompanyReq
+	if err := c.BodyParser(&request); err != nil{
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse company")
 	}
-	
-	if err := h.companyServices.Create(&newCompany); err != nil{
+
+	newCompany, err := h.companyServices.Create(request); 
+	if err != nil{
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 	
