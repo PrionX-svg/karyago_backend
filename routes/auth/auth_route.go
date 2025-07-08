@@ -20,6 +20,7 @@ func SetupAuthRoutes(router fiber.Router, db *gorm.DB) {
 
 	auth.Post("/register", authHandler.Register)
 	auth.Post("/verify", authHandler.Verify)
+	auth.Post("/resend-verification", authHandler.ResendVerification)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/logout", authHandler.Logout)
 	auth.Post("/forgot-password", authHandler.ForgotPassword)
