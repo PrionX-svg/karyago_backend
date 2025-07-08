@@ -3,6 +3,8 @@ package services
 import (
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
+
+	"github.com/google/uuid"
 )
 
 type CompanyServices interface {
@@ -18,6 +20,7 @@ func NewCompanyService(companyRepo repositories.CompanyRepositories) CompanyServ
 }
 
 func (s *companyServices) Create(company *models.Company) (error){
+	company.UUID = uuid.NewString()
 	if err := s.companyRepo.Create(company); err != nil{
 		return err
 	}

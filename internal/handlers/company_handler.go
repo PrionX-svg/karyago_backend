@@ -10,7 +10,7 @@ import (
 
 
 type CompanyHandler interface {
-
+	Create(c * fiber.Ctx) error
 }
 
 type companyHandler struct {
@@ -24,7 +24,7 @@ func NewCompanyHandler(companyServices services.CompanyServices) CompanyHandler 
 func (h *companyHandler) Create(c * fiber.Ctx) error {
 	var newCompany models.Company
 	if err := c.BodyParser(&newCompany); err != nil{
-		return err
+		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse company")
 	}
 	
 	if err := h.companyServices.Create(&newCompany); err != nil{

@@ -1,11 +1,13 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"hris_backend/database"
 	"hris_backend/routes/auth"
+	"hris_backend/routes/company"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func SetupRoutes(app *fiber.App) {
@@ -30,4 +32,5 @@ func SetupRoutes(app *fiber.App) {
 	v1 := api.Group("/v1")
 
 	auth.SetupAuthRoutes(v1, db)
+	company.SetupCompanyRoutes(v1, db)
 }
