@@ -7,12 +7,8 @@ import (
 )
 
 type CompanyRepositories interface {
-	// Register(user *models.User) error
-	// FindByEmail(email string) (*models.User, error)
-	// CheckLogin(email string) (*models.User, error)
-	// UpdatePasswordByEmail(email, hashedPassword string) error
-	// UpdatePassword(user *models.User) error
-	// VerifyUser(user *models.User) error
+	Create(company *models.Company) error
+
 }
 
 type companyRepositories struct {
