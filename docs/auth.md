@@ -113,7 +113,7 @@ Verifies email using the UUID from the verification link.
 
 ```json
 {
-  "uuid": "18002c90-b392-4e35-aabe-540310855a6f"
+  "email": "marcomelandri808@gmail.com"
 }
 ```
 
