@@ -15,6 +15,7 @@ import (
 type AuthService interface {
 	Register(newUser models.User) error
 	VerifyUser(otpUUID string) (*models.User, error)
+	ResendVerificationLink(email string) error
 	Login(email, password string) (*models.User, error)
 	ForgotPassword(email string) error
 	ResetPassword(email, code, newPassword string) error
@@ -117,6 +118,48 @@ func (s *authService) VerifyUser(otpUUID string) (*models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *authService) ResendVerificationLink(email string) error {
+	user, err := s.authRepo.FindByEmail(email)
+	if err != nil {
+		return fmt.Errorf("user not found")
+	}
+
+	if user.IsVerified {
+		return fmt.Errorf("user already verified")
+	}
+
+	otp := &models.OTP{
+		UUID:      uuid.NewString(),
+		Target:    user.Email,
+		Code:      pkg.GenerateOTPCode(6),
+		Purpose:   "register",
+		IsUsed:    false,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+	}
+
+	if err := s.otpRepo.Create(otp); err != nil {
+		return fmt.Errorf("failed to generate OTP: %w", err)
+	}
+
+	link := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), otp.UUID)
+	body := fmt.Sprintf(`
+		<p>Hi %s,</p>
+		<p>You requested a new verification link.</p>
+		<p>Please verify your email using the link below:</p>
+		<a href="%s">Verify your Email</a>
+		<p>This link will expire in 5 minutes.</p>`,
+		user.FirstName, link)
+
+	go func() {
+		err := pkg.SendEmail(user.Email, "Email Verification", body)
+		if err != nil {
+			log.Printf("failed to send email: %v", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *authService) Login(email, password string) (*models.User, error) {

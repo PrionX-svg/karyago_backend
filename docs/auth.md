@@ -6,11 +6,8 @@ This documentation covers the authentication endpoints for the HRIS system.
 ---
 
 ## 📌 Base URL
-```
 
-[http://localhost:8080/api/v1/auth](http://localhost:8080/api/v1/auth)
-
-````
+http://localhost:8080/api/v1/auth
 
 ---
 
@@ -100,6 +97,32 @@ Verifies email using the UUID from the verification link.
     "uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387"
   },
   "message": "Email verified successfully",
+  "status": "success"
+}
+```
+
+---
+
+## ✅ Resend Verify Email
+
+**POST** `/resend-verification`
+
+Verifies email using the UUID from the verification link.
+
+### Request Body
+
+```json
+{
+  "uuid": "18002c90-b392-4e35-aabe-540310855a6f"
+}
+```
+
+### Response
+
+```json
+{
+  "data": {},
+  "message": "Verification link resent to your email",
   "status": "success"
 }
 ```

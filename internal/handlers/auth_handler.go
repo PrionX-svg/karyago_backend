@@ -13,6 +13,7 @@ import (
 type AuthHandler interface {
 	Register(c *fiber.Ctx) error
 	Verify(c *fiber.Ctx) error
+	ResendVerification(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
 	ForgotPassword(c *fiber.Ctx) error
@@ -61,6 +62,23 @@ func (h *authHandler) Verify(c *fiber.Ctx) error {
 		"name":  user.FirstName,
 		"email": user.Email,
 	}, "Email verified successfully")
+}
+
+func (h *authHandler) ResendVerification(c *fiber.Ctx) error {
+	type Request struct {
+		Email string `json:"email"`
+	}
+
+	var req Request
+	if err := c.BodyParser(&req); err != nil || req.Email == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "Invalid email")
+	}
+
+	if err := h.authService.ResendVerificationLink(req.Email); err != nil {
+		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return pkg.Success(c, fiber.Map{}, "Verification link resent to your email")
 }
 
 func (h *authHandler) Login(c *fiber.Ctx) error {
