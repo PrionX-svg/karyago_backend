@@ -120,17 +120,22 @@ func (s *authService) VerifyUser(otpUUID string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *authService) ResendVerificationLink(email string) error {
-	user, err := s.authRepo.FindByEmail(email)
+func (s *authService) ResendVerificationLink(oldUUID string) error {
+	otp, err := s.otpRepo.FindByUUID(oldUUID)
 	if err != nil {
-		return fmt.Errorf("user not found")
+		return fmt.Errorf("OTP not found")
+	}
+
+	user, err := s.authRepo.FindByEmail(otp.Target)
+	if err != nil {
+		return fmt.Errorf("user not found for this OTP")
 	}
 
 	if user.IsVerified {
 		return fmt.Errorf("user already verified")
 	}
 
-	otp := &models.OTP{
+	newOTP := &models.OTP{
 		UUID:      uuid.NewString(),
 		Target:    user.Email,
 		Code:      pkg.GenerateOTPCode(6),
@@ -139,11 +144,11 @@ func (s *authService) ResendVerificationLink(email string) error {
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	}
 
-	if err := s.otpRepo.Create(otp); err != nil {
-		return fmt.Errorf("failed to generate OTP: %w", err)
+	if err := s.otpRepo.Create(newOTP); err != nil {
+		return fmt.Errorf("failed to generate new OTP: %w", err)
 	}
 
-	link := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), otp.UUID)
+	link := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), newOTP.UUID)
 	body := fmt.Sprintf(`
 		<p>Hi %s,</p>
 		<p>You requested a new verification link.</p>
@@ -153,8 +158,7 @@ func (s *authService) ResendVerificationLink(email string) error {
 		user.FirstName, link)
 
 	go func() {
-		err := pkg.SendEmail(user.Email, "Email Verification", body)
-		if err != nil {
+		if err := pkg.SendEmail(user.Email, "Email Verification", body); err != nil {
 			log.Printf("failed to send email: %v", err)
 		}
 	}()

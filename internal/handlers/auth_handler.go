@@ -66,15 +66,15 @@ func (h *authHandler) Verify(c *fiber.Ctx) error {
 
 func (h *authHandler) ResendVerification(c *fiber.Ctx) error {
 	type Request struct {
-		Email string `json:"email"`
+		UUID string `json:"uuid"`
 	}
 
 	var req Request
-	if err := c.BodyParser(&req); err != nil || req.Email == "" {
-		return pkg.Error(c, fiber.StatusBadRequest, "Invalid email")
+	if err := c.BodyParser(&req); err != nil || req.UUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "Invalid UUID")
 	}
 
-	if err := h.authService.ResendVerificationLink(req.Email); err != nil {
+	if err := h.authService.ResendVerificationLink(req.UUID); err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
