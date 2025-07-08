@@ -4,7 +4,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"hris_backend/database"
+	"hris_backend/pkg"
 	"hris_backend/routes/auth"
+	"hris_backend/routes/role"
 	"time"
 )
 
@@ -26,8 +28,12 @@ func SetupRoutes(app *fiber.App) {
 	}))
 
 	db := database.DB
+	pkg.InitPermissionRepo(db)
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
 
 	auth.SetupAuthRoutes(v1, db)
+	role.SetupRoleRoutes(v1, db)
+	role.SetupRolePermissionRoutes(v1, db)
+	role.SetupPermissionRoutes(v1, db)
 }
