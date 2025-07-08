@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"hris_backend/internal/models"
+	"hris_backend/internal/request"
 	"hris_backend/internal/services"
 	"hris_backend/pkg"
 	"time"
@@ -30,12 +30,12 @@ func NewAuthHandler(authService services.AuthService) AuthHandler {
 }
 
 func (h *authHandler) Register(c *fiber.Ctx) error {
-	var newUser models.User
-	if err := c.BodyParser(&newUser); err != nil {
+	var request request.UserRequest
+	if err := c.BodyParser(&request); err != nil {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse user")
 	}
-
-	if err := h.authService.Register(newUser); err != nil {
+	
+	if err := h.authService.Register(request); err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 

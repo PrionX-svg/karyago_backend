@@ -4,12 +4,11 @@ import (
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
+	"hris_backend/pkg"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
-var validate = validator.New()
 
 type CompanyServices interface {
 	Create(request request.CompanyReq) (models.Company, error)
@@ -24,7 +23,7 @@ func NewCompanyService(companyRepo repositories.CompanyRepositories) CompanyServ
 }
 
 func (s *companyServices) Create(request request.CompanyReq) (models.Company, error){
-	if err := validate.Struct(request); err != nil{
+	if err := pkg.Validate.Struct(request); err != nil{
 		return models.Company{}, err
 	}	
 
