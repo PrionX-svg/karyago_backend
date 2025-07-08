@@ -4,9 +4,10 @@ import (
 	"time"
 )
 
-type Role struct {
+type Permission struct {
 	ID        uint      `gorm:"primaryKey;autoIncrement" json:"-"`
 	UUID      string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
+	Label     string    `gorm:"type:varchar(100);not null" json:"label"`
 	Name      string    `gorm:"type:varchar(100);not null" json:"name"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
 	CreatedBy uint      `gorm:"not null" json:"-"`

@@ -6,7 +6,13 @@ import (
 )
 
 func MigrationAll() {
-	err := DB.AutoMigrate(&models.User{}, &models.Role{}, &models.OTP{})
+	err := DB.AutoMigrate(
+		&models.User{},
+		&models.Role{},
+		&models.OTP{},
+		&models.Permission{},
+		&models.RolePermission{},
+	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)
 	}

@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID         uint      `gorm:"primaryKey;autoIncrement" json:"-"`
 	UUID       string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	RoleID     uint      `gorm:"not null" json:"role_id"`
 	CompanyID  *uint     `gorm:"default:null" json:"company_id"` // nullable
