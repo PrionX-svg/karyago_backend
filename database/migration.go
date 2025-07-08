@@ -12,6 +12,7 @@ func MigrationAll() {
 		&models.OTP{},
 		&models.Permission{},
 		&models.RolePermission{},
+		&models.Company{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)

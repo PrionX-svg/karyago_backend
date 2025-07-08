@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
+	"hris_backend/internal/request"
 	"hris_backend/pkg"
 	"log"
 	"os"
@@ -13,7 +14,7 @@ import (
 )
 
 type AuthService interface {
-	Register(newUser models.User) error
+	Register(request request.UserRequest) error
 	VerifyUser(otpUUID string) (*models.User, error)
 	ResendVerificationLink(email string) error
 	Login(email, password string) (*models.User, error)
@@ -33,21 +34,32 @@ func NewAuthService(authRepo repositories.AuthRepository, roleRepo repositories.
 	return &authService{authRepo, roleRepo, otpRepo}
 }
 
-func (s *authService) Register(newUser models.User) error {
+func (s *authService) Register(request request.UserRequest) error {
+	if err := pkg.Validate.Struct(request); err != nil{
+		return err
+	}
+
 	role, err := s.roleRepo.FindByName("owner")
 	if err != nil {
 		return fmt.Errorf("failed to find role: %w", err)
 	}
 
-	password, err := pkg.HashPassword(newUser.Password)
+	password, err := pkg.HashPassword(request.Password)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	newUser.UUID = uuid.NewString()
-	newUser.RoleID = role.ID
-	newUser.Password = password
-	newUser.CreatedAt = time.Now()
+	newUser := models.User{
+		UUID: uuid.NewString(),
+		RoleID: role.ID,
+		CompanyID: request.CompanyID,
+		FirstName: request.FirstName,
+		LastName: request.LastName,
+		Phone: request.Phone,
+		Email: request.Email,
+		Password: password,
+		Timezone: request.Timezone,
+	}
 
 	if err := s.authRepo.Register(&newUser); err != nil {
 		return fmt.Errorf("failed to register user: %w", err)

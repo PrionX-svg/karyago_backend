@@ -35,10 +35,6 @@ func (h *authHandler) Register(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse user")
 	}
 
-	if newUser.Email == "" || newUser.Password == "" || newUser.FirstName == "" || newUser.LastName == "" {
-		return pkg.Error(c, fiber.StatusBadRequest, "Missing required fields")
-	}
-
 	if err := h.authService.Register(newUser); err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -106,7 +102,7 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to get role")
 	}
 
-	token, err := pkg.GenerateJWT(user.ID, user.UUID, user.Email, fmt.Sprintf("%d", user.RoleID))
+	token, err := pkg.GenerateJWT(user.UUID, user.Email, fmt.Sprintf("%d", user.RoleID))
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to generate token")
 	}
