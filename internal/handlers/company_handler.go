@@ -25,12 +25,12 @@ func NewCompanyHandler(companyServices services.CompanyServices) CompanyHandler 
 }
 
 func (h *companyHandler) Create(c *fiber.Ctx) error {
-	var request request.CompanyReq
-	if err := c.BodyParser(&request); err != nil {
+	var companyReq request.CompanyReq
+	if err := c.BodyParser(&companyReq); err != nil {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse company")
 	}
 
-	newCompany, err := h.companyServices.Create(request)
+	newCompany, err := h.companyServices.Create(companyReq)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -65,12 +65,12 @@ func (h *companyHandler) Update(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "UUID is required")
 	}
 
-	var request request.CompanyReq
-	if err := c.BodyParser(&request); err != nil {
+	var companyReq request.CompanyReq
+	if err := c.BodyParser(&companyReq); err != nil {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse company")
 	}
 
-	updatedCompany, err := h.companyServices.Update(uuid, request)
+	updatedCompany, err := h.companyServices.Update(uuid, companyReq)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -90,6 +90,5 @@ func (h *companyHandler) Delete(c *fiber.Ctx) error {
 	}
 
 	return pkg.Success(c, targetCompany, "Company deleted successfully")
-
 
 }

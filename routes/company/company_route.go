@@ -9,13 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupCompanyRoutes(router fiber.Router, db *gorm.DB){
+func SetupCompanyRoutes(router fiber.Router, db *gorm.DB) {
 	companyRepo := repositories.NewCompanyRepository(db)
 
 	companyService := services.NewCompanyService(companyRepo)
 	companyHandler := handlers.NewCompanyHandler(companyService)
 
-	company := router.Group("/company")
+	company := router.Group("/companies")
 
 	company.Post("/create", companyHandler.Create)
 	company.Get("/get-all", companyHandler.GetAll)
