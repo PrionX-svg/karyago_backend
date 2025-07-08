@@ -18,4 +18,8 @@ func SetupCompanyRoutes(router fiber.Router, db *gorm.DB){
 	company := router.Group("/company")
 
 	company.Post("/create", companyHandler.Create)
+	company.Get("/get-all", companyHandler.GetAll)
+	company.Get("/get/:uuid", companyHandler.GetByUUID)
+	company.Patch("/update/:uuid", companyHandler.Update)
+	company.Delete("/delete/:uuid", companyHandler.Delete)
 }

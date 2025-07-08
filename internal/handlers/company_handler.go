@@ -10,6 +10,10 @@ import (
 
 type CompanyHandler interface {
 	Create(c *fiber.Ctx) error
+	GetAll(c *fiber.Ctx) error
+	GetByUUID(c *fiber.Ctx) error
+	Update(c *fiber.Ctx) error
+	Delete(c *fiber.Ctx) error
 }
 
 type companyHandler struct {
