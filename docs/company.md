@@ -1,14 +1,17 @@
 # 🧾 HRIS - Company Management API
 
-This section documents the **Company** management endpoints used for creating, retrieving, updating, and deleting company data in the HRIS system.
+Documentation for **Company** management endpoints in the HRIS system, including create, retrieve, update, and delete
+operations.
 
 ---
 
 ## 📌 Base URL
 
 ```
+
 http://localhost:8080/api/v1/companies
-```
+
+````
 
 ---
 
@@ -22,14 +25,14 @@ Create a new company.
 
 ```json
 {
-  "user_id": 4,
+  "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
   "name": "PT Teknologi Nusantara",
   "address": "Jl. Merdeka No.123, Jakarta",
-  "email": "info@teknologi.co.id",
+  "email": "info2@teknologi.co.id",
   "phone": "021-12345678",
   "logo": "/uuid-date-namafile"
 }
-```
+````
 
 ### Response
 
@@ -37,10 +40,10 @@ Create a new company.
 {
   "data": {
     "uuid": "generated-company-uuid",
-    "user_id": 4,
+    "user_uuid": "",
     "name": "PT Teknologi Nusantara",
     "address": "Jl. Merdeka No.123, Jakarta",
-    "email": "info@teknologi.co.id",
+    "email": "info2@teknologi.co.id",
     "phone": "021-12345678",
     "logo": "/uuid-date-namafile"
   },
@@ -55,7 +58,7 @@ Create a new company.
 
 **GET** `/get-all`
 
-Returns list of all companies.
+Retrieve the list of all companies.
 
 ### Response
 
@@ -64,6 +67,7 @@ Returns list of all companies.
   "data": [
     {
       "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
+      "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
       "name": "PT Teknologi Nusantara",
       "email": "info@teknologi.co.id",
       "address": "Jl. Merdeka No.123, Jakarta",
@@ -89,6 +93,7 @@ Example: `/get/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 {
   "data": {
     "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
+    "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
     "name": "PT Teknologi Nusantara",
     "email": "info@teknologi.co.id",
     "address": "Jl. Merdeka No.123, Jakarta",
@@ -111,7 +116,7 @@ Example: `/update/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 
 ```json
 {
-  "user_id": 4,
+  "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
   "name": "PT Teknologi Nusantara Update",
   "address": "Jl. Merdeka No.123, Jakarta",
   "email": "info@teknologi.co.id",
@@ -144,26 +149,13 @@ Example: `/update/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 **DELETE** `/delete/:uuid`
 Example: `/delete/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 
-### Request Body
-
-```json
-{
-  "user_id": 4,
-  "name": "PT Teknologi Nusantara Update",
-  "address": "Jl. Merdeka No.123, Jakarta",
-  "email": "info@teknologi.co.id",
-  "phone": "021-12345678",
-  "logo": "/uuid-date-namafile"
-}
-```
-
 ### Response
 
 ```json
 {
   "data": {
     "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
-    "user_id": 4,
+    "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
     "logo": "/uuid-date-namafile",
     "name": "PT Teknologi Nusantara Update",
     "address": "Jl. Merdeka No.123, Jakarta",

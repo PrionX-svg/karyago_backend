@@ -155,6 +155,33 @@ Sends an OTP to the email for password reset.
 
 ---
 
+## 🧾 Verify OTP Forgot Password
+
+**POST** `/forgot-password/verify`
+
+Verifies the OTP sent to the user's email for password reset.
+
+### Request Body
+
+```json
+{
+  "email": "marcomelandri808@gmail.com",
+  "otp_code": "477963"
+}
+```
+
+### Response
+
+```json
+{
+  "data": {},
+  "message": "OTP verified successfully",
+  "status": "success"
+}
+```
+
+---
+
 ## 🔁 Resend OTP Forgot Password
 
 **POST** `/forgot-password/resend`

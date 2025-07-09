@@ -6,6 +6,7 @@ import (
 	"hris_backend/database"
 	"hris_backend/pkg"
 	"hris_backend/routes/auth"
+	"hris_backend/routes/branch"
 	"hris_backend/routes/company"
 	"hris_backend/routes/role"
 	"time"
@@ -37,5 +38,6 @@ func SetupRoutes(app *fiber.App) {
 	role.SetupRoleRoutes(v1, db)
 	role.SetupRolePermissionRoutes(v1, db)
 	role.SetupPermissionRoutes(v1, db)
+	branch.SetupBranchRoutes(v1, db)
 	company.SetupCompanyRoutes(v1, db)
 }

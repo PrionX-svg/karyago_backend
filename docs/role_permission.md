@@ -59,19 +59,20 @@ Returns all permissions currently assigned to a specific role.
 
 ```json
 {
-  "data": [
-    {
-      "uuid": "e5066c23-abb3-4f8c-9926-e644cedc5e01",
-      "label": "role.view",
-      "name": "View Role"
-    },
-    {
-      "uuid": "a7e90`e1d-3f96-4f44-bc2d-bb01d861fa1f",
-      "label": "role.update",
-      "name": "Update Role"
-    }
-  ],
-  "message": "Permissions retrieved successfully",
+  "data": {
+    "role_name": "Staff",
+    "permissions": [
+      {
+        "permission_name": "View-Name Role",
+        "label": "role.view-name"
+      },
+      {
+        "permission_name": "View-All Role",
+        "label": "role.view-all"
+      }
+    ]
+  },
+  "message": "Success get permissions",
   "status": "success"
 }
 ```

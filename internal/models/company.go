@@ -7,7 +7,8 @@ import (
 type Company struct {
 	ID        uint      `gorm:"primaryKey;autoIncrement" json:"-"`
 	UUID      string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
-	UserId    uint      `gorm:"not null" json:"user_id"`
+	UserId    uint      `gorm:"not null" json:"-"`
+	UserUUID  string    `gorm:"->" json:"user_uuid"`
 	Logo      string    `gorm:"default:null" json:"logo"` //nullable
 	Name      string    `gorm:"type:varchar(100);not null" json:"name"`
 	Address   string    `gorm:"type:varchar(255);not null" json:"address"`

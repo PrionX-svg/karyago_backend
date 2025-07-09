@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"hris_backend/internal/response"
 
 	"github.com/google/uuid"
 	"hris_backend/internal/models"
@@ -11,7 +12,7 @@ import (
 type RolePermissionService interface {
 	AssignPermission(roleUUID, permissionUUID string, actorID uint) error
 	RemovePermission(roleUUID, permissionUUID string) error
-	GetPermissionsByRole(roleUUID string) ([]models.RolePermission, error)
+	GetPermissionsByRole(roleUUID string) (response.RolePermissionGrouped, error)
 }
 
 type rolePermissionService struct {
@@ -59,10 +60,10 @@ func (s *rolePermissionService) RemovePermission(roleUUID, permissionUUID string
 	return s.rpRepo.DeleteByRoleAndPermission(role.ID, perm.ID)
 }
 
-func (s *rolePermissionService) GetPermissionsByRole(roleUUID string) ([]models.RolePermission, error) {
+func (s *rolePermissionService) GetPermissionsByRole(roleUUID string) (response.RolePermissionGrouped, error) {
 	role, err := s.roleRepo.FindByUUID(roleUUID)
 	if err != nil {
-		return nil, fmt.Errorf("role not found: %w", err)
+		return response.RolePermissionGrouped{}, fmt.Errorf("role not found: %w", err)
 	}
-	return s.rpRepo.GetByRoleID(role.ID)
+	return s.rpRepo.GetByRoleIDDetailed(role.ID)
 }
