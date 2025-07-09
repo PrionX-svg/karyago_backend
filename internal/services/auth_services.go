@@ -19,6 +19,7 @@ type AuthService interface {
 	ResendVerificationLink(email string) error
 	Login(email, password string) (*models.User, error)
 	ForgotPassword(email string) error
+	VerifyOTP(email, code string) error
 	ResetPassword(email, code, newPassword string) error
 	ResendForgotPasswordOTP(email string) error
 	GetRoleName(roleID uint) (string, error)
@@ -35,7 +36,7 @@ func NewAuthService(authRepo repositories.AuthRepository, roleRepo repositories.
 }
 
 func (s *authService) Register(request request.UserRequest) error {
-	if err := pkg.Validate.Struct(request); err != nil{
+	if err := pkg.Validate.Struct(request); err != nil {
 		return err
 	}
 
@@ -50,15 +51,15 @@ func (s *authService) Register(request request.UserRequest) error {
 	}
 
 	newUser := models.User{
-		UUID: uuid.NewString(),
-		RoleID: role.ID,
+		UUID:      uuid.NewString(),
+		RoleID:    role.ID,
 		CompanyID: request.CompanyID,
 		FirstName: request.FirstName,
-		LastName: request.LastName,
-		Phone: request.Phone,
-		Email: request.Email,
-		Password: password,
-		Timezone: request.Timezone,
+		LastName:  request.LastName,
+		Phone:     request.Phone,
+		Email:     request.Email,
+		Password:  password,
+		Timezone:  request.Timezone,
 	}
 
 	if err := s.authRepo.Register(&newUser); err != nil {
@@ -227,6 +228,15 @@ func (s *authService) ForgotPassword(email string) error {
 			log.Printf("failed to send email: %v", err)
 		}
 	}()
+
+	return nil
+}
+
+func (s *authService) VerifyOTP(email, code string) error {
+	otp, err := s.otpRepo.FindByCodeAndTarget(code, email)
+	if err != nil || otp.IsUsed || otp.ExpiresAt.Before(time.Now()) {
+		return fmt.Errorf("invalid or expired OTP")
+	}
 
 	return nil
 }

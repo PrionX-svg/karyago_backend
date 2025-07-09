@@ -17,6 +17,7 @@ type AuthHandler interface {
 	Login(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
 	ForgotPassword(c *fiber.Ctx) error
+	VerifyOTP(c *fiber.Ctx) error
 	ResetPassword(c *fiber.Ctx) error
 	ResendForgotPasswordOTP(c *fiber.Ctx) error
 }
@@ -151,6 +152,24 @@ func (h *authHandler) ForgotPassword(c *fiber.Ctx) error {
 	}
 
 	return pkg.Success(c, fiber.Map{}, "Reset link sent to email")
+}
+
+func (h *authHandler) VerifyOTP(c *fiber.Ctx) error {
+	type Request struct {
+		Email   string `json:"email"`
+		OTPCode string `json:"otp_code"`
+	}
+
+	var req Request
+	if err := c.BodyParser(&req); err != nil || req.Email == "" || req.OTPCode == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "Invalid request data")
+	}
+
+	if err := h.authService.VerifyOTP(req.Email, req.OTPCode); err != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	return pkg.Success(c, fiber.Map{}, "OTP verified successfully")
 }
 
 func (h *authHandler) ResetPassword(c *fiber.Ctx) error {
