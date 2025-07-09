@@ -73,11 +73,13 @@ func (h *RolePermissionHandler) AssignAndRemovePermissions(c *fiber.Ctx) error {
 func (h *RolePermissionHandler) ListPermissionsByRole(c *fiber.Ctx) error {
 	roleUUID := c.Params("role_uuid")
 	if roleUUID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "role_uuid is required"})
+		return pkg.Error(c, fiber.StatusBadRequest, "role_uuid is required")
 	}
+
 	list, err := h.service.GetPermissionsByRole(roleUUID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(list)
+
+	return pkg.Success(c, list, "Success get permissions")
 }

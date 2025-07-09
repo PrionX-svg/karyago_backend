@@ -11,7 +11,7 @@ type CompanyRepositories interface {
 	GetAll() ([]models.Company, error)
 	GetByUUID(uuid string) (models.Company, error)
 	Update(updatedCompany *models.Company) error
-	Delete(targetCompany *models.Company) error 
+	Delete(targetCompany *models.Company) error
 }
 
 type companyRepositories struct {
@@ -31,15 +31,27 @@ func (r *companyRepositories) Create(company *models.Company) error {
 
 func (r *companyRepositories) GetAll() ([]models.Company, error) {
 	var companies []models.Company
-	if err := r.db.Find(&companies).Error; err != nil {
-		return nil, err
-	}
-	return companies, nil
+
+	err := r.db.
+		Table("companies").
+		Select("companies.*, users.uuid AS UserUUID").
+		Joins("JOIN users ON users.id = companies.user_id").
+		Scan(&companies).Error
+
+	return companies, err
 }
 
 func (r *companyRepositories) GetByUUID(uuid string) (models.Company, error) {
 	var company models.Company
-	if err := r.db.Where("uuid = ?", uuid).First(&company).Error; err != nil {
+
+	err := r.db.
+		Table("companies").
+		Select("companies.*, users.uuid AS UserUUID").
+		Joins("JOIN users ON users.id = companies.user_id").
+		Where("companies.uuid = ?", uuid).
+		Scan(&company).Error
+
+	if err != nil {
 		return models.Company{}, err
 	}
 	return company, nil

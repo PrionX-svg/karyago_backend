@@ -19,10 +19,14 @@ type CompanyServices interface {
 
 type companyServices struct {
 	companyRepo repositories.CompanyRepositories
+	userRepo    repositories.UserRepository
 }
 
-func NewCompanyService(companyRepo repositories.CompanyRepositories) CompanyServices {
-	return &companyServices{companyRepo}
+func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo repositories.UserRepository) CompanyServices {
+	return &companyServices{
+		companyRepo: companyRepo,
+		userRepo:    userRepo,
+	}
 }
 
 func (s *companyServices) Create(request request.CompanyReq) (models.Company, error) {
@@ -30,14 +34,21 @@ func (s *companyServices) Create(request request.CompanyReq) (models.Company, er
 		return models.Company{}, err
 	}
 
+	user, err := s.userRepo.GetByUUID(request.UserUUID)
+	if err != nil {
+		return models.Company{}, err
+	}
+
 	newCompany := models.Company{
-		UUID:    uuid.NewString(),
-		UserId:  request.UserId,
-		Name:    request.Name,
-		Logo:    request.Logo,
-		Address: request.Address,
-		Email:   request.Email,
-		Phone:   request.Phone,
+		UUID:      uuid.NewString(),
+		UserId:    user.ID,
+		Name:      request.Name,
+		Logo:      request.Logo,
+		Address:   request.Address,
+		Email:     request.Email,
+		Phone:     request.Phone,
+		CreatedBy: user.ID,
+		ModifyBy:  user.ID,
 	}
 
 	if err := s.companyRepo.Create(&newCompany); err != nil {
@@ -53,7 +64,6 @@ func (s *companyServices) GetAll() ([]models.Company, error) {
 		return nil, err
 	}
 	return companies, nil
-
 }
 
 func (s *companyServices) GetByUUID(uuid string) (models.Company, error) {
@@ -65,7 +75,7 @@ func (s *companyServices) GetByUUID(uuid string) (models.Company, error) {
 }
 
 func (s *companyServices) Update(uuid string, request request.CompanyReq) (models.Company, error) {
-	if err := pkg.Validate.Struct(request); err != nil{
+	if err := pkg.Validate.Struct(request); err != nil {
 		return models.Company{}, err
 	}
 
@@ -80,18 +90,17 @@ func (s *companyServices) Update(uuid string, request request.CompanyReq) (model
 	updatedCompany.Email = request.Email
 	updatedCompany.Phone = request.Phone
 
-	if err := s.companyRepo.Update(&updatedCompany); err != nil{
+	if err := s.companyRepo.Update(&updatedCompany); err != nil {
 		return models.Company{}, err
 	}
-	return updatedCompany,nil
+	return updatedCompany, nil
 }
-
 
 func (s *companyServices) Delete(uuid string) (models.Company, error) {
 	targetCompany, err := s.companyRepo.GetByUUID(uuid)
 	if err != nil {
 		return models.Company{}, err
-	} 
+	}
 
 	if err := s.companyRepo.Delete(&targetCompany); err != nil {
 		return models.Company{}, err
@@ -99,4 +108,3 @@ func (s *companyServices) Delete(uuid string) (models.Company, error) {
 	return targetCompany, nil
 
 }
-
