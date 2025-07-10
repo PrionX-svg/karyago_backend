@@ -1,6 +1,6 @@
 package request
 
-type DepartmentGroupCreateReq struct {
+type DepartmentGroupReq struct {
 	CompanyUUID     string `json:"company_uuid" validate:"required"`
 	ResponsibleUUID string `json:"responsible_uuid"`
 	Name            string `json:"name" validate:"required,max=100"`
