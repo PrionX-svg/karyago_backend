@@ -63,6 +63,7 @@ Logs in with email and password. A JWT token is returned in the `token` cookie.
   "data": {
     "email": "marcomelandri808@gmail.com",
     "fullname": "Marco Melandri",
+    "is_onboarding": true,
     "role_name": "owner",
     "uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387"
   },

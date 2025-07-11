@@ -1,20 +1,22 @@
 package services
 
 import (
+	"fmt"
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
+	"hris_backend/internal/response"
 	"hris_backend/pkg"
 
 	"github.com/google/uuid"
 )
 
 type CompanyServices interface {
-	Create(request request.CompanyReq) (models.Company, error)
-	GetAll() ([]models.Company, error)
-	GetByUUID(uuid string) (models.Company, error)
-	Update(uuid string, request request.CompanyReq) (models.Company, error)
-	Delete(uuid string) (models.Company, error)
+	Create(request request.CompanyReq) (response.CompanyResponse, error)
+	GetAll() ([]response.CompanyResponse, error)
+	GetByUUID(uuid string) (response.CompanyResponse, error)
+	Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error)
+	Delete(uuid string) (response.CompanyResponse, error)
 }
 
 type companyServices struct {
@@ -29,14 +31,14 @@ func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo re
 	}
 }
 
-func (s *companyServices) Create(request request.CompanyReq) (models.Company, error) {
+func (s *companyServices) Create(request request.CompanyReq) (response.CompanyResponse, error) {
 	if err := pkg.Validate.Struct(request); err != nil {
-		return models.Company{}, err
+		return response.CompanyResponse{}, err
 	}
 
 	user, err := s.userRepo.GetByUUID(request.UserUUID)
 	if err != nil {
-		return models.Company{}, err
+		return response.CompanyResponse{}, err
 	}
 
 	newCompany := models.Company{
@@ -51,60 +53,155 @@ func (s *companyServices) Create(request request.CompanyReq) (models.Company, er
 		ModifyBy:  user.ID,
 	}
 
-	if err := s.companyRepo.Create(&newCompany); err != nil {
-		return models.Company{}, err
+	createdCompany, err := s.companyRepo.CreateWithUser(&newCompany)
+	if err != nil {
+		return response.CompanyResponse{}, err
 	}
-	return newCompany, nil
+
+	resp := response.CompanyResponse{
+		UUID:    createdCompany.UUID,
+		Logo:    createdCompany.Logo,
+		Name:    createdCompany.Name,
+		Address: createdCompany.Address,
+		Email:   createdCompany.Email,
+		Phone:   createdCompany.Phone,
+		User: struct {
+			UUID      string `json:"uuid"`
+			FirstName string `json:"firstname"`
+			LastName  string `json:"lastname"`
+		}{
+			UUID:      createdCompany.User.UUID,
+			FirstName: createdCompany.User.FirstName,
+			LastName:  createdCompany.User.LastName,
+		},
+	}
+
+	return resp, nil
 }
 
-func (s *companyServices) GetAll() ([]models.Company, error) {
-	var companies []models.Company
+func (s *companyServices) GetAll() ([]response.CompanyResponse, error) {
 	companies, err := s.companyRepo.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return companies, nil
+
+	var result []response.CompanyResponse
+	for _, c := range companies {
+		res := response.CompanyResponse{
+			UUID:    c.UUID,
+			Logo:    c.Logo,
+			Name:    c.Name,
+			Address: c.Address,
+			Email:   c.Email,
+			Phone:   c.Phone,
+		}
+		res.User.UUID = c.User.UUID
+		res.User.FirstName = c.User.FirstName
+		res.User.LastName = c.User.LastName
+
+		result = append(result, res)
+	}
+
+	return result, nil
 }
 
-func (s *companyServices) GetByUUID(uuid string) (models.Company, error) {
+func (s *companyServices) GetByUUID(uuid string) (response.CompanyResponse, error) {
+	c, err := s.companyRepo.GetByUUID(uuid)
+	if err != nil {
+		return response.CompanyResponse{}, err
+	}
+
+	res := response.CompanyResponse{
+		UUID:    c.UUID,
+		Logo:    c.Logo,
+		Name:    c.Name,
+		Address: c.Address,
+		Email:   c.Email,
+		Phone:   c.Phone,
+	}
+	res.User.UUID = c.User.UUID
+	res.User.FirstName = c.User.FirstName
+	res.User.LastName = c.User.LastName
+
+	return res, nil
+}
+
+func (s *companyServices) Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error) {
+	if err := pkg.Validate.Struct(request); err != nil {
+		return response.CompanyResponse{}, err
+	}
+
 	company, err := s.companyRepo.GetByUUID(uuid)
 	if err != nil {
-		return models.Company{}, err
+		return response.CompanyResponse{}, err
 	}
-	return company, nil
+
+	company.Name = request.Name
+	company.Logo = request.Logo
+	company.Address = request.Address
+	company.Email = request.Email
+	company.Phone = request.Phone
+	company.ModifyBy = company.UserId
+
+	updated, err := s.companyRepo.UpdateWithUser(&company)
+	if err != nil {
+		return response.CompanyResponse{}, err
+	}
+
+	return response.CompanyResponse{
+		UUID:    updated.UUID,
+		Logo:    updated.Logo,
+		Name:    updated.Name,
+		Address: updated.Address,
+		Email:   updated.Email,
+		Phone:   updated.Phone,
+		User: struct {
+			UUID      string `json:"uuid"`
+			FirstName string `json:"firstname"`
+			LastName  string `json:"lastname"`
+		}{
+			UUID:      updated.User.UUID,
+			FirstName: updated.User.FirstName,
+			LastName:  updated.User.LastName,
+		},
+	}, nil
 }
 
-func (s *companyServices) Update(uuid string, request request.CompanyReq) (models.Company, error) {
-	if err := pkg.Validate.Struct(request); err != nil {
-		return models.Company{}, err
-	}
-
-	updatedCompany, err := s.companyRepo.GetByUUID(uuid)
+func (s *companyServices) Delete(uuid string) (response.CompanyResponse, error) {
+	company, err := s.companyRepo.GetByUUID(uuid)
 	if err != nil {
-		return models.Company{}, err
+		return response.CompanyResponse{}, err
 	}
 
-	updatedCompany.Name = request.Name
-	updatedCompany.Logo = request.Logo
-	updatedCompany.Address = request.Address
-	updatedCompany.Email = request.Email
-	updatedCompany.Phone = request.Phone
-
-	if err := s.companyRepo.Update(&updatedCompany); err != nil {
-		return models.Company{}, err
-	}
-	return updatedCompany, nil
-}
-
-func (s *companyServices) Delete(uuid string) (models.Company, error) {
-	targetCompany, err := s.companyRepo.GetByUUID(uuid)
+	hasBranch, err := s.companyRepo.HasAnyBranch(company.ID)
 	if err != nil {
-		return models.Company{}, err
+		return response.CompanyResponse{}, fmt.Errorf("failed to check company branches: %w", err)
+	}
+	if hasBranch {
+		return response.CompanyResponse{}, fmt.Errorf("cannot delete company because it still has branches")
 	}
 
-	if err := s.companyRepo.Delete(&targetCompany); err != nil {
-		return models.Company{}, err
+	if err := s.companyRepo.Delete(&company); err != nil {
+		return response.CompanyResponse{}, fmt.Errorf("failed to delete company: %w", err)
 	}
-	return targetCompany, nil
 
+	resp := response.CompanyResponse{
+		UUID:    company.UUID,
+		Logo:    company.Logo,
+		Name:    company.Name,
+		Address: company.Address,
+		Email:   company.Email,
+		Phone:   company.Phone,
+		User: struct {
+			UUID      string `json:"uuid"`
+			FirstName string `json:"firstname"`
+			LastName  string `json:"lastname"`
+		}{
+			UUID:      company.User.UUID,
+			FirstName: company.User.FirstName,
+			LastName:  company.User.LastName,
+		},
+	}
+
+	return resp, nil
 }

@@ -86,7 +86,7 @@ func (h *companyHandler) Delete(c *fiber.Ctx) error {
 
 	targetCompany, err := h.companyServices.Delete(uuid)
 	if err != nil {
-		return pkg.Error(c, fiber.StatusNotFound, "Failed to get company")
+		return pkg.Error(c, fiber.StatusNotFound, err.Error())
 	}
 
 	return pkg.Success(c, targetCompany, "Company deleted successfully")

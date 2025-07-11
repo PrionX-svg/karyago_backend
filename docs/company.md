@@ -39,15 +39,19 @@ Create a new company.
 ```json
 {
   "data": {
-    "uuid": "generated-company-uuid",
-    "user_uuid": "",
-    "name": "PT Teknologi Nusantara",
+    "uuid": "2d1f05da-5fa4-4977-80bc-8d0d3b031bf3",
+    "logo": "/uuid-date-namafile",
+    "name": "PT Teknologi Nusantara 2",
     "address": "Jl. Merdeka No.123, Jakarta",
     "email": "info2@teknologi.co.id",
     "phone": "021-12345678",
-    "logo": "/uuid-date-namafile"
+    "user": {
+      "uuid": "85b47132-345d-40a1-868f-3e48adacb319",
+      "firstname": "Marco",
+      "lastname": "Melandri"
+    }
   },
-  "message": "Company created successfully",
+  "message": "Company Created Succesfully",
   "status": "success"
 }
 ```
@@ -66,16 +70,20 @@ Retrieve the list of all companies.
 {
   "data": [
     {
-      "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
-      "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
-      "name": "PT Teknologi Nusantara",
-      "email": "info@teknologi.co.id",
+      "uuid": "2d1f05da-5fa4-4977-80bc-8d0d3b031bf3",
+      "logo": "/uuid-date-namafile",
+      "name": "PT Teknologi Nusantara 2",
       "address": "Jl. Merdeka No.123, Jakarta",
+      "email": "info2@teknologi.co.id",
       "phone": "021-12345678",
-      "logo": "/uuid-date-namafile"
+      "user": {
+        "uuid": "85b47132-345d-40a1-868f-3e48adacb319",
+        "firstname": "Marco",
+        "lastname": "Melandri"
+      }
     }
   ],
-  "message": "Companies fetched",
+  "message": "Successfully get all companies",
   "status": "success"
 }
 ```
@@ -92,15 +100,19 @@ Example: `/get/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 ```json
 {
   "data": {
-    "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
-    "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
-    "name": "PT Teknologi Nusantara",
-    "email": "info@teknologi.co.id",
+    "uuid": "2d1f05da-5fa4-4977-80bc-8d0d3b031bf3",
+    "logo": "/uuid-date-namafile",
+    "name": "PT Teknologi Nusantara 2",
     "address": "Jl. Merdeka No.123, Jakarta",
+    "email": "info2@teknologi.co.id",
     "phone": "021-12345678",
-    "logo": "/uuid-date-namafile"
+    "user": {
+      "uuid": "85b47132-345d-40a1-868f-3e48adacb319",
+      "firstname": "Marco",
+      "lastname": "Melandri"
+    }
   },
-  "message": "Company found",
+  "message": "Succesfully get company",
   "status": "success"
 }
 ```
@@ -130,14 +142,19 @@ Example: `/update/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 ```json
 {
   "data": {
-    "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
-    "name": "PT Teknologi Nusantara Update",
-    "email": "info@teknologi.co.id",
+    "uuid": "2d1f05da-5fa4-4977-80bc-8d0d3b031bf3",
+    "logo": "/uuid-date-namafile",
+    "name": "PT Teknologi Nusantara",
     "address": "Jl. Merdeka No.123, Jakarta",
+    "email": "info@teknologi.co.id",
     "phone": "021-12345678",
-    "logo": "/uuid-date-namafile"
+    "user": {
+      "uuid": "85b47132-345d-40a1-868f-3e48adacb319",
+      "firstname": "Marco",
+      "lastname": "Melandri"
+    }
   },
-  "message": "Company updated successfully",
+  "message": "Company updated succesfully",
   "status": "success"
 }
 ```
@@ -154,13 +171,17 @@ Example: `/delete/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 ```json
 {
   "data": {
-    "uuid": "cd041c00-9808-4d85-8a2e-5ca9af9f938f",
-    "user_uuid": "f4d811c2-8583-44f0-ab4c-b2cc1f483387",
+    "uuid": "2d1f05da-5fa4-4977-80bc-8d0d3b031bf3",
     "logo": "/uuid-date-namafile",
-    "name": "PT Teknologi Nusantara Update",
+    "name": "PT Teknologi Nusantara",
     "address": "Jl. Merdeka No.123, Jakarta",
     "email": "info@teknologi.co.id",
-    "phone": "021-12345678"
+    "phone": "021-12345678",
+    "user": {
+      "uuid": "85b47132-345d-40a1-868f-3e48adacb319",
+      "firstname": "Marco",
+      "lastname": "Melandri"
+    }
   },
   "message": "Company deleted successfully",
   "status": "success"

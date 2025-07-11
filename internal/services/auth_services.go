@@ -53,7 +53,6 @@ func (s *authService) Register(request request.UserRequest) error {
 	newUser := models.User{
 		UUID:      uuid.NewString(),
 		RoleID:    role.ID,
-		CompanyID: request.CompanyID,
 		FirstName: request.FirstName,
 		LastName:  request.LastName,
 		Phone:     request.Phone,
