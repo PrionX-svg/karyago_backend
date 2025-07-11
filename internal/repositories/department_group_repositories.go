@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"hris_backend/internal/models"
 	"gorm.io/gorm"
+	"hris_backend/internal/models"
 )
 
 type DepartmentGroupRepositories interface {
@@ -21,7 +21,7 @@ func NewDepartmentGroupRepositories(db *gorm.DB) DepartmentGroupRepositories {
 	return &departmentGroupRepositories{db}
 }
 
-func (r *departmentGroupRepositories) Create(departmentGroup *models.DepartmentGroup) error{
+func (r *departmentGroupRepositories) Create(departmentGroup *models.DepartmentGroup) error {
 	if err := r.db.Create(departmentGroup).Error; err != nil {
 		return err
 	}
@@ -30,18 +30,32 @@ func (r *departmentGroupRepositories) Create(departmentGroup *models.DepartmentG
 
 func (r *departmentGroupRepositories) GetAll() ([]models.DepartmentGroup, error) {
 	var departmentGroups []models.DepartmentGroup
-	if err := r.db.Find(&departmentGroups).Error; err != nil {
+	err := r.db.
+		Table("department_groups").
+		Select("department_groups.*, companies.uuid AS CompanyUUID, users.uuid AS ResponsibleUUID").
+		Joins("JOIN companies ON companies.id = department_groups.company_id").
+		Joins("LEFT JOIN users ON users.id = department_groups.responsible_id").
+		Find(&departmentGroups).Error
+	if err != nil {
 		return nil, err
 	}
 	return departmentGroups, nil
 }
 
 func (r *departmentGroupRepositories) FindByUUID(UUID string) (*models.DepartmentGroup, error) {
-	departmentGroup := &models.DepartmentGroup{}
-	if err := r.db.Where("uuid = ?", UUID).First(departmentGroup).Error; err != nil {
+	var departmentGroup models.DepartmentGroup
+	err := r.db.
+		Table("department_groups").
+		Select("department_groups.*, companies.uuid AS CompanyUUID, users.uuid AS ResponsibleUUID").
+		Joins("JOIN companies ON companies.id = department_groups.company_id").
+		Joins("LEFT JOIN users ON users.id = department_groups.responsible_id").
+		Where("department_groups.uuid = ?", UUID).
+		First(&departmentGroup).Error
+
+	if err != nil {
 		return nil, err
 	}
-	return departmentGroup, nil
+	return &departmentGroup, nil
 }
 
 func (r *departmentGroupRepositories) Update(departmentGroup *models.DepartmentGroup) error {

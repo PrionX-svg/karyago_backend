@@ -44,7 +44,6 @@ func (s *departmentGroupServices) Create(request request.DepartmentGroupReq) (mo
 	newDepartmentGroup := models.DepartmentGroup{
 		UUID:            uuid.NewString(),
 		CompanyID:       company.ID,
-		CompanyUUID:     request.CompanyUUID,
 		ResponsibleUUID: request.ResponsibleUUID,
 		Name:            request.Name,
 		Desc:            request.Desc,
