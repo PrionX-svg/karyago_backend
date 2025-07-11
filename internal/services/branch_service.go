@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"hris_backend/internal/response"
 
 	"github.com/google/uuid"
 	"hris_backend/internal/models"
@@ -11,11 +12,11 @@ import (
 )
 
 type BranchService interface {
-	Create(request request.BranchReq, actorID uint) (models.Branch, error)
-	Get(uuid string) (models.Branch, error)
-	Update(uuid string, request request.BranchReq, actorID uint) (models.Branch, error)
-	Delete(uuid string) (models.Branch, error)
-	List() ([]models.Branch, error)
+	Create(req request.BranchReq, actorID uint) (response.BranchResponse, error)
+	Get(uuid string) (response.BranchResponse, error)
+	Update(uuid string, req request.BranchReq, actorID uint) (response.BranchResponse, error)
+	Delete(uuid string) (response.BranchResponse, error)
+	List() ([]response.BranchResponse, error)
 }
 
 type branchService struct {
@@ -30,14 +31,14 @@ func NewBranchService(branchRepo repositories.BranchRepository, companyRepo repo
 	}
 }
 
-func (s *branchService) Create(req request.BranchReq, actorID uint) (models.Branch, error) {
+func (s *branchService) Create(req request.BranchReq, actorID uint) (response.BranchResponse, error) {
 	if err := pkg.Validate.Struct(req); err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
 
 	company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
 	if err != nil {
-		return models.Branch{}, fmt.Errorf("invalid company UUID")
+		return response.BranchResponse{}, fmt.Errorf("invalid company UUID")
 	}
 
 	newBranch := models.Branch{
@@ -52,32 +53,85 @@ func (s *branchService) Create(req request.BranchReq, actorID uint) (models.Bran
 	}
 
 	if err := s.repo.Create(&newBranch); err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
-	return newBranch, nil
+
+	branchModel, err := s.repo.FindByUUID(newBranch.UUID)
+	if err != nil {
+		return response.BranchResponse{}, err
+	}
+
+	branchResp := response.BranchResponse{
+		UUID:    branchModel.UUID,
+		Name:    branchModel.Name,
+		Address: branchModel.Address,
+		Email:   branchModel.Email,
+		Phone:   branchModel.Phone,
+		Company: struct {
+			UUID    string `json:"uuid"`
+			Logo    string `json:"logo"`
+			Name    string `json:"name"`
+			Address string `json:"address"`
+			Email   string `json:"email"`
+			Phone   string `json:"phone"`
+		}{
+			UUID:    branchModel.Company.UUID,
+			Logo:    branchModel.Company.Logo,
+			Name:    branchModel.Company.Name,
+			Address: branchModel.Company.Address,
+			Email:   branchModel.Company.Email,
+			Phone:   branchModel.Company.Phone,
+		},
+	}
+
+	return branchResp, nil
 }
 
-func (s *branchService) Get(uuid string) (models.Branch, error) {
+func (s *branchService) Get(uuid string) (response.BranchResponse, error) {
 	branch, err := s.repo.FindByUUID(uuid)
 	if err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
-	return *branch, nil
+
+	result := response.BranchResponse{
+		UUID:    branch.UUID,
+		Name:    branch.Name,
+		Address: branch.Address,
+		Email:   branch.Email,
+		Phone:   branch.Phone,
+		Company: struct {
+			UUID    string `json:"uuid"`
+			Logo    string `json:"logo"`
+			Name    string `json:"name"`
+			Address string `json:"address"`
+			Email   string `json:"email"`
+			Phone   string `json:"phone"`
+		}{
+			UUID:    branch.Company.UUID,
+			Logo:    branch.Company.Logo,
+			Name:    branch.Company.Name,
+			Address: branch.Company.Address,
+			Email:   branch.Company.Email,
+			Phone:   branch.Company.Phone,
+		},
+	}
+
+	return result, nil
 }
 
-func (s *branchService) Update(uuid string, req request.BranchReq, actorID uint) (models.Branch, error) {
+func (s *branchService) Update(uuid string, req request.BranchReq, actorID uint) (response.BranchResponse, error) {
 	if err := pkg.Validate.Struct(req); err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
 
 	branch, err := s.repo.FindByUUID(uuid)
 	if err != nil {
-		return models.Branch{}, fmt.Errorf("branch not found")
+		return response.BranchResponse{}, fmt.Errorf("branch not found")
 	}
 
 	company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
 	if err != nil {
-		return models.Branch{}, fmt.Errorf("invalid company UUID")
+		return response.BranchResponse{}, fmt.Errorf("invalid company UUID")
 	}
 
 	branch.Name = req.Name
@@ -88,25 +142,107 @@ func (s *branchService) Update(uuid string, req request.BranchReq, actorID uint)
 	branch.ModifyBy = actorID
 
 	if err := s.repo.Update(branch); err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
 
-	return *branch, nil
+	updatedBranch, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return response.BranchResponse{}, err
+	}
+
+	resp := response.BranchResponse{
+		UUID:    updatedBranch.UUID,
+		Name:    updatedBranch.Name,
+		Address: updatedBranch.Address,
+		Email:   updatedBranch.Email,
+		Phone:   updatedBranch.Phone,
+		Company: struct {
+			UUID    string `json:"uuid"`
+			Logo    string `json:"logo"`
+			Name    string `json:"name"`
+			Address string `json:"address"`
+			Email   string `json:"email"`
+			Phone   string `json:"phone"`
+		}{
+			UUID:    updatedBranch.Company.UUID,
+			Logo:    updatedBranch.Company.Logo,
+			Name:    updatedBranch.Company.Name,
+			Address: updatedBranch.Company.Address,
+			Email:   updatedBranch.Company.Email,
+			Phone:   updatedBranch.Company.Phone,
+		},
+	}
+
+	return resp, nil
 }
 
-func (s *branchService) Delete(uuid string) (models.Branch, error) {
+func (s *branchService) Delete(uuid string) (response.BranchResponse, error) {
 	branch, err := s.repo.FindByUUID(uuid)
 	if err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
 
 	if err := s.repo.Delete(uuid); err != nil {
-		return models.Branch{}, err
+		return response.BranchResponse{}, err
 	}
 
-	return *branch, nil
+	resp := response.BranchResponse{
+		UUID:    branch.UUID,
+		Name:    branch.Name,
+		Address: branch.Address,
+		Email:   branch.Email,
+		Phone:   branch.Phone,
+		Company: struct {
+			UUID    string `json:"uuid"`
+			Logo    string `json:"logo"`
+			Name    string `json:"name"`
+			Address string `json:"address"`
+			Email   string `json:"email"`
+			Phone   string `json:"phone"`
+		}{
+			UUID:    branch.Company.UUID,
+			Logo:    branch.Company.Logo,
+			Name:    branch.Company.Name,
+			Address: branch.Company.Address,
+			Email:   branch.Company.Email,
+			Phone:   branch.Company.Phone,
+		},
+	}
+
+	return resp, nil
 }
 
-func (s *branchService) List() ([]models.Branch, error) {
-	return s.repo.FindAll()
+func (s *branchService) List() ([]response.BranchResponse, error) {
+	branches, err := s.repo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []response.BranchResponse
+	for _, b := range branches {
+		result = append(result, response.BranchResponse{
+			UUID:    b.UUID,
+			Name:    b.Name,
+			Address: b.Address,
+			Email:   b.Email,
+			Phone:   b.Phone,
+			Company: struct {
+				UUID    string `json:"uuid"`
+				Logo    string `json:"logo"`
+				Name    string `json:"name"`
+				Address string `json:"address"`
+				Email   string `json:"email"`
+				Phone   string `json:"phone"`
+			}{
+				UUID:    b.Company.UUID,
+				Logo:    b.Company.Logo,
+				Name:    b.Company.Name,
+				Address: b.Company.Address,
+				Email:   b.Company.Email,
+				Phone:   b.Company.Phone,
+			},
+		})
+	}
+
+	return result, nil
 }

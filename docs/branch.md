@@ -38,14 +38,21 @@ Create a new branch.
 ```json
 {
   "data": {
-    "uuid": "generated-branch-uuid",
-    "company_uuid": "797a93d6-c780-4847-8839-f2220bd4a4c2",
-    "name": "Cabang Jakarta",
-    "address": "Jl. Sudirman No. 100, Jakarta",
-    "email": "jakarta.branch@company.com",
-    "phone": "021-98765432"
+    "uuid": "a3994ce4-cb47-4a21-83f3-78b4dbc9c5fd",
+    "name": "Cabang Surabaya",
+    "address": "Jl. Sudirman No. 100, Surabaya",
+    "email": "Surabaya.branch@company.com",
+    "phone": "021-98765432",
+    "company": {
+      "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
+      "logo": "/uuid-date-namafile",
+      "name": "PT Teknologi Nusantara 2",
+      "address": "Jl. Merdeka No.123, Jakarta",
+      "email": "info2@teknologi.co.id",
+      "phone": "021-12345678"
+    }
   },
-  "message": "Branch created successfully",
+  "message": "Branch created",
   "status": "success"
 }
 ```
@@ -64,15 +71,22 @@ Retrieve the list of all branches.
 {
   "data": [
     {
-      "uuid": "8ec51987-9375-4151-9b3b-b9d2467669f8",
-      "company_uuid": "797a93d6-c780-4847-8839-f2220bd4a4c2",
-      "name": "Cabang Jakarta",
-      "address": "Jl. Sudirman No. 100, Jakarta",
-      "email": "jakarta.branch@company.com",
-      "phone": "021-98765432"
+      "uuid": "a3994ce4-cb47-4a21-83f3-78b4dbc9c5fd",
+      "name": "Cabang Surabaya",
+      "address": "Jl. Sudirman No. 100, Surabaya",
+      "email": "Surabaya.branch@company.com",
+      "phone": "021-98765432",
+      "company": {
+        "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
+        "logo": "/uuid-date-namafile",
+        "name": "PT Teknologi Nusantara 2",
+        "address": "Jl. Merdeka No.123, Jakarta",
+        "email": "info2@teknologi.co.id",
+        "phone": "021-12345678"
+      }
     }
   ],
-  "message": "Branches fetched",
+  "message": "Successfully get all branches",
   "status": "success"
 }
 ```
@@ -89,14 +103,21 @@ Example: `/get/8ec51987-9375-4151-9b3b-b9d2467669f8`
 ```json
 {
   "data": {
-    "uuid": "8ec51987-9375-4151-9b3b-b9d2467669f8",
-    "company_uuid": "797a93d6-c780-4847-8839-f2220bd4a4c2",
-    "name": "Cabang Jakarta",
-    "address": "Jl. Sudirman No. 100, Jakarta",
-    "email": "jakarta.branch@company.com",
-    "phone": "021-98765432"
+    "uuid": "a3994ce4-cb47-4a21-83f3-78b4dbc9c5fd",
+    "name": "Cabang Surabaya",
+    "address": "Jl. Sudirman No. 100, Surabaya",
+    "email": "Surabaya.branch@company.com",
+    "phone": "021-98765432",
+    "company": {
+      "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
+      "logo": "/uuid-date-namafile",
+      "name": "PT Teknologi Nusantara 2",
+      "address": "Jl. Merdeka No.123, Jakarta",
+      "email": "info2@teknologi.co.id",
+      "phone": "021-12345678"
+    }
   },
-  "message": "Branch found",
+  "message": "Successfully get branch",
   "status": "success"
 }
 ```
@@ -125,14 +146,21 @@ Example: `/update/8ec51987-9375-4151-9b3b-b9d2467669f8`
 ```json
 {
   "data": {
-    "uuid": "8ec51987-9375-4151-9b3b-b9d2467669f8",
-    "company_uuid": "797a93d6-c780-4847-8839-f2220bd4a4c2",
+    "uuid": "a3994ce4-cb47-4a21-83f3-78b4dbc9c5fd",
     "name": "Cabang Tangerang",
     "address": "Jl. Tangerang No. 100, Tangerang",
-    "email": "jakarta.branch@company.com",
-    "phone": "021-98765432"
+    "email": "tangerang.branch@company.com",
+    "phone": "021-98765432",
+    "company": {
+      "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
+      "logo": "/uuid-date-namafile",
+      "name": "PT Teknologi Nusantara 2",
+      "address": "Jl. Merdeka No.123, Jakarta",
+      "email": "info2@teknologi.co.id",
+      "phone": "021-12345678"
+    }
   },
-  "message": "Branch updated successfully",
+  "message": "Branch updated",
   "status": "success"
 }
 ```
@@ -149,14 +177,21 @@ Example: `/delete/8ec51987-9375-4151-9b3b-b9d2467669f8`
 ```json
 {
   "data": {
-    "uuid": "8ec51987-9375-4151-9b3b-b9d2467669f8",
-    "company_uuid": "797a93d6-c780-4847-8839-f2220bd4a4c2",
+    "uuid": "a3994ce4-cb47-4a21-83f3-78b4dbc9c5fd",
     "name": "Cabang Tangerang",
     "address": "Jl. Tangerang No. 100, Tangerang",
-    "email": "jakarta.branch@company.com",
-    "phone": "021-98765432"
+    "email": "tangerang.branch@company.com",
+    "phone": "021-98765432",
+    "company": {
+      "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
+      "logo": "/uuid-date-namafile",
+      "name": "PT Teknologi Nusantara 2",
+      "address": "Jl. Merdeka No.123, Jakarta",
+      "email": "info2@teknologi.co.id",
+      "phone": "021-12345678"
+    }
   },
-  "message": "Branch deleted successfully",
+  "message": "Branch deleted",
   "status": "success"
 }
 ```

@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
+	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
 	"hris_backend/internal/services"
 	"hris_backend/pkg"
@@ -24,10 +27,11 @@ type AuthHandler interface {
 
 type authHandler struct {
 	authService services.AuthService
+	companyRepo repositories.CompanyRepositories
 }
 
-func NewAuthHandler(authService services.AuthService) AuthHandler {
-	return &authHandler{authService}
+func NewAuthHandler(authService services.AuthService, companyRepo repositories.CompanyRepositories) AuthHandler {
+	return &authHandler{authService, companyRepo}
 }
 
 func (h *authHandler) Register(c *fiber.Ctx) error {
@@ -108,6 +112,14 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to generate token")
 	}
 
+	isOnboarding := true
+	_, err = h.companyRepo.GetByUserID(user.ID)
+	if err == nil {
+		isOnboarding = false
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to check company data")
+	}
+
 	c.Cookie(&fiber.Cookie{
 		Name:     "token",
 		Value:    token,
@@ -118,10 +130,11 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 	})
 
 	return pkg.Success(c, fiber.Map{
-		"uuid":      user.UUID,
-		"fullname":  user.FirstName + " " + user.LastName,
-		"email":     user.Email,
-		"role_name": role,
+		"uuid":          user.UUID,
+		"fullname":      user.FirstName + " " + user.LastName,
+		"email":         user.Email,
+		"role_name":     role,
+		"is_onboarding": isOnboarding,
 	}, "Login successful")
 }
 

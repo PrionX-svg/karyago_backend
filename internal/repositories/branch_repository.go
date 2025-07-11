@@ -8,6 +8,7 @@ import (
 type BranchRepository interface {
 	Create(branch *models.Branch) error
 	FindByUUID(uuid string) (*models.Branch, error)
+	FindByID(id uint) (*models.Branch, error)
 	Update(branch *models.Branch) error
 	Delete(uuid string) error
 	FindAll() ([]models.Branch, error)
@@ -29,11 +30,23 @@ func (r *branchRepository) FindByUUID(uuid string) (*models.Branch, error) {
 	var branch models.Branch
 
 	err := r.db.
-		Table("branches").
-		Select("branches.*, companies.uuid AS CompanyUUID").
-		Joins("JOIN companies ON companies.id = branches.company_id").
-		Where("branches.uuid = ?", uuid).
-		Scan(&branch).Error
+		Preload("Company").
+		Where("uuid = ?", uuid).
+		First(&branch).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return &branch, nil
+}
+
+func (r *branchRepository) FindByID(id uint) (*models.Branch, error) {
+	var branch models.Branch
+
+	err := r.db.
+		Preload("Company").
+		Where("id = ?", id).
+		First(&branch).Error
 
 	if err != nil {
 		return nil, err
@@ -53,10 +66,8 @@ func (r *branchRepository) FindAll() ([]models.Branch, error) {
 	var branches []models.Branch
 
 	err := r.db.
-		Table("branches").
-		Select("branches.*, companies.uuid AS CompanyUUID").
-		Joins("JOIN companies ON companies.id = branches.company_id").
-		Scan(&branches).Error
+		Preload("Company").
+		Find(&branches).Error
 
 	if err != nil {
 		return nil, err

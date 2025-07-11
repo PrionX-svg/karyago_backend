@@ -12,9 +12,10 @@ func SetupAuthRoutes(router fiber.Router, db *gorm.DB) {
 	otpRepo := repositories.NewOTPRepositories(db)
 	roleRepo := repositories.NewRoleRepositories(db)
 	authRepo := repositories.NewAuthRepository(db)
+	companyRepo := repositories.NewCompanyRepository(db)
 
 	authService := services.NewAuthService(authRepo, roleRepo, otpRepo)
-	authHandler := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(authService, companyRepo)
 
 	auth := router.Group("/auth")
 
