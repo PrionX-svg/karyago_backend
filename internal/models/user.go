@@ -24,6 +24,5 @@ type User struct {
 	ModifyAt    time.Time  `gorm:"autoUpdateTime" json:"-"`
 	ModifyBy    uint       `gorm:"not null" json:"-"`
 
-	Role   Role    `json:"role"`
-	Branch *Branch `gorm:"foreignKey:BranchID" json:"branch"`
+	Role Role `json:"role"`
 }
