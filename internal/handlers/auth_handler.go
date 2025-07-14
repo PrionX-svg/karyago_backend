@@ -126,7 +126,7 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 		Expires:  time.Now().Add(1 * time.Hour),
 		HTTPOnly: true,
 		Secure:   true,
-		SameSite: "Lax",
+		SameSite: "None",
 	})
 
 	return pkg.Success(c, fiber.Map{
@@ -145,7 +145,7 @@ func (h *authHandler) Logout(c *fiber.Ctx) error {
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
 		Secure:   true,
-		SameSite: "Lax",
+		SameSite: "None",
 	})
 	return pkg.Success(c, fiber.Map{}, "Logged out successfully")
 }

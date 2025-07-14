@@ -43,5 +43,6 @@ func SetupRoutes(app *fiber.App) {
 	branch.SetupBranchRoutes(v1, db)
 	company.SetupCompanyRoutes(v1, db)
 	user.SetupUserDetailRoutes(v1, db)
+	user.SetupUserRoutes(v1, db)
 	departmentgroup.SetupDepartmentGroupRoutes(v1, db)
 }
