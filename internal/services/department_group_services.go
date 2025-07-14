@@ -4,17 +4,18 @@ import (
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
+	"hris_backend/internal/response"
 	"hris_backend/pkg"
 
 	"github.com/google/uuid"
 )
 
 type DepartmentGroupServices interface {
-	Create(request request.DepartmentGroupReq) (models.DepartmentGroup, error)
-	GetAll() ([]models.DepartmentGroup, error)
-	FindByUUID(UUID string) (*models.DepartmentGroup, error)
-	Update(UUID string, departmentGroupReq request.DepartmentGroupReq) (models.DepartmentGroup, error)
-	Delete(UUID string) (models.DepartmentGroup, error)
+	Create(request request.DepartmentGroupReq) (response.DepartmentGroupResponse, error)
+	GetAll() ([]response.DepartmentGroupResponse, error)
+	FindByUUID(UUID string) (*response.DepartmentGroupResponse, error)
+	Update(UUID string, departmentGroupReq request.DepartmentGroupReq) (response.DepartmentGroupResponse, error)
+	Delete(UUID string) (response.DepartmentGroupResponse, error)
 }
 
 type departmentGroupServices struct {
@@ -31,14 +32,14 @@ func NewDepartmentGroupService(departmentGroupRepo repositories.DepartmentGroupR
 	}
 }
 
-func (s *departmentGroupServices) Create(request request.DepartmentGroupReq) (models.DepartmentGroup, error) {
+func (s *departmentGroupServices) Create(request request.DepartmentGroupReq) (response.DepartmentGroupResponse, error) {
 	if err := pkg.Validate.Struct(request); err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
 
 	company, err := s.companyRepo.GetByUUID(request.CompanyUUID)
 	if err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
 
 	newDepartmentGroup := models.DepartmentGroup{
@@ -52,69 +53,132 @@ func (s *departmentGroupServices) Create(request request.DepartmentGroupReq) (mo
 	if request.ResponsibleUUID != "" {
 		responsible, err := s.userRepo.GetByUUID(request.ResponsibleUUID)
 		if err != nil {
-			return models.DepartmentGroup{}, err
+			return response.DepartmentGroupResponse{}, err
 		}
-
 		newDepartmentGroup.ResponsibleID = responsible.ID
 	}
 
 	if err := s.departmentGroupRepo.Create(&newDepartmentGroup); err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
-	return newDepartmentGroup, nil
+
+	return response.DepartmentGroupResponse{
+		UUID:            newDepartmentGroup.UUID,
+		CompanyUUID:     request.CompanyUUID,
+		ResponsibleUUID: request.ResponsibleUUID,
+		Name:            newDepartmentGroup.Name,
+		Desc:            newDepartmentGroup.Desc,
+	}, nil
 }
 
-func (s *departmentGroupServices) GetAll() ([]models.DepartmentGroup, error) {
-	var departmentGroups []models.DepartmentGroup
+func (s *departmentGroupServices) GetAll() ([]response.DepartmentGroupResponse, error) {
 	departmentGroups, err := s.departmentGroupRepo.GetAll()
 	if err != nil {
 		return nil, err
 	}
-	return departmentGroups, nil
+
+	var responses []response.DepartmentGroupResponse
+	for _, group := range departmentGroups {
+		company, err := s.companyRepo.GetByID(group.CompanyID)
+		if err != nil {
+			return nil, err
+		}
+
+		res := response.DepartmentGroupResponse{
+			UUID:            group.UUID,
+			CompanyUUID:     company.UUID,
+			ResponsibleUUID: group.ResponsibleUUID,
+			Name:            group.Name,
+			Desc:            group.Desc,
+		}
+		responses = append(responses, res)
+	}
+
+	return responses, nil
 }
 
-func (s *departmentGroupServices) FindByUUID(UUID string) (*models.DepartmentGroup, error) {
-	departmentGroup, err := s.departmentGroupRepo.FindByUUID(UUID)
+func (s *departmentGroupServices) FindByUUID(UUID string) (*response.DepartmentGroupResponse, error) {
+	group, err := s.departmentGroupRepo.FindByUUID(UUID)
 	if err != nil {
 		return nil, err
 	}
-	return departmentGroup, nil
+
+	company, err := s.companyRepo.GetByID(group.CompanyID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &response.DepartmentGroupResponse{
+		UUID:            group.UUID,
+		CompanyUUID:     company.UUID,
+		ResponsibleUUID: group.ResponsibleUUID,
+		Name:            group.Name,
+		Desc:            group.Desc,
+	}
+
+	return res, nil
 }
 
-func (s *departmentGroupServices) Update(UUID string, departmentGroupReq request.DepartmentGroupReq) (models.DepartmentGroup, error) {
+func (s *departmentGroupServices) Update(UUID string, departmentGroupReq request.DepartmentGroupReq) (response.DepartmentGroupResponse, error) {
 	if err := pkg.Validate.Struct(departmentGroupReq); err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
 
 	departmentGroup, err := s.departmentGroupRepo.FindByUUID(UUID)
 	if err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
 
 	departmentGroup.Name = departmentGroupReq.Name
 	departmentGroup.Desc = departmentGroupReq.Desc
+
 	if departmentGroupReq.ResponsibleUUID != "" {
 		responsible, err := s.userRepo.GetByUUID(departmentGroupReq.ResponsibleUUID)
 		if err != nil {
-			return models.DepartmentGroup{}, err
+			return response.DepartmentGroupResponse{}, err
 		}
 		departmentGroup.ResponsibleID = responsible.ID
 		departmentGroup.ResponsibleUUID = responsible.UUID
 	}
+
 	if err := s.departmentGroupRepo.Update(departmentGroup); err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
-	return *departmentGroup, nil
+
+	company, err := s.companyRepo.GetByID(departmentGroup.CompanyID)
+	if err != nil {
+		return response.DepartmentGroupResponse{}, err
+	}
+
+	return response.DepartmentGroupResponse{
+		UUID:            departmentGroup.UUID,
+		CompanyUUID:     company.UUID,
+		ResponsibleUUID: departmentGroup.ResponsibleUUID,
+		Name:            departmentGroup.Name,
+		Desc:            departmentGroup.Desc,
+	}, nil
 }
 
-func (s *departmentGroupServices) Delete(UUID string) (models.DepartmentGroup, error) {
+func (s *departmentGroupServices) Delete(UUID string) (response.DepartmentGroupResponse, error) {
 	departmentGroup, err := s.departmentGroupRepo.FindByUUID(UUID)
 	if err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
 
 	if err := s.departmentGroupRepo.Delete(UUID); err != nil {
-		return models.DepartmentGroup{}, err
+		return response.DepartmentGroupResponse{}, err
 	}
-	return *departmentGroup, nil
+
+	company, err := s.companyRepo.GetByID(departmentGroup.CompanyID)
+	if err != nil {
+		return response.DepartmentGroupResponse{}, err
+	}
+
+	return response.DepartmentGroupResponse{
+		UUID:            departmentGroup.UUID,
+		CompanyUUID:     company.UUID,
+		ResponsibleUUID: departmentGroup.ResponsibleUUID,
+		Name:            departmentGroup.Name,
+		Desc:            departmentGroup.Desc,
+	}, nil
 }

@@ -49,13 +49,7 @@ func (r *companyRepositories) GetAll() ([]models.Company, error) {
 
 func (r *companyRepositories) GetByID(id uint) (models.Company, error) {
 	var company models.Company
-
-	err := r.db.
-		Preload("User", func(db *gorm.DB) *gorm.DB {
-			return db.Select("uuid", "first_name", "last_name")
-		}).
-		First(&company, id).Error
-
+	err := r.db.Select("uuid").First(&company, id).Error
 	return company, err
 }
 
