@@ -14,8 +14,10 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	userRepo := repositories.NewUserRepository(db)
 	roleRepo := repositories.NewRoleRepositories(db)
 	branchRepo := repositories.NewBranchRepository(db)
+	employeeRepo := repositories.NewEmployeeRepository(db)
+	companyRepo := repositories.NewCompanyRepository(db)
 
-	userService := services.NewUserService(db, userRepo, roleRepo, branchRepo)
+	userService := services.NewUserService(db, userRepo, roleRepo, branchRepo, employeeRepo, companyRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
 	user := router.Group("/users")
@@ -28,4 +30,5 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	user.Get("/get/:uuid", middlewares.RequirePermission("user.view"), userHandler.GetUserByUUID)
 	user.Delete("/delete/:uuid", middlewares.RequirePermission("user.delete"), userHandler.DeleteUser)
 	user.Patch("/update/:uuid", middlewares.RequirePermission("user.update"), userHandler.UpdateUser)
+	user.Patch("/rehire/:uuid", middlewares.RequirePermission("user.rehire"), userHandler.RehireUser)
 }

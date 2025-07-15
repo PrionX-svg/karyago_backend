@@ -26,12 +26,13 @@ type AuthHandler interface {
 }
 
 type authHandler struct {
-	authService services.AuthService
-	companyRepo repositories.CompanyRepositories
+	authService  services.AuthService
+	companyRepo  repositories.CompanyRepositories
+	employeeRepo repositories.EmployeeRepository
 }
 
-func NewAuthHandler(authService services.AuthService, companyRepo repositories.CompanyRepositories) AuthHandler {
-	return &authHandler{authService, companyRepo}
+func NewAuthHandler(authService services.AuthService, companyRepo repositories.CompanyRepositories, employeeRepo repositories.EmployeeRepository) AuthHandler {
+	return &authHandler{authService, companyRepo, employeeRepo}
 }
 
 func (h *authHandler) Register(c *fiber.Ctx) error {
@@ -102,12 +103,17 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusUnauthorized, err.Error())
 	}
 
-	role, err := h.authService.GetRoleName(user.RoleID)
+	employee, err := h.employeeRepo.FindByUserID(user.ID)
+	if err != nil {
+		return pkg.Error(c, fiber.StatusUnauthorized, "Employee data not found")
+	}
+
+	role, err := h.authService.GetRoleName(employee.RoleID)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to get role")
 	}
 
-	token, err := pkg.GenerateJWT(user.ID, user.UUID, user.Email, fmt.Sprintf("%d", user.RoleID))
+	token, err := pkg.GenerateJWT(user.ID, user.UUID, user.Email, fmt.Sprintf("%d", employee.RoleID))
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to generate token")
 	}

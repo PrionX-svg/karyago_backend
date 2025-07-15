@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -14,21 +15,23 @@ import (
 )
 
 type userService struct {
-	db          *gorm.DB
-	userRepo    repositories.UserRepository
-	roleRepo    repositories.RoleRepositories
-	companyRepo repositories.CompanyRepositories
-	branchRepo  repositories.BranchRepository
+	db           *gorm.DB
+	userRepo     repositories.UserRepository
+	roleRepo     repositories.RoleRepositories
+	companyRepo  repositories.CompanyRepositories
+	branchRepo   repositories.BranchRepository
+	employeeRepo repositories.EmployeeRepository
 }
 
 type UserService interface {
 	CreateUser(req request.UserEmployeeReq, creatorID uint) error
 	GetMe(userID uint) (*response.UserWithEmployeeResponse, error)
-	GetAllUsers() ([]response.UserWithEmployeeResponse, error)
-	GetUserByUUID(uuid string) (*response.UserWithEmployeeResponse, error)
-	GetUsersWithEmployeeDataTable(page, limit int, search, roleUUID, branchUUID string) ([]response.UserWithEmployeeResponse, int64, int64, error)
+	GetAllUsers(companyUUID string) ([]response.UserWithEmployeeResponse, error)
+	GetUserByUUID(userUUID string, companyUUID string) (*response.UserWithEmployeeResponse, error)
+	GetUsersWithEmployeeDataTable(page, limit int, search, roleUUID, branchUUID, isTerminated string) ([]response.UserWithEmployeeResponse, int64, int64, error)
 	UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) error
-	DeleteUser(userUUID string) error
+	DeleteUser(userUUID, companyUUID, reason string) error
+	RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error
 }
 
 func NewUserService(
@@ -36,12 +39,16 @@ func NewUserService(
 	userRepo repositories.UserRepository,
 	roleRepo repositories.RoleRepositories,
 	branchRepo repositories.BranchRepository,
+	employeeRepo repositories.EmployeeRepository,
+	companyRepo repositories.CompanyRepositories,
 ) UserService {
 	return &userService{
-		db:         db,
-		userRepo:   userRepo,
-		roleRepo:   roleRepo,
-		branchRepo: branchRepo,
+		db:           db,
+		userRepo:     userRepo,
+		roleRepo:     roleRepo,
+		branchRepo:   branchRepo,
+		employeeRepo: employeeRepo,
+		companyRepo:  companyRepo,
 	}
 }
 
@@ -61,28 +68,49 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) er
 			branchID = &branch.ID
 		}
 
+		company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
+		if err != nil {
+			return fmt.Errorf("company not found: %w", err)
+		}
+
 		hashedPassword, err := pkg.HashPassword(req.Password)
 		if err != nil {
 			return fmt.Errorf("failed to hash password: %w", err)
 		}
 
 		user := &models.User{
+			UUID:      uuid.NewString(),
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+			Phone:     req.Phone,
+			Email:     req.Email,
+			Password:  hashedPassword,
+			DOB:       &req.DOB,
+			Gender:    &req.Gender,
+			CreatedBy: creatorID,
+			ModifyBy:  creatorID,
+		}
+
+		if err := s.userRepo.Create(user); err != nil {
+			return fmt.Errorf("failed to create user: %w", err)
+		}
+
+		employee := &models.Employee{
 			UUID:        uuid.NewString(),
+			UserID:      user.ID,
 			RoleID:      role.ID,
+			CompanyID:   &company.ID,
 			BranchID:    branchID,
-			FirstName:   req.FirstName,
-			LastName:    req.LastName,
-			Phone:       req.Phone,
-			Email:       req.Email,
-			Password:    hashedPassword,
-			DOB:         &req.DOB,
-			Gender:      &req.Gender,
 			IsFreelance: req.IsFreelance,
 			CreatedBy:   creatorID,
 			ModifyBy:    creatorID,
 		}
 
-		return s.userRepo.Create(user)
+		if err := s.employeeRepo.Create(employee); err != nil {
+			return fmt.Errorf("failed to create employee: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -92,18 +120,23 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
+	employee, err := s.employeeRepo.FindByUserID(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("employee not found: %w", err)
+	}
+
+	role, err := s.roleRepo.FindByID(employee.RoleID)
+	if err != nil {
+		return nil, fmt.Errorf("role not found: %w", err)
+	}
+
 	var branchUUID, branchName string
-	if user.BranchID != nil {
-		branch, err := s.branchRepo.FindByID(*user.BranchID)
+	if employee.BranchID != nil {
+		branch, err := s.branchRepo.FindByID(*employee.BranchID)
 		if err == nil {
 			branchUUID = branch.UUID
 			branchName = branch.Name
 		}
-	}
-
-	role, err := s.roleRepo.FindByID(user.RoleID)
-	if err != nil {
-		return nil, fmt.Errorf("role not found: %w", err)
 	}
 
 	return &response.UserWithEmployeeResponse{
@@ -113,7 +146,7 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 		Phone:       user.Phone,
 		Gender:      user.Gender,
 		DOB:         user.DOB,
-		IsFreelance: user.IsFreelance,
+		IsFreelance: employee.IsFreelance,
 		Role:        role.Name,
 		Branch: struct {
 			UUID string `json:"uuid"`
@@ -122,23 +155,54 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 	}, nil
 }
 
-func (s *userService) GetAllUsers() ([]response.UserWithEmployeeResponse, error) {
-	users, err := s.userRepo.List()
+func (s *userService) GetAllUsers(companyUUID string) ([]response.UserWithEmployeeResponse, error) {
+	company, err := s.companyRepo.GetByUUID(companyUUID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("company not found: %w", err)
+	}
+
+	employees, err := s.employeeRepo.FindByCompanyID(company.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get employees: %w", err)
 	}
 
 	var result []response.UserWithEmployeeResponse
 
-	for _, user := range users {
-		role, _ := s.roleRepo.FindByID(user.RoleID)
+	for _, emp := range employees {
+		if emp.TerminatedAt != nil {
+			continue
+		}
+
+		user, err := s.userRepo.GetByID(emp.UserID)
+		if err != nil {
+			continue
+		}
+
+		role, err := s.roleRepo.FindByID(emp.RoleID)
+		if err != nil {
+			continue
+		}
 
 		var branchUUID, branchName string
-		if user.BranchID != nil {
-			branch, err := s.branchRepo.FindByID(*user.BranchID)
+		if emp.BranchID != nil {
+			branch, err := s.branchRepo.FindByID(*emp.BranchID)
 			if err == nil {
 				branchUUID = branch.UUID
 				branchName = branch.Name
+			}
+		}
+
+		var termination *struct {
+			Reason string     `json:"reason"`
+			Date   *time.Time `json:"date"`
+		}
+		if emp.TerminatedAt != nil || emp.TerminationReason != nil {
+			termination = &struct {
+				Reason string     `json:"reason"`
+				Date   *time.Time `json:"date"`
+			}{
+				Reason: pkg.DerefString(emp.TerminationReason),
+				Date:   emp.TerminatedAt,
 			}
 		}
 
@@ -149,36 +213,61 @@ func (s *userService) GetAllUsers() ([]response.UserWithEmployeeResponse, error)
 			Phone:       user.Phone,
 			Gender:      user.Gender,
 			DOB:         user.DOB,
-			IsFreelance: user.IsFreelance,
+			IsFreelance: emp.IsFreelance,
 			Role:        role.Name,
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
 			}{UUID: branchUUID, Name: branchName},
+			Termination: termination,
 		})
 	}
 
 	return result, nil
 }
 
-func (s *userService) GetUserByUUID(userUUID string) (*response.UserWithEmployeeResponse, error) {
+func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*response.UserWithEmployeeResponse, error) {
 	user, err := s.userRepo.GetByUUID(userUUID)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
+	company, err := s.companyRepo.GetByUUID(companyUUID)
+	if err != nil {
+		return nil, fmt.Errorf("company not found: %w", err)
+	}
+
+	employee, err := s.employeeRepo.FindByUserIDAndCompanyID(user.ID, company.ID)
+	if err != nil {
+		return nil, fmt.Errorf("employee not found in this company: %w", err)
+	}
+
+	role, err := s.roleRepo.FindByID(employee.RoleID)
+	if err != nil {
+		return nil, fmt.Errorf("role not found: %w", err)
+	}
+
 	var branchUUID, branchName string
-	if user.BranchID != nil {
-		branch, err := s.branchRepo.FindByID(*user.BranchID)
+	if employee.BranchID != nil {
+		branch, err := s.branchRepo.FindByID(*employee.BranchID)
 		if err == nil {
 			branchUUID = branch.UUID
 			branchName = branch.Name
 		}
 	}
 
-	role, err := s.roleRepo.FindByID(user.RoleID)
-	if err != nil {
-		return nil, fmt.Errorf("role not found: %w", err)
+	var termination *struct {
+		Reason string     `json:"reason"`
+		Date   *time.Time `json:"date"`
+	}
+	if employee.TerminatedAt != nil || employee.TerminationReason != nil {
+		termination = &struct {
+			Reason string     `json:"reason"`
+			Date   *time.Time `json:"date"`
+		}{
+			Reason: pkg.DerefString(employee.TerminationReason),
+			Date:   employee.TerminatedAt,
+		}
 	}
 
 	return &response.UserWithEmployeeResponse{
@@ -188,26 +277,25 @@ func (s *userService) GetUserByUUID(userUUID string) (*response.UserWithEmployee
 		Phone:       user.Phone,
 		Gender:      user.Gender,
 		DOB:         user.DOB,
-		IsFreelance: user.IsFreelance,
+		IsFreelance: employee.IsFreelance,
 		Role:        role.Name,
 		Branch: struct {
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
 		}{UUID: branchUUID, Name: branchName},
+		Termination: termination,
 	}, nil
 }
 
-func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, roleUUID, branchUUID string) ([]response.UserWithEmployeeResponse, int64, int64, error) {
+func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, roleUUID, branchUUID, isTerminated string) ([]response.UserWithEmployeeResponse, int64, int64, error) {
 	var (
-		users    []models.User
-		result   []response.UserWithEmployeeResponse
-		total    int64
-		filtered int64
-		offset   = (page - 1) * limit
+		users  []models.User
+		result []response.UserWithEmployeeResponse
+		total  int64
+		offset = (page - 1) * limit
 	)
 
-	query := s.db.Model(&models.User{}).Preload("Role").Preload("Branch")
-
+	query := s.db.Model(&models.User{})
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, 0, fmt.Errorf("failed to count total users: %w", err)
 	}
@@ -216,36 +304,64 @@ func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, rol
 		likeQuery := "%" + search + "%"
 		query = query.Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?", likeQuery, likeQuery, likeQuery, likeQuery)
 	}
-	if roleUUID != "" {
-		role, err := s.roleRepo.FindByUUID(roleUUID)
-		if err == nil {
-			query = query.Where("role_id = ?", role.ID)
-		}
-	}
-	if branchUUID != "" {
-		branch, err := s.branchRepo.FindByUUID(branchUUID)
-		if err == nil {
-			query = query.Where("branch_id = ?", branch.ID)
-		}
-	}
-
-	if err := query.Count(&filtered).Error; err != nil {
-		return nil, 0, 0, fmt.Errorf("failed to count filtered users: %w", err)
-	}
 
 	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
 		return nil, 0, 0, fmt.Errorf("failed to query users: %w", err)
 	}
 
 	for _, user := range users {
-		role, _ := s.roleRepo.FindByID(user.RoleID)
+		employee, err := s.employeeRepo.FindByUserID(user.ID)
+		if err != nil {
+			continue
+		}
+
+		// Filter termination status
+		if isTerminated == "true" && employee.TerminatedAt == nil {
+			continue
+		}
+		if isTerminated == "false" && employee.TerminatedAt != nil {
+			continue
+		}
+
+		if roleUUID != "" {
+			roleFilter, err := s.roleRepo.FindByUUID(roleUUID)
+			if err != nil || employee.RoleID != roleFilter.ID {
+				continue
+			}
+		}
+
+		if branchUUID != "" {
+			branchFilter, err := s.branchRepo.FindByUUID(branchUUID)
+			if err != nil || (employee.BranchID == nil || *employee.BranchID != branchFilter.ID) {
+				continue
+			}
+		}
+
+		role, err := s.roleRepo.FindByID(employee.RoleID)
+		if err != nil {
+			continue
+		}
 
 		var branchUUIDStr, branchName string
-		if user.BranchID != nil {
-			branch, err := s.branchRepo.FindByID(*user.BranchID)
+		if employee.BranchID != nil {
+			branch, err := s.branchRepo.FindByID(*employee.BranchID)
 			if err == nil {
 				branchUUIDStr = branch.UUID
 				branchName = branch.Name
+			}
+		}
+
+		var termination *struct {
+			Reason string     `json:"reason"`
+			Date   *time.Time `json:"date"`
+		}
+		if employee.TerminatedAt != nil || employee.TerminationReason != nil {
+			termination = &struct {
+				Reason string     `json:"reason"`
+				Date   *time.Time `json:"date"`
+			}{
+				Reason: pkg.DerefString(employee.TerminationReason),
+				Date:   employee.TerminatedAt,
 			}
 		}
 
@@ -256,23 +372,34 @@ func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, rol
 			Phone:       user.Phone,
 			Gender:      user.Gender,
 			DOB:         user.DOB,
-			IsFreelance: user.IsFreelance,
+			IsFreelance: employee.IsFreelance,
 			Role:        role.Name,
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
 			}{UUID: branchUUIDStr, Name: branchName},
+			Termination: termination,
 		})
 	}
 
-	return result, total, filtered, nil
+	return result, total, int64(len(result)), nil
 }
 
-func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) error {
+func (s *userService) RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		user, err := s.userRepo.GetByUUID(userUUID)
 		if err != nil {
 			return fmt.Errorf("user not found: %w", err)
+		}
+
+		company, err := s.companyRepo.GetByUUID(companyUUID)
+		if err != nil {
+			return fmt.Errorf("company not found: %w", err)
+		}
+
+		employee, err := s.employeeRepo.FindTerminatedByUserIDAndCompanyID(user.ID, company.ID)
+		if err != nil {
+			return fmt.Errorf("terminated employee not found: %w", err)
 		}
 
 		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
@@ -289,15 +416,57 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			branchID = &branch.ID
 		}
 
-		user.RoleID = role.ID
-		user.BranchID = branchID
+		employee.TerminatedAt = nil
+		employee.TerminationReason = nil
+		employee.RoleID = role.ID
+		employee.BranchID = branchID
+		employee.IsFreelance = req.IsFreelance
+		employee.ModifyBy = modifierID
+
+		if err := s.employeeRepo.Update(employee); err != nil {
+			return fmt.Errorf("failed to rehire employee: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		user, err := s.userRepo.GetByUUID(userUUID)
+		if err != nil {
+			return fmt.Errorf("user not found: %w", err)
+		}
+
+		employee, err := s.employeeRepo.FindByUserID(user.ID)
+		if err != nil {
+			return fmt.Errorf("employee not found: %w", err)
+		}
+
+		if employee.TerminatedAt != nil {
+			return fmt.Errorf("cannot update employee that has been terminated")
+		}
+
+		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
+		if err != nil {
+			return fmt.Errorf("role not found: %w", err)
+		}
+
+		var branchID *uint
+		if req.BranchUUID != "" {
+			branch, err := s.branchRepo.FindByUUID(req.BranchUUID)
+			if err != nil {
+				return fmt.Errorf("branch not found: %w", err)
+			}
+			branchID = &branch.ID
+		}
+
 		user.FirstName = req.FirstName
 		user.LastName = req.LastName
 		user.Phone = req.Phone
 		user.Email = req.Email
 		user.DOB = &req.DOB
 		user.Gender = &req.Gender
-		user.IsFreelance = req.IsFreelance
 		user.ModifyBy = modifierID
 
 		if req.Password != "" {
@@ -308,23 +477,48 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			user.Password = hashedPassword
 		}
 
+		employee.RoleID = role.ID
+		employee.BranchID = branchID
+		employee.IsFreelance = req.IsFreelance
+		employee.ModifyBy = modifierID
+
 		if err := s.userRepo.Update(&user); err != nil {
 			return fmt.Errorf("failed to update user: %w", err)
+		}
+		if err := s.employeeRepo.Update(employee); err != nil {
+			return fmt.Errorf("failed to update employee: %w", err)
 		}
 
 		return nil
 	})
 }
 
-func (s *userService) DeleteUser(userUUID string) error {
+func (s *userService) DeleteUser(userUUID, companyUUID, reason string) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		user, err := s.userRepo.GetByUUID(userUUID)
 		if err != nil {
 			return fmt.Errorf("user not found: %w", err)
 		}
 
-		if err := s.userRepo.Delete(user.ID); err != nil {
-			return fmt.Errorf("failed to delete user: %w", err)
+		company, err := s.companyRepo.GetByUUID(companyUUID)
+		if err != nil {
+			return fmt.Errorf("company not found: %w", err)
+		}
+
+		employee, err := s.employeeRepo.FindByUserIDAndCompanyID(user.ID, company.ID)
+		if err != nil {
+			return fmt.Errorf("employee not found in company: %w", err)
+		}
+
+		now := time.Now()
+		employee.TerminatedAt = &now
+		if reason != "" {
+			employee.TerminationReason = &reason
+		}
+		employee.ModifyBy = user.ID
+
+		if err := s.employeeRepo.Update(employee); err != nil {
+			return fmt.Errorf("failed to update employee termination: %w", err)
 		}
 
 		return nil
