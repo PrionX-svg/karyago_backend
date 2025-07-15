@@ -66,7 +66,7 @@ func (r *companyRepositories) GetByUserUUID(uuid string) (models.Company, error)
 	var company models.Company
 	err := r.db.Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Select("id", "uuid", "first_name", "last_name")
-	}).Where("user_uuid = ?", uuid).First(&company).Error
+	}).Joins("JOIN users ON users.id = companies.user_id").Where("users.uuid = ?", uuid).First(&company).Error
 	return company, err
 }
 
