@@ -11,6 +11,7 @@ type CompanyRepositories interface {
 	GetAll() ([]models.Company, error)
 	GetByID(id uint) (models.Company, error)
 	GetByUUID(uuid string) (models.Company, error)
+	GetByUserUUID(uuid string) (models.Company, error)
 	UpdateWithUser(company *models.Company) (models.Company, error)
 	HasAnyBranch(companyID uint) (bool, error)
 	GetByUserID(userID uint) (models.Company, error)
@@ -58,6 +59,14 @@ func (r *companyRepositories) GetByUUID(uuid string) (models.Company, error) {
 	err := r.db.Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Select("id", "uuid", "first_name", "last_name")
 	}).Where("uuid = ?", uuid).First(&company).Error
+	return company, err
+}
+
+func (r *companyRepositories) GetByUserUUID(uuid string) (models.Company, error) {
+	var company models.Company
+	err := r.db.Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "uuid", "first_name", "last_name")
+	}).Where("user_uuid = ?", uuid).First(&company).Error
 	return company, err
 }
 

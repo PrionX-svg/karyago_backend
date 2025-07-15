@@ -15,6 +15,7 @@ type CompanyServices interface {
 	Create(request request.CompanyReq) (response.CompanyResponse, error)
 	GetAll() ([]response.CompanyResponse, error)
 	GetByUUID(uuid string) (response.CompanyResponse, error)
+	GetByUserUUID(uuid string) (response.CompanyResponse, error)
 	Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error)
 	Delete(uuid string) (response.CompanyResponse, error)
 }
@@ -121,6 +122,27 @@ func (s *companyServices) GetAll() ([]response.CompanyResponse, error) {
 
 func (s *companyServices) GetByUUID(uuid string) (response.CompanyResponse, error) {
 	c, err := s.companyRepo.GetByUUID(uuid)
+	if err != nil {
+		return response.CompanyResponse{}, err
+	}
+
+	res := response.CompanyResponse{
+		UUID:    c.UUID,
+		Logo:    c.Logo,
+		Name:    c.Name,
+		Address: c.Address,
+		Email:   c.Email,
+		Phone:   c.Phone,
+	}
+	res.User.UUID = c.User.UUID
+	res.User.FirstName = c.User.FirstName
+	res.User.LastName = c.User.LastName
+
+	return res, nil
+}
+
+func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, error) {
+	c, err := s.companyRepo.GetByUserUUID(uuid)
 	if err != nil {
 		return response.CompanyResponse{}, err
 	}

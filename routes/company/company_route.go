@@ -23,6 +23,7 @@ func SetupCompanyRoutes(router fiber.Router, db *gorm.DB) {
 	company.Post("/create", middlewares.RequirePermission("company.create"), companyHandler.Create)
 	company.Get("/get-all", middlewares.RequirePermission("company.view-all"), companyHandler.GetAll)
 	company.Get("/get/:uuid", middlewares.RequirePermission("company.view"), companyHandler.GetByUUID)
+	company.Get("/get-by-user/:uuid", middlewares.RequirePermission("company.view"), companyHandler.GetByUserUUID)
 	company.Patch("/update/:uuid", middlewares.RequirePermission("company.update"), companyHandler.Update)
 	company.Delete("/delete/:uuid", middlewares.RequirePermission("company.delete"), companyHandler.Delete)
 }
