@@ -15,4 +15,8 @@ type UserWithEmployeeResponse struct {
 		UUID string `json:"uuid"`
 		Name string `json:"name"`
 	} `json:"branch"`
+	Termination *struct {
+		Reason string     `json:"reason"`
+		Date   *time.Time `json:"date"`
+	} `json:"termination,omitempty"`
 }

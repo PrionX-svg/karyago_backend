@@ -20,14 +20,16 @@ type CompanyServices interface {
 }
 
 type companyServices struct {
-	companyRepo repositories.CompanyRepositories
-	userRepo    repositories.UserRepository
+	companyRepo  repositories.CompanyRepositories
+	userRepo     repositories.UserRepository
+	employeeRepo repositories.EmployeeRepository
 }
 
-func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo repositories.UserRepository) CompanyServices {
+func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo repositories.UserRepository, employeeRepo repositories.EmployeeRepository) CompanyServices {
 	return &companyServices{
-		companyRepo: companyRepo,
-		userRepo:    userRepo,
+		companyRepo:  companyRepo,
+		userRepo:     userRepo,
+		employeeRepo: employeeRepo,
 	}
 }
 
@@ -58,6 +60,18 @@ func (s *companyServices) Create(request request.CompanyReq) (response.CompanyRe
 		return response.CompanyResponse{}, err
 	}
 
+	employee, err := s.employeeRepo.FindByUserID(user.ID)
+	if err != nil {
+		return response.CompanyResponse{}, fmt.Errorf("failed to find employee for user: %w", err)
+	}
+
+	employee.CompanyID = &createdCompany.ID
+	employee.ModifyBy = user.ID
+
+	if err := s.employeeRepo.Update(employee); err != nil {
+		return response.CompanyResponse{}, fmt.Errorf("failed to update employee with company ID: %w", err)
+	}
+
 	resp := response.CompanyResponse{
 		UUID:    createdCompany.UUID,
 		Logo:    createdCompany.Logo,
@@ -70,9 +84,9 @@ func (s *companyServices) Create(request request.CompanyReq) (response.CompanyRe
 			FirstName string `json:"firstname"`
 			LastName  string `json:"lastname"`
 		}{
-			UUID:      createdCompany.User.UUID,
-			FirstName: createdCompany.User.FirstName,
-			LastName:  createdCompany.User.LastName,
+			UUID:      user.UUID,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
 		},
 	}
 

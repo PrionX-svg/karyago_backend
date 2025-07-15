@@ -10,7 +10,7 @@ type RoleRepositories interface {
 	FindByName(name string) (*models.Role, error)
 	FindByID(id uint) (*models.Role, error)
 	FindByUUID(uuid string) (*models.Role, error)
-	FindAll(limit, offset int, search, sort string) ([]models.Role, int64, error)
+	FindAll(limit, offset int, search, sort string, companyID uint) ([]models.Role, int64, error)
 	Create(role *models.Role) error
 	Update(role *models.Role) error
 	Delete(uuid string) error
@@ -48,26 +48,26 @@ func (r *roleRepositories) FindByUUID(uuid string) (*models.Role, error) {
 	return &role, nil
 }
 
-func (r *roleRepositories) FindAll(limit, offset int, search, sort string) ([]models.Role, int64, error) {
+func (r *roleRepositories) FindAll(limit, offset int, search, sort string, companyID uint) ([]models.Role, int64, error) {
 	var roles []models.Role
 	var total int64
 
-	query := r.db.Model(&models.Role{})
+	query := r.db.Model(&models.Role{}).Where("company_id = ?", companyID)
 
 	if search != "" {
-		query = query.Where("name LIKE ?", "%"+search+"%")
+		searchPattern := "%" + search + "%"
+		query = query.Where("name LIKE ?", searchPattern)
 	}
 
-	query.Count(&total)
-
-	if sort != "" {
-		query = query.Order(sort)
-	} else {
-		query = query.Order("created_at DESC")
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	err := query.Limit(limit).Offset(offset).Find(&roles).Error
-	if err != nil {
+	if sort == "" {
+		sort = "id desc"
+	}
+
+	if err := query.Order(sort).Limit(limit).Offset(offset).Find(&roles).Error; err != nil {
 		return nil, 0, err
 	}
 

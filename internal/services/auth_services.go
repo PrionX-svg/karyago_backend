@@ -26,13 +26,14 @@ type AuthService interface {
 }
 
 type authService struct {
-	authRepo repositories.AuthRepository
-	roleRepo repositories.RoleRepositories
-	otpRepo  repositories.OTPRepositories
+	authRepo     repositories.AuthRepository
+	roleRepo     repositories.RoleRepositories
+	otpRepo      repositories.OTPRepositories
+	employeeRepo repositories.EmployeeRepository
 }
 
-func NewAuthService(authRepo repositories.AuthRepository, roleRepo repositories.RoleRepositories, otpRepo repositories.OTPRepositories) AuthService {
-	return &authService{authRepo, roleRepo, otpRepo}
+func NewAuthService(authRepo repositories.AuthRepository, roleRepo repositories.RoleRepositories, otpRepo repositories.OTPRepositories, employeeRepo repositories.EmployeeRepository) AuthService {
+	return &authService{authRepo, roleRepo, otpRepo, employeeRepo}
 }
 
 func (s *authService) Register(request request.UserRequest) error {
@@ -52,17 +53,31 @@ func (s *authService) Register(request request.UserRequest) error {
 
 	newUser := models.User{
 		UUID:      uuid.NewString(),
-		RoleID:    role.ID,
 		FirstName: request.FirstName,
 		LastName:  request.LastName,
 		Phone:     request.Phone,
 		Email:     request.Email,
 		Password:  password,
 		Timezone:  request.Timezone,
+		CreatedBy: 0,
+		ModifyBy:  0,
 	}
 
 	if err := s.authRepo.Register(&newUser); err != nil {
 		return fmt.Errorf("failed to register user: %w", err)
+	}
+
+	newEmployee := models.Employee{
+		UUID:        uuid.NewString(),
+		UserID:      newUser.ID,
+		RoleID:      role.ID,
+		IsFreelance: request.IsFreelance,
+		CreatedBy:   newUser.ID,
+		ModifyBy:    newUser.ID,
+	}
+
+	if err := s.employeeRepo.Create(&newEmployee); err != nil {
+		return fmt.Errorf("failed to create employee: %w", err)
 	}
 
 	otp := &models.OTP{
@@ -95,8 +110,7 @@ func (s *authService) Register(request request.UserRequest) error {
 			</html>
 		`, name, verificationLink)
 
-		err = pkg.SendEmail(email, "Email Verification", body)
-		if err != nil {
+		if err := pkg.SendEmail(email, "Email Verification", body); err != nil {
 			log.Printf("failed to send email: %v", err)
 		}
 	}(newUser.Email, newUser.FirstName, otp.UUID)

@@ -8,6 +8,7 @@ type Role struct {
 	ID        uint      `gorm:"primaryKey;autoIncrement" json:"-"`
 	UUID      string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	Name      string    `gorm:"type:varchar(100);not null" json:"name"`
+	CompanyID *uint     `gorm:"index" json:"company_id"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
 	CreatedBy uint      `gorm:"not null" json:"-"`
 	ModifyAt  time.Time `gorm:"autoUpdateTime" json:"-"`

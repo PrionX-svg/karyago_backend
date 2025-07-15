@@ -11,8 +11,10 @@ import (
 
 func SetupRoleRoutes(router fiber.Router, db *gorm.DB) {
 	roleRepo := repositories.NewRoleRepositories(db)
-	roleService := services.NewRoleService(roleRepo)
-	roleHandler := handlers.NewRoleHandler(roleService)
+	companyRepo := repositories.NewCompanyRepository(db)
+	employeeRepo := repositories.NewEmployeeRepository(db)
+	roleService := services.NewRoleService(roleRepo, companyRepo)
+	roleHandler := handlers.NewRoleHandler(roleService, companyRepo, employeeRepo, roleRepo)
 
 	role := router.Group("/roles")
 	role.Use(middlewares.JWTMiddleware)

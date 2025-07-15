@@ -13,7 +13,8 @@ import (
 func SetupCompanyRoutes(router fiber.Router, db *gorm.DB) {
 	companyRepo := repositories.NewCompanyRepository(db)
 	userRepo := repositories.NewUserRepository(db)
-	companyService := services.NewCompanyService(companyRepo, userRepo)
+	employeeRepo := repositories.NewEmployeeRepository(db)
+	companyService := services.NewCompanyService(companyRepo, userRepo, employeeRepo)
 	companyHandler := handlers.NewCompanyHandler(companyService)
 
 	company := router.Group("/companies")
