@@ -23,6 +23,7 @@ func SetupDepartmentRoutes(router fiber.Router, db *gorm.DB) {
 	department.Post("/create", middlewares.RequirePermission("department.create"), departmentHandler.Create)
 	department.Get("/get-all", middlewares.RequirePermission("department.view-all"), departmentHandler.List)
 	department.Get("/get/:uuid", middlewares.RequirePermission("department.view"), departmentHandler.Get)
+	department.Get("/get-all/dt", middlewares.RequirePermission("department.view-all-dt"), departmentHandler.GetAllDataTable)
 	department.Patch("/update/:uuid", middlewares.RequirePermission("department.update"), departmentHandler.Update)
 	department.Delete("/delete/:uuid", middlewares.RequirePermission("department.delete"), departmentHandler.Delete)
 }

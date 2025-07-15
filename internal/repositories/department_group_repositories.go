@@ -10,6 +10,7 @@ type DepartmentGroupRepositories interface {
 	GetAll() ([]models.DepartmentGroup, error)
 	FindByUUID(UUID string) (*models.DepartmentGroup, error)
 	FindByUUIDFromID(id uint) (*models.DepartmentGroup, error)
+	GetCompanyByUUID(uuid string) (*models.Company, error)
 	GetDataTable(limit, offset int, search string, companyID uint) ([]models.DepartmentGroup, int64, int64, error)
 	Update(departmentGroup *models.DepartmentGroup) error
 	Delete(UUID string) error
@@ -67,6 +68,18 @@ func (r *departmentGroupRepositories) FindByUUIDFromID(id uint) (*models.Departm
 		return nil, err
 	}
 	return &group, nil
+}
+
+func (r *departmentGroupRepositories) GetCompanyByUUID(uuid string) (*models.Company, error) {
+	var company models.Company
+	err := r.db.
+		Table("companies").
+		Where("uuid = ?", uuid).
+		First(&company).Error
+	if err != nil {
+		return nil, err
+	}
+	return &company, nil
 }
 
 func (r *departmentGroupRepositories) GetDataTable(limit, offset int, search string, companyID uint) ([]models.DepartmentGroup, int64, int64, error) {
