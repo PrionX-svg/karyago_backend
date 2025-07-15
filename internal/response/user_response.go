@@ -4,6 +4,8 @@ import "time"
 
 type UserWithEmployeeResponse struct {
 	UserUUID    string     `json:"user_uuid"`
+	FirstName   string     `json:"first_name"`
+	LastName    string     `json:"last_name"`
 	FullName    string     `json:"full_name"`
 	Email       string     `json:"email"`
 	Phone       string     `json:"phone"`

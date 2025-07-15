@@ -9,6 +9,7 @@ type UserRepository interface {
 	Create(user *models.User) error
 	GetByID(id uint) (models.User, error)
 	GetByUUID(uuid string) (models.User, error)
+	FindByEmail(email string) (*models.User, error)
 	Update(user *models.User) error
 	Delete(id uint) error
 	List() ([]models.User, error)
@@ -40,6 +41,12 @@ func (r *userRepository) GetByUUID(uuid string) (models.User, error) {
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func (r *userRepository) FindByEmail(email string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("email = ?", email).First(&user).Error
+	return &user, err
 }
 
 func (r *userRepository) Update(user *models.User) error {

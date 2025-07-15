@@ -141,6 +141,8 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 
 	return &response.UserWithEmployeeResponse{
 		UserUUID:    user.UUID,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
 		FullName:    user.FirstName + " " + user.LastName,
 		Email:       user.Email,
 		Phone:       user.Phone,
@@ -208,6 +210,8 @@ func (s *userService) GetAllUsers(companyUUID string) ([]response.UserWithEmploy
 
 		result = append(result, response.UserWithEmployeeResponse{
 			UserUUID:    user.UUID,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
 			FullName:    user.FirstName + " " + user.LastName,
 			Email:       user.Email,
 			Phone:       user.Phone,
@@ -272,6 +276,8 @@ func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*respo
 
 	return &response.UserWithEmployeeResponse{
 		UserUUID:    user.UUID,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
 		FullName:    user.FirstName + " " + user.LastName,
 		Email:       user.Email,
 		Phone:       user.Phone,
@@ -367,6 +373,8 @@ func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, rol
 
 		result = append(result, response.UserWithEmployeeResponse{
 			UserUUID:    user.UUID,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
 			FullName:    user.FirstName + " " + user.LastName,
 			Email:       user.Email,
 			Phone:       user.Phone,
