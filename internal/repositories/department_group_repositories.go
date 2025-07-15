@@ -9,6 +9,7 @@ type DepartmentGroupRepositories interface {
 	Create(departmentGroup *models.DepartmentGroup) error
 	GetAll() ([]models.DepartmentGroup, error)
 	FindByUUID(UUID string) (*models.DepartmentGroup, error)
+	FindByUUIDFromID(id uint) (*models.DepartmentGroup, error)
 	Update(departmentGroup *models.DepartmentGroup) error
 	Delete(UUID string) error
 }
@@ -56,6 +57,15 @@ func (r *departmentGroupRepositories) FindByUUID(UUID string) (*models.Departmen
 		return nil, err
 	}
 	return &departmentGroup, nil
+}
+
+func (r *departmentGroupRepositories) FindByUUIDFromID(id uint) (*models.DepartmentGroup, error) {
+	var group models.DepartmentGroup
+	err := r.db.First(&group, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
 }
 
 func (r *departmentGroupRepositories) Update(departmentGroup *models.DepartmentGroup) error {
