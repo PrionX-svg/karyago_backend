@@ -25,12 +25,12 @@ Creates a new user with employee details.
 
 ```json
 {
-  "role_uuid": "3f631da5-4315-448d-8f0e-e01300e5de7a",
-  "company_uuid": "5c9fab88-3184-4589-8d5a-faff487f54e1",
+  "role_uuid": "d96bd928-51e3-43a5-a5d1-413d7ce3edc1",
+  "company_uuid": "5e143995-557e-45b0-8822-691321c62a62",
   "firstname": "John",
   "lastname": "Doe",
   "phone": "628123456789",
-  "email": "john.doe@example.com",
+  "email": "john.doe2@example.com",
   "password": "securepassword123",
   "dob": "1990-05-15T00:00:00Z",
   "gender": "male",
@@ -115,18 +115,19 @@ Supports pagination, search, and filtering by role or branch.
 
 ### Query Parameters
 
-| Param         | Type   | Description                      |
-|---------------|--------|----------------------------------|
-| `page`        | int    | Page number                      |
-| `limit`       | int    | Items per page                   |
-| `search`      | string | Search term (optional)           |
-| `role_uuid`   | string | Filter by role UUID (optional)   |
-| `branch_uuid` | string | Filter by branch UUID (optional) |
+| Param           | Type    | Description                      |
+|-----------------|---------|----------------------------------|
+| `page`          | int     | Page number                      |
+| `limit`         | int     | Items per page                   |
+| `search`        | string  | Search term (optional)           |
+| `role_uuid`     | string  | Filter by role UUID (optional)   |
+| `branch_uuid`   | string  | Filter by branch UUID (optional) |
+| `is_terminated` | boolean | Filter by branch UUID (optional) |
 
 ### Example
 
 ```
-/get-all/dt?page=1&limit=10&role_uuid=1d11dc07-7eef-4165-9599-6eaf8f5268eb&branch_uuid=053f1a3b-9082-4d08-9ccd-52de56c2fdab
+/get-all/dt?page=1&limit=10&role_uuid=1d11dc07-7eef-4165-9599-6eaf8f5268eb&branch_uuid=053f1a3b-9082-4d08-9ccd-52de56c2fdab&is_terminated=
 ```
 
 ### Response
@@ -146,6 +147,10 @@ Supports pagination, search, and filtering by role or branch.
       "branch": {
         "uuid": "",
         "name": ""
+      },
+      "termination": {
+        "reason": "termination",
+        "date": "2025-07-15T02:35:53.204Z"
       }
     },
     {
@@ -295,5 +300,30 @@ Retrieve the currently authenticated user's profile.
       "name": ""
     }
   }
+}
+```
+
+---
+
+## ♻️ Rehire User
+
+**PATCH** `/rehire/:uuid?company_uuid=...`
+
+Reactivate a user that was previously deleted (terminated).
+
+### Request Body
+
+```json
+{
+  "role_uuid": "d96bd928-51e3-43a5-a5d1-413d7ce3edc1",
+  "is_freelance": false
+}
+```
+
+### Response
+
+```json
+{
+  "message": "employee rehired successfully"
 }
 ```

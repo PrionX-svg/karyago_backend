@@ -17,6 +17,7 @@ func MigrationAll() {
 		&models.UserDetail{},
 		&models.DepartmentGroup{},
 		&models.Employee{},
+		&models.Department{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)

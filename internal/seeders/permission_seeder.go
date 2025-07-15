@@ -18,6 +18,7 @@ var actionsByResource = map[string][]string{
 	"user_detail":      {"view", "create", "update", "delete"},
 	"user":             {"view", "view-all", "view-all-datatable", "create", "update", "delete", "rehire"},
 	"department_group": {"view", "view-all", "create", "update", "delete"},
+	"department":       {"view", "view-all", "create", "update", "delete"},
 }
 
 var customPermissions = []models.Permission{
