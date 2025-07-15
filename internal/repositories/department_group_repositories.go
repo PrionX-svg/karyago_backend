@@ -10,6 +10,7 @@ type DepartmentGroupRepositories interface {
 	GetAll() ([]models.DepartmentGroup, error)
 	FindByUUID(UUID string) (*models.DepartmentGroup, error)
 	FindByUUIDFromID(id uint) (*models.DepartmentGroup, error)
+	GetDataTable(limit, offset int, search string, companyID uint) ([]models.DepartmentGroup, int64, int64, error)
 	Update(departmentGroup *models.DepartmentGroup) error
 	Delete(UUID string) error
 }
@@ -66,6 +67,31 @@ func (r *departmentGroupRepositories) FindByUUIDFromID(id uint) (*models.Departm
 		return nil, err
 	}
 	return &group, nil
+}
+
+func (r *departmentGroupRepositories) GetDataTable(limit, offset int, search string, companyID uint) ([]models.DepartmentGroup, int64, int64, error) {
+	var results []models.DepartmentGroup
+	var total int64
+	var filtered int64
+
+	if err := r.db.Model(&models.DepartmentGroup{}).Where("company_id = ?", companyID).Count(&total).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
+	query := r.db.Model(&models.DepartmentGroup{}).
+		Where("company_id = ?", companyID).
+		Limit(limit).Offset(offset).
+		Order("id DESC")
+
+	if search != "" {
+		query = query.Where("name LIKE ? OR `desc` LIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+	if err := query.Find(&results).Count(&filtered).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
+	return results, total, filtered, nil
 }
 
 func (r *departmentGroupRepositories) Update(departmentGroup *models.DepartmentGroup) error {
