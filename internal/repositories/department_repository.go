@@ -9,7 +9,7 @@ type DepartmentRepositories interface {
 	Create(department *models.Department) error
 	GetAll() ([]models.Department, error)
 	FindByUUID(UUID string) (*models.Department, error)
-	GetDataTable(limit, offset int, search string, companyID uint) ([]models.Department, int64, int64, error)
+	GetDataTable(limit, offset int, search string, companyID uint, departmentGroupID *uint) ([]models.Department, int64, int64, error)
 	Update(department *models.Department) error
 	Delete(UUID string) error
 }
@@ -52,31 +52,32 @@ func (r *departmentRepositories) FindByUUID(UUID string) (*models.Department, er
 	return &department, nil
 }
 
-func (r *departmentRepositories) GetDataTable(limit, offset int, search string, companyID uint) ([]models.Department, int64, int64, error) {
+func (r *departmentRepositories) GetDataTable(limit, offset int, search string, companyID uint, departmentGroupID *uint) ([]models.Department, int64, int64, error) {
 	var departments []models.Department
-	var total int64
-	var filtered int64
+	var total, filtered int64
 
-	if err := r.db.Model(&models.Department{}).
-		Joins("JOIN department_groups ON departments.department_group_id = department_groups.id").
-		Where("department_groups.company_id = ?", companyID).
-		Count(&total).Error; err != nil {
-		return nil, 0, 0, err
-	}
-
-	query := r.db.Model(&models.Department{}).
+	baseQuery := r.db.Model(&models.Department{}).
 		Joins("JOIN department_groups ON departments.department_group_id = department_groups.id").
 		Where("department_groups.company_id = ?", companyID)
 
-	if search != "" {
-		query = query.Where("departments.name LIKE ?", "%"+search+"%")
+	if departmentGroupID != nil {
+		baseQuery = baseQuery.Where("departments.department_group_id = ?", *departmentGroupID)
 	}
 
-	if err := query.Count(&filtered).Error; err != nil {
+	if err := baseQuery.Count(&total).Error; err != nil {
 		return nil, 0, 0, err
 	}
 
-	err := query.
+	filteredQuery := baseQuery
+	if search != "" {
+		filteredQuery = filteredQuery.Where("departments.name LIKE ?", "%"+search+"%")
+	}
+
+	if err := filteredQuery.Count(&filtered).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
+	err := filteredQuery.
 		Select("departments.*").
 		Limit(limit).
 		Offset(offset).

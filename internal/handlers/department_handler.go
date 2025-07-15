@@ -56,6 +56,7 @@ func (h *DepartmentHandler) GetAllDataTable(c *fiber.Ctx) error {
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
 	search := c.Query("search", "")
 	companyUUID := c.Query("company_uuid")
+	departmentGroupUUID := c.Query("department_group_uuid", "")
 
 	if companyUUID == "" {
 		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
@@ -68,7 +69,7 @@ func (h *DepartmentHandler) GetAllDataTable(c *fiber.Ctx) error {
 		limit = 10
 	}
 
-	data, total, filtered, err := h.service.GetDataTable(page, limit, search, companyUUID)
+	data, total, filtered, err := h.service.GetDataTable(page, limit, search, companyUUID, departmentGroupUUID)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to get department data table")
 	}

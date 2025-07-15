@@ -144,3 +144,50 @@ Example: `/delete/f3f70505-8de6-42cf-bffd-6ac94fb3459e`
   "status": "success"
 }
 ```
+
+---
+
+## 📄 Get All Departments (Datatable)
+
+**GET** `/get-all/dt`
+
+Retrieve a paginated list of departments with optional search and filtering.
+
+### Query Parameters
+
+| Parameter               | Type   | Required | Description                                 |
+|-------------------------|--------|----------|---------------------------------------------|
+| `page`                  | int    | No       | Page number (default: 1)                    |
+| `limit`                 | int    | No       | Items per page (default: 10)                |
+| `search`                | string | No       | Search keyword (applies to department name) |
+| `company_uuid`          | string | **Yes**  | UUID of the company                         |
+| `department_group_uuid` | string | No       | UUID of the department group to filter      |
+
+### Example Request
+
+```
+GET /api/v1/departments/get-all/dt?page=1&limit=10&search=pajak&company_uuid=86a9688c-53b4-42c8-b3c1-819fd6ad1d9f&department_group_uuid=0ad96968-1f92-4199-87b4-d22b5c725023
+```
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "uuid": "f3f70505-8de6-42cf-bffd-6ac94fb3459e",
+      "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
+      "name": "Pajak",
+      "description": "Handles tax, employee relations, and organizational development."
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 20,
+    "filtered": 1
+  },
+  "message": "Successfully fetched department datatable",
+  "status": "success"
+}
+```
