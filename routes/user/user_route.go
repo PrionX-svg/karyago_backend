@@ -18,7 +18,8 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	companyRepo := repositories.NewCompanyRepository(db)
 
 	userService := services.NewUserService(db, userRepo, roleRepo, branchRepo, employeeRepo, companyRepo)
-	userHandler := handlers.NewUserHandler(userService)
+	userExcelService := services.NewUserExcelService(userService, companyRepo, roleRepo, branchRepo, userRepo, employeeRepo)
+	userHandler := handlers.NewUserHandler(userService, userExcelService)
 
 	user := router.Group("/users")
 	user.Use(middlewares.JWTMiddleware)
@@ -31,4 +32,7 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	user.Delete("/delete/:uuid", middlewares.RequirePermission("user.delete"), userHandler.DeleteUser)
 	user.Patch("/update/:uuid", middlewares.RequirePermission("user.update"), userHandler.UpdateUser)
 	user.Patch("/rehire/:uuid", middlewares.RequirePermission("user.rehire"), userHandler.RehireUser)
+
+	user.Get("/export", middlewares.RequirePermission("user.export"), userHandler.ExportUsersToExcel)
+	user.Post("/import", middlewares.RequirePermission("user.import"), userHandler.ImportUsersFromExcel)
 }

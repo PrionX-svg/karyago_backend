@@ -9,6 +9,7 @@ type BranchRepository interface {
 	Create(branch *models.Branch) error
 	FindByUUID(uuid string) (*models.Branch, error)
 	FindByID(id uint) (*models.Branch, error)
+	FindByName(name string) (*models.Branch, error)
 	Update(branch *models.Branch) error
 	Delete(uuid string) error
 	FindAll() ([]models.Branch, error)
@@ -46,6 +47,20 @@ func (r *branchRepository) FindByID(id uint) (*models.Branch, error) {
 	err := r.db.
 		Preload("Company").
 		Where("id = ?", id).
+		First(&branch).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return &branch, nil
+}
+
+func (r *branchRepository) FindByName(name string) (*models.Branch, error) {
+	var branch models.Branch
+
+	err := r.db.
+		Preload("Company").
+		Where("name = ?", name).
 		First(&branch).Error
 
 	if err != nil {

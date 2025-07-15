@@ -327,3 +327,78 @@ Reactivate a user that was previously deleted (terminated).
   "message": "employee rehired successfully"
 }
 ```
+
+---
+
+## 📤 Export Users to Excel
+
+**GET** `/export`
+
+Generates an Excel file containing all users and their employee data.
+
+### Query Parameters (optional)
+
+| Parameter      | Type   | Description       |
+|----------------|--------|-------------------|
+| `company_uuid` | string | Filter by company |
+| `branch_uuid`  | string | Filter by branch  |
+| `role_uuid`    | string | Filter by role    |
+
+### Example
+
+```
+/export?company_uuid=1234-uuid&branch_uuid=5678-uuid
+```
+
+### Response
+
+* Downloads an `.xlsx` file.
+* Sheet name: `Users`
+
+### Excel Columns
+
+| Column       | Description                                       |
+|--------------|---------------------------------------------------|
+| First Name   | First name of the user                            |
+| Last Name    | Last name of the user                             |
+| Email        | Email address                                     |
+| Phone        | Phone number                                      |
+| Gender       | Gender (`male`, `female`, etc.)                   |
+| DOB          | Date of Birth (formatted `YYYY-MM-DD`)            |
+| Is Freelance | Whether the user is freelance (`true` or `false`) |
+| Role         | Role name                                         |
+| Branch       | Branch name                                       |
+
+---
+
+## 📥 Import Users from Excel
+
+**POST** `/import`
+
+Imports users in bulk from an Excel (`.xlsx`) file.
+
+### Request
+
+* **Content-Type:** `multipart/form-data`
+* **Form Field:** `file` (Excel file)
+
+### Excel Format (Sheet: `Users`)
+
+| First Name | Last Name | Email                                               | Phone        | Gender | DOB (`YYYY-MM-DD`) | Is Freelance | Role      | Branch  |
+|------------|-----------|-----------------------------------------------------|--------------|--------|--------------------|--------------|-----------|---------|
+| John       | Doe       | [john.doe@example.com](mailto:john.doe@example.com) | 628123456789 | male   | 1990-01-01         | false        | assistant | Jakarta |
+
+### Import Rules
+
+* The **first row** is treated as the **header** and will be skipped.
+* If a `role` or `branch` name cannot be found → that row will be **skipped**.
+* If the `email` already exists → the user is considered a duplicate and the row will be **skipped**.
+* The default password for all imported users is set to `"default123"` (should be changed by users later).
+
+### Response
+
+```json
+{
+  "message": "Import completed successfully"
+}
+```

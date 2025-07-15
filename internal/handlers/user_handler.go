@@ -5,15 +5,20 @@ import (
 	"hris_backend/internal/request"
 	"hris_backend/internal/services"
 	"hris_backend/pkg"
+	"mime/multipart"
 	"strconv"
 )
 
 type UserHandler struct {
-	userService services.UserService
+	userService      services.UserService
+	userExcelService services.UserExcelService
 }
 
-func NewUserHandler(userService services.UserService) *UserHandler {
-	return &UserHandler{userService}
+func NewUserHandler(userService services.UserService, userExcelService services.UserExcelService) *UserHandler {
+	return &UserHandler{
+		userService:      userService,
+		userExcelService: userExcelService,
+	}
 }
 
 func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
@@ -213,4 +218,54 @@ func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	}
 
 	return pkg.Success(c, nil, "User marked as terminated successfully")
+}
+
+func (h *UserHandler) ExportUsersToExcel(c *fiber.Ctx) error {
+	companyUUID := c.Query("company_uuid")
+	if companyUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
+	}
+
+	excelData, err := h.userExcelService.ExportUsersToExcel(companyUUID)
+	if err != nil {
+		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	c.Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Set("Content-Disposition", "attachment; filename=employee_template.xlsx")
+	return c.Send(excelData)
+}
+
+func (h *UserHandler) ImportUsersFromExcel(c *fiber.Ctx) error {
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, "file is required")
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return pkg.Error(c, fiber.StatusInternalServerError, "failed to open file")
+	}
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
+
+	creatorID, ok := c.Locals("user_id").(uint)
+	if !ok {
+		return pkg.Error(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	companyUUID := c.FormValue("company_uuid")
+	if companyUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
+	}
+
+	if err := h.userExcelService.ImportUsersFromExcel(file, creatorID, companyUUID); err != nil {
+		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return pkg.Success(c, nil, "Import completed successfully")
 }
