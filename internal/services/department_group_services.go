@@ -14,6 +14,7 @@ type DepartmentGroupServices interface {
 	Create(request request.DepartmentGroupReq) (response.DepartmentGroupResponse, error)
 	GetAll() ([]response.DepartmentGroupResponse, error)
 	FindByUUID(UUID string) (*response.DepartmentGroupResponse, error)
+	GetDataTable(page, limit int, search, companyUUID string) ([]response.DepartmentGroupResponse, int64, int64, error)
 	Update(UUID string, departmentGroupReq request.DepartmentGroupReq) (response.DepartmentGroupResponse, error)
 	Delete(UUID string) (response.DepartmentGroupResponse, error)
 }
@@ -117,6 +118,43 @@ func (s *departmentGroupServices) FindByUUID(UUID string) (*response.DepartmentG
 	}
 
 	return res, nil
+}
+
+func (s *departmentGroupServices) GetDataTable(page, limit int, search, companyUUID string) ([]response.DepartmentGroupResponse, int64, int64, error) {
+	offset := (page - 1) * limit
+
+	company, err := s.companyRepo.GetByUUID(companyUUID)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	groups, total, filtered, err := s.departmentGroupRepo.GetDataTable(limit, offset, search, company.ID)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	var responses []response.DepartmentGroupResponse
+	for _, group := range groups {
+		var responsibleUUID string
+		if group.ResponsibleID != 0 {
+			responsible, err := s.userRepo.GetByID(group.ResponsibleID)
+			if err != nil {
+				continue
+			}
+			responsibleUUID = responsible.UUID
+		}
+
+		res := response.DepartmentGroupResponse{
+			UUID:            group.UUID,
+			CompanyUUID:     company.UUID,
+			ResponsibleUUID: responsibleUUID,
+			Name:            group.Name,
+			Desc:            group.Desc,
+		}
+		responses = append(responses, res)
+	}
+
+	return responses, total, filtered, nil
 }
 
 func (s *departmentGroupServices) Update(UUID string, departmentGroupReq request.DepartmentGroupReq) (response.DepartmentGroupResponse, error) {
