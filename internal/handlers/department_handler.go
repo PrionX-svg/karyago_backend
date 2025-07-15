@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"hris_backend/internal/request"
@@ -48,6 +49,37 @@ func (h *DepartmentHandler) Get(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusNotFound, "Department not found")
 	}
 	return pkg.Success(c, department, "Successfully get department")
+}
+
+func (h *DepartmentHandler) GetAllDataTable(c *fiber.Ctx) error {
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "10"))
+	search := c.Query("search", "")
+	companyUUID := c.Query("company_uuid")
+
+	if companyUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
+	}
+
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	data, total, filtered, err := h.service.GetDataTable(page, limit, search, companyUUID)
+	if err != nil {
+		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to get department data table")
+	}
+
+	return c.JSON(fiber.Map{
+		"data":     data,
+		"page":     page,
+		"limit":    limit,
+		"total":    total,
+		"filtered": filtered,
+	})
 }
 
 func (h *DepartmentHandler) Update(c *fiber.Ctx) error {
