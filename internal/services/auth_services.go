@@ -17,7 +17,7 @@ type AuthService interface {
 	Register(request request.UserRequest) error
 	VerifyUser(otpUUID string) (*models.User, error)
 	ResendVerificationLink(email string) error
-	Login(email, password string) (*models.User, error)
+	Login(email, password string) (*models.User, bool, error)
 	ForgotPassword(email string) error
 	VerifyOTP(email, code string) error
 	ResetPassword(email, code, newPassword string) error
@@ -192,21 +192,32 @@ func (s *authService) ResendVerificationLink(oldUUID string) error {
 	return nil
 }
 
-func (s *authService) Login(email, password string) (*models.User, error) {
+func (s *authService) Login(email, password string) (*models.User, bool, error) {
 	user, err := s.authRepo.CheckLogin(email)
 	if err != nil {
-		return nil, fmt.Errorf("email or password is incorrect")
+		return nil, false, fmt.Errorf("email or password is incorrect")
 	}
 
 	if !user.IsVerified {
-		return nil, fmt.Errorf("account is not verified")
+		return nil, false, fmt.Errorf("account is not verified")
 	}
 
 	if !pkg.CheckPasswordHash(password, user.Password) {
-		return nil, fmt.Errorf("email or password is incorrect")
+		return nil, false, fmt.Errorf("email or password is incorrect")
 	}
 
-	return user, nil
+	isFirstLogin := false
+	if user.LastLoginAt == nil {
+		isFirstLogin = true
+		now := time.Now()
+		err := s.authRepo.UpdateLastLogin(user.ID, now)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to update last login: %w", err)
+		}
+		user.LastLoginAt = &now
+	}
+
+	return user, isFirstLogin, nil
 }
 
 func (s *authService) ForgotPassword(email string) error {

@@ -98,7 +98,7 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "Invalid login payload")
 	}
 
-	user, err := h.authService.Login(req.Email, req.Password)
+	user, isFirstLogin, err := h.authService.Login(req.Email, req.Password)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusUnauthorized, err.Error())
 	}
@@ -136,11 +136,12 @@ func (h *authHandler) Login(c *fiber.Ctx) error {
 	})
 
 	return pkg.Success(c, fiber.Map{
-		"uuid":          user.UUID,
-		"fullname":      user.FirstName + " " + user.LastName,
-		"email":         user.Email,
-		"role_name":     role,
-		"is_onboarding": isOnboarding,
+		"uuid":           user.UUID,
+		"fullname":       user.FirstName + " " + user.LastName,
+		"email":          user.Email,
+		"role_name":      role,
+		"is_onboarding":  isOnboarding,
+		"is_first_login": isFirstLogin,
 	}, "Login successful")
 }
 

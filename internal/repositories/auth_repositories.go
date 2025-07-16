@@ -3,12 +3,14 @@ package repositories
 import (
 	"gorm.io/gorm"
 	"hris_backend/internal/models"
+	"time"
 )
 
 type AuthRepository interface {
 	Register(user *models.User) error
 	FindByEmail(email string) (*models.User, error)
 	CheckLogin(email string) (*models.User, error)
+	UpdateLastLogin(userID uint, loginTime time.Time) error
 	UpdatePasswordByEmail(email, hashedPassword string) error
 	UpdatePassword(user *models.User) error
 	VerifyUser(user *models.User) error
@@ -44,6 +46,12 @@ func (r *authRepository) CheckLogin(email string) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *authRepository) UpdateLastLogin(userID uint, loginTime time.Time) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Update("last_login_at", loginTime).Error
 }
 
 func (r *authRepository) UpdatePasswordByEmail(email, hashedPassword string) error {
