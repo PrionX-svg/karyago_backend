@@ -7,6 +7,7 @@ import (
 )
 
 type RoleRepositories interface {
+	FindByNameAndCompanyID(name string, companyUUID string) (*models.Role, error)
 	FindByName(name string) (*models.Role, error)
 	FindByID(id uint) (*models.Role, error)
 	FindByUUID(uuid string) (*models.Role, error)
@@ -22,6 +23,24 @@ type roleRepositories struct {
 
 func NewRoleRepositories(db *gorm.DB) RoleRepositories {
 	return &roleRepositories{db}
+}
+
+func (r *roleRepositories) FindByNameAndCompanyID(name string, companyUUID string) (*models.Role, error) {
+	var company models.Company
+	if err := r.db.Where("uuid = ?", companyUUID).First(&company).Error; err != nil {
+		return nil, err
+	}
+
+	var role models.Role
+	err := r.db.
+		Where("name = ? AND company_id = ?", name, company.ID).
+		First(&role).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &role, nil
 }
 
 func (r *roleRepositories) FindByName(name string) (*models.Role, error) {

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -59,9 +60,38 @@ func NewUserService(
 
 func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
+		var err error
+		var role *models.Role
+
+		company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
 		if err != nil {
-			return fmt.Errorf("role not found: %w", err)
+			return fmt.Errorf("company not found: %w", err)
+		}
+
+		if req.RoleUUID == "" {
+			role, err = s.roleRepo.FindByNameAndCompanyID("employee", req.CompanyUUID)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					newRole := &models.Role{
+						UUID:      uuid.NewString(),
+						Name:      "employee",
+						CompanyID: &company.ID,
+						CreatedBy: creatorID,
+						ModifyBy:  creatorID,
+					}
+					if err := s.roleRepo.Create(newRole); err != nil {
+						return fmt.Errorf("failed to create role 'employee': %w", err)
+					}
+					role = newRole
+				} else {
+					return fmt.Errorf("failed to check role: %w", err)
+				}
+			}
+		} else {
+			role, err = s.roleRepo.FindByUUID(req.RoleUUID)
+			if err != nil {
+				return fmt.Errorf("role not found: %w", err)
+			}
 		}
 
 		var branchID *uint
@@ -71,11 +101,6 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) er
 				return fmt.Errorf("branch not found: %w", err)
 			}
 			branchID = &branch.ID
-		}
-
-		company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
-		if err != nil {
-			return fmt.Errorf("company not found: %w", err)
 		}
 
 		hashedPassword, err := pkg.HashPassword(req.Password)
