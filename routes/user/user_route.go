@@ -12,12 +12,13 @@ import (
 
 func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	userRepo := repositories.NewUserRepository(db)
+	otpRepo := repositories.NewOTPRepositories(db)
 	roleRepo := repositories.NewRoleRepositories(db)
 	branchRepo := repositories.NewBranchRepository(db)
 	employeeRepo := repositories.NewEmployeeRepository(db)
 	companyRepo := repositories.NewCompanyRepository(db)
 
-	userService := services.NewUserService(db, userRepo, roleRepo, branchRepo, employeeRepo, companyRepo)
+	userService := services.NewUserService(db, userRepo, otpRepo, roleRepo, branchRepo, employeeRepo, companyRepo)
 	userExcelService := services.NewUserExcelService(userService, companyRepo, roleRepo, branchRepo, userRepo, employeeRepo)
 	userHandler := handlers.NewUserHandler(userService, userExcelService)
 
