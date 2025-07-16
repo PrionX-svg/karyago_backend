@@ -13,6 +13,7 @@ type BranchRepository interface {
 	Update(branch *models.Branch) error
 	Delete(uuid string) error
 	FindAll() ([]models.Branch, error)
+	FindByCompanyID(id uint) ([]models.Branch, error)
 }
 
 type branchRepository struct {
@@ -53,6 +54,20 @@ func (r *branchRepository) FindByID(id uint) (*models.Branch, error) {
 		return nil, err
 	}
 	return &branch, nil
+}
+
+func (r *branchRepository) FindByCompanyID(id uint) ([]models.Branch, error) {
+	var branches []models.Branch
+
+	err := r.db.
+		Preload("Company").
+		Where("company_id = ?", id).
+		Find(&branches).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return branches, nil
 }
 
 func (r *branchRepository) FindByName(name string) (*models.Branch, error) {

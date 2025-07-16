@@ -19,6 +19,7 @@ func SetupBranchRoutes(router fiber.Router, db *gorm.DB) {
 	branch.Use(middlewares.JWTMiddleware)
 
 	branch.Get("/get/:uuid", middlewares.RequirePermission("branch.view"), branchHandler.Get)
+	branch.Get("/get-by-company-uuid/:uuid", middlewares.RequirePermission("branch.view"), branchHandler.GetByCompanyUUID)
 	branch.Get("/get-all", middlewares.RequirePermission("branch.view-all"), branchHandler.List)
 	branch.Post("/create", middlewares.RequirePermission("branch.create"), branchHandler.Create)
 	branch.Patch("/update/:uuid", middlewares.RequirePermission("branch.update"), branchHandler.Update)

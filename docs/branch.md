@@ -13,7 +13,7 @@ http://localhost:8080/api/v1/branches
 
 ````
 
----
+---****
 
 ## ➕ Create Branch
 
@@ -89,6 +89,58 @@ Retrieve the list of all branches.
   "message": "Successfully get all branches",
   "status": "success"
 }
+```
+
+---
+
+## 🔍 Get Branches By Company UUID
+
+
+**GET** `/get-by-company-uuid/:uuid`
+Example: `/get-by-company-uuid/8b21610d-8d24-4510-a324-77760a344242`
+
+Retrieve the list of all branches by company UUID.
+
+### Response
+
+```json
+{
+    "data": [
+        {
+            "uuid": "5ea0ce42-9d90-4e26-a484-94d881f12ea5",
+            "name": "Cabang Jakarta",
+            "address": "Jl. Sudirman No. 100, Jakarta",
+            "email": "jakarta.branch@company.com",
+            "phone": "021-98765432",
+            "company": {
+                "uuid": "8b21610d-8d24-4510-a324-77760a344242",
+                "logo": "",
+                "name": "Company Name",
+                "address": "Company Address",
+                "email": "company@example.com",
+                "phone": "+1 (555) 123-4567"
+            }
+        },
+        {
+            "uuid": "f977c833-bcda-42f4-a769-c2fcd9e943e9",
+            "name": "Cabang Jakarta Kedua",
+            "address": "Jl. Malioboro No. 100, Yogyakarta",
+            "email": "jakarta.2ndbranch@company.com",
+            "phone": "021-98765432",
+            "company": {
+                "uuid": "8b21610d-8d24-4510-a324-77760a344242",
+                "logo": "",
+                "name": "Company Name",
+                "address": "Company Address",
+                "email": "company@example.com",
+                "phone": "+1 (555) 123-4567"
+            }
+        }
+    ],
+    "message": "Successfully get branch by company UUID",
+    "status": "success"
+}
+
 ```
 
 ---
