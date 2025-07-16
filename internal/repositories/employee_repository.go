@@ -8,6 +8,8 @@ import (
 
 type EmployeeRepository interface {
 	Create(employee *models.Employee) error
+	FindByID(id uint) (*models.Employee, error)
+	FindByUUID(uuid string) (*models.Employee, error)
 	FindByUserID(userID uint) (*models.Employee, error)
 	FindByCompanyID(companyID uint) ([]models.Employee, error)
 	FindByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error)
@@ -26,6 +28,22 @@ func NewEmployeeRepository(db *gorm.DB) EmployeeRepository {
 
 func (r *employeeRepository) Create(employee *models.Employee) error {
 	return r.db.Create(employee).Error
+}
+
+func (r *employeeRepository) FindByID(id uint) (*models.Employee, error) {
+	var employee models.Employee
+	if err := r.db.Preload("User").Where("id = ?", id).First(&employee).Error; err != nil {
+		return nil, err
+	}
+	return &employee, nil
+}
+
+func (r *employeeRepository) FindByUUID(uuid string) (*models.Employee, error) {
+	var employee models.Employee
+	if err := r.db.Preload("User").Where("uuid = ?", uuid).First(&employee).Error; err != nil {
+		return nil, err
+	}
+	return &employee, nil
 }
 
 func (r *employeeRepository) FindByUserID(userID uint) (*models.Employee, error) {

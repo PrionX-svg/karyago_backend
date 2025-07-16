@@ -140,16 +140,17 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 	}
 
 	return &response.UserWithEmployeeResponse{
-		UserUUID:    user.UUID,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		FullName:    user.FirstName + " " + user.LastName,
-		Email:       user.Email,
-		Phone:       user.Phone,
-		Gender:      user.Gender,
-		DOB:         user.DOB,
-		IsFreelance: employee.IsFreelance,
-		Role:        role.Name,
+		UserUUID:     user.UUID,
+		EmployeeUUID: employee.UUID,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		FullName:     user.FirstName + " " + user.LastName,
+		Email:        user.Email,
+		Phone:        user.Phone,
+		Gender:       user.Gender,
+		DOB:          user.DOB,
+		IsFreelance:  employee.IsFreelance,
+		Role:         role.Name,
 		Branch: struct {
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
@@ -209,16 +210,17 @@ func (s *userService) GetAllUsers(companyUUID string) ([]response.UserWithEmploy
 		}
 
 		result = append(result, response.UserWithEmployeeResponse{
-			UserUUID:    user.UUID,
-			FirstName:   user.FirstName,
-			LastName:    user.LastName,
-			FullName:    user.FirstName + " " + user.LastName,
-			Email:       user.Email,
-			Phone:       user.Phone,
-			Gender:      user.Gender,
-			DOB:         user.DOB,
-			IsFreelance: emp.IsFreelance,
-			Role:        role.Name,
+			UserUUID:     user.UUID,
+			EmployeeUUID: emp.UUID,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			FullName:     user.FirstName + " " + user.LastName,
+			Email:        user.Email,
+			Phone:        user.Phone,
+			Gender:       user.Gender,
+			DOB:          user.DOB,
+			IsFreelance:  emp.IsFreelance,
+			Role:         role.Name,
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
@@ -275,16 +277,17 @@ func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*respo
 	}
 
 	return &response.UserWithEmployeeResponse{
-		UserUUID:    user.UUID,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		FullName:    user.FirstName + " " + user.LastName,
-		Email:       user.Email,
-		Phone:       user.Phone,
-		Gender:      user.Gender,
-		DOB:         user.DOB,
-		IsFreelance: employee.IsFreelance,
-		Role:        role.Name,
+		UserUUID:     user.UUID,
+		EmployeeUUID: employee.UUID,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		FullName:     user.FirstName + " " + user.LastName,
+		Email:        user.Email,
+		Phone:        user.Phone,
+		Gender:       user.Gender,
+		DOB:          user.DOB,
+		IsFreelance:  employee.IsFreelance,
+		Role:         role.Name,
 		Branch: struct {
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
@@ -372,16 +375,17 @@ func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, rol
 		}
 
 		result = append(result, response.UserWithEmployeeResponse{
-			UserUUID:    user.UUID,
-			FirstName:   user.FirstName,
-			LastName:    user.LastName,
-			FullName:    user.FirstName + " " + user.LastName,
-			Email:       user.Email,
-			Phone:       user.Phone,
-			Gender:      user.Gender,
-			DOB:         user.DOB,
-			IsFreelance: employee.IsFreelance,
-			Role:        role.Name,
+			UserUUID:     user.UUID,
+			EmployeeUUID: employee.UUID,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			FullName:     user.FirstName + " " + user.LastName,
+			Email:        user.Email,
+			Phone:        user.Phone,
+			Gender:       user.Gender,
+			DOB:          user.DOB,
+			IsFreelance:  employee.IsFreelance,
+			Role:         role.Name,
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
