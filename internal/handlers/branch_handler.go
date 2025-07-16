@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"hris_backend/internal/request"
 	"hris_backend/internal/services"
 	"hris_backend/pkg"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type BranchHandler struct {
@@ -44,6 +45,15 @@ func (h *BranchHandler) Get(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusNotFound, "Branch not found")
 	}
 	return pkg.Success(c, branch, "Successfully get branch")
+}
+
+func (h *BranchHandler) GetByCompanyUUID(c *fiber.Ctx) error {
+	uuid := c.Params("uuid")
+	branch, err := h.service.GetByCompanyUUID(uuid)
+	if err != nil {
+		return pkg.Error(c, fiber.StatusNotFound, "Branch not found")
+	}
+	return pkg.Success(c, branch, "Successfully get branch by company UUID")
 }
 
 func (h *BranchHandler) Update(c *fiber.Ctx) error {
