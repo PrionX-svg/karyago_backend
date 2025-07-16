@@ -68,10 +68,20 @@ func (h *companyHandler) GetByUserUUID(c *fiber.Ctx) error {
 
 	company, err := h.companyServices.GetByUserUUID(uuid)
 	if err != nil {
-		return pkg.Error(c, fiber.StatusNotFound, "Failed to get company by user UUID")
+		if err.Error() == "user-not-found" {
+			return pkg.Error(c, fiber.StatusNotFound, "User not found")
+		}
+		return pkg.Error(c, fiber.StatusInternalServerError, "Something went wrong")
 	}
-	return pkg.Success(c, company, "Succesfully get company by user UUID")
+
+	if company.UUID == "" {
+		return pkg.Success(c, nil, "No company found for this user")
+	}
+
+	return pkg.Success(c, company, "Successfully retrieved company by user UUID")
 }
+
+
 
 func (h *companyHandler) Update(c *fiber.Ctx) error {
 	uuid := c.Params("uuid")

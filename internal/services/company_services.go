@@ -144,7 +144,14 @@ func (s *companyServices) GetByUUID(uuid string) (response.CompanyResponse, erro
 func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, error) {
 	c, err := s.companyRepo.GetByUserUUID(uuid)
 	if err != nil {
+		if err.Error() == "user-not-found" {
+			return response.CompanyResponse{}, fmt.Errorf("user-not-found")
+		}
 		return response.CompanyResponse{}, err
+	}
+
+	if c == nil {
+		return response.CompanyResponse{}, nil // user exists, no company
 	}
 
 	res := response.CompanyResponse{
@@ -161,6 +168,8 @@ func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, 
 
 	return res, nil
 }
+
+
 
 func (s *companyServices) Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error) {
 	if err := pkg.Validate.Struct(request); err != nil {
