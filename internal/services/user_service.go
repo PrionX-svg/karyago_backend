@@ -2,6 +2,8 @@ package services
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +19,7 @@ import (
 type userService struct {
 	db           *gorm.DB
 	userRepo     repositories.UserRepository
+	otpRepo      repositories.OTPRepositories
 	roleRepo     repositories.RoleRepositories
 	companyRepo  repositories.CompanyRepositories
 	branchRepo   repositories.BranchRepository
@@ -37,6 +40,7 @@ type UserService interface {
 func NewUserService(
 	db *gorm.DB,
 	userRepo repositories.UserRepository,
+	otpRepo repositories.OTPRepositories,
 	roleRepo repositories.RoleRepositories,
 	branchRepo repositories.BranchRepository,
 	employeeRepo repositories.EmployeeRepository,
@@ -45,6 +49,7 @@ func NewUserService(
 	return &userService{
 		db:           db,
 		userRepo:     userRepo,
+		otpRepo:      otpRepo,
 		roleRepo:     roleRepo,
 		branchRepo:   branchRepo,
 		employeeRepo: employeeRepo,
@@ -109,6 +114,40 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) er
 		if err := s.employeeRepo.Create(employee); err != nil {
 			return fmt.Errorf("failed to create employee: %w", err)
 		}
+
+		otp := &models.OTP{
+			UUID:      uuid.NewString(),
+			Target:    user.Email,
+			Code:      pkg.GenerateOTPCode(6),
+			Purpose:   "create user & employee",
+			IsUsed:    false,
+			ExpiresAt: time.Now().Add(5 * time.Minute),
+		}
+
+		if err := s.otpRepo.Create(otp); err != nil {
+			return fmt.Errorf("failed to create OTP: %w", err)
+		}
+
+		go func(email, name, token string) {
+			verificationLink := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), token)
+			body := fmt.Sprintf(`
+				<html>
+					<body>
+						<p>Hi %s,</p>
+						<p>Welcome! Please verify your email address to activate your account:</p>
+						<p><a href="%s">Verify your Email</a></p>
+						<p>This link will expire in 5 minutes.</p>
+						<p>If you didn't register, you can ignore this email.</p>
+						<br/>
+						<p>Regards,<br/>The Team</p>
+					</body>
+				</html>
+			`, name, verificationLink)
+
+			if err := pkg.SendEmail(email, "Email Verification", body); err != nil {
+				log.Printf("failed to send email: %v", err)
+			}
+		}(user.Email, user.FirstName, otp.UUID)
 
 		return nil
 	})
@@ -324,7 +363,6 @@ func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, rol
 			continue
 		}
 
-		// Filter termination status
 		if isTerminated == "true" && employee.TerminatedAt == nil {
 			continue
 		}
