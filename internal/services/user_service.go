@@ -439,6 +439,14 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 			}
 		}
 
+		var companyUUIDStr string
+		if employee.CompanyID != nil {
+			company, err := s.companyRepo.GetByID(*employee.CompanyID)
+			if err == nil {
+				companyUUIDStr = company.UUID
+			}
+		}
+
 		var termination *struct {
 			Reason string     `json:"reason"`
 			Date   *time.Time `json:"date"`
@@ -469,6 +477,9 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
 			}{UUID: branchUUIDStr, Name: branchName},
+			Company: &struct {
+				UUID string `json:"uuid"`
+			}{UUID: companyUUIDStr},
 			Termination: termination,
 		})
 	}
