@@ -139,7 +139,8 @@ func (h *UserHandler) GetUsersDataTable(c *fiber.Ctx) error {
 	search := c.Query("search", "")
 	roleUUID := c.Query("role_uuid", "")
 	branchUUID := c.Query("branch_uuid", "")
-	isTerminated := c.Query("is_terminated", "") // "true", "false", atau "" (semua)
+	isTerminated := c.Query("is_terminated", "")
+	companyUUID := c.Query("company_uuid", "")
 
 	if page <= 0 {
 		page = 1
@@ -149,7 +150,7 @@ func (h *UserHandler) GetUsersDataTable(c *fiber.Ctx) error {
 	}
 
 	data, total, filtered, err := h.userService.GetUsersWithEmployeeDataTable(
-		page, limit, search, roleUUID, branchUUID, isTerminated,
+		page, limit, search, roleUUID, branchUUID, isTerminated, companyUUID,
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -207,7 +208,7 @@ func (h *UserHandler) RehireUser(c *fiber.Ctx) error {
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	userUUID := c.Params("uuid")
 	companyUUID := c.Query("company_uuid")
-	terminationReason := c.Query("reason") // opsional, misalnya: "resigned", "terminated", etc.
+	terminationReason := c.Query("reason")
 
 	if userUUID == "" || companyUUID == "" {
 		return pkg.Error(c, fiber.StatusBadRequest, "Missing user_uuid or company_uuid")

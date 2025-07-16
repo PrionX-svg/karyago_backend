@@ -115,14 +115,15 @@ Supports pagination, search, and filtering by role or branch.
 
 ### Query Parameters
 
-| Param           | Type    | Description                      |
-|-----------------|---------|----------------------------------|
-| `page`          | int     | Page number                      |
-| `limit`         | int     | Items per page                   |
-| `search`        | string  | Search term (optional)           |
-| `role_uuid`     | string  | Filter by role UUID (optional)   |
-| `branch_uuid`   | string  | Filter by branch UUID (optional) |
-| `is_terminated` | boolean | Filter by branch UUID (optional) |
+| Param           | Type    | Description                       |
+|-----------------|---------|-----------------------------------|
+| `page`          | int     | Page number                       |
+| `limit`         | int     | Items per page                    |
+| `search`        | string  | Search term (optional)            |
+| `role_uuid`     | string  | Filter by role UUID (optional)    |
+| `branch_uuid`   | string  | Filter by branch UUID (optional)  |
+| `company_uuid`  | string  | Filter by company UUID (optional) |
+| `is_terminated` | boolean | Filter by branch UUID (optional)  |
 
 ### Example
 
