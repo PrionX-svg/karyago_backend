@@ -32,7 +32,10 @@ type UserService interface {
 	GetMe(userID uint) (*response.UserWithEmployeeResponse, error)
 	GetAllUsers(companyUUID string) ([]response.UserWithEmployeeResponse, error)
 	GetUserByUUID(userUUID string, companyUUID string) (*response.UserWithEmployeeResponse, error)
-	GetUsersWithEmployeeDataTable(page, limit int, search, roleUUID, branchUUID, isTerminated string) ([]response.UserWithEmployeeResponse, int64, int64, error)
+	GetUsersWithEmployeeDataTable(
+		page, limit int,
+		search, roleUUID, branchUUID, isTerminated, companyUUID string,
+	) ([]response.UserWithEmployeeResponse, int64, int64, error)
 	UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) error
 	DeleteUser(userUUID, companyUUID, reason string) error
 	RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error
@@ -360,7 +363,10 @@ func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*respo
 	}, nil
 }
 
-func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, roleUUID, branchUUID, isTerminated string) ([]response.UserWithEmployeeResponse, int64, int64, error) {
+func (s *userService) GetUsersWithEmployeeDataTable(
+	page, limit int,
+	search, roleUUID, branchUUID, isTerminated, companyUUID string,
+) ([]response.UserWithEmployeeResponse, int64, int64, error) {
 	var (
 		users  []models.User
 		result []response.UserWithEmployeeResponse
@@ -368,17 +374,27 @@ func (s *userService) GetUsersWithEmployeeDataTable(page, limit int, search, rol
 		offset = (page - 1) * limit
 	)
 
-	query := s.db.Model(&models.User{})
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, 0, fmt.Errorf("failed to count total users: %w", err)
+	query := s.db.Model(&models.User{}).
+		Joins("JOIN employees ON employees.user_id = users.id")
+
+	if companyUUID != "" {
+		company, err := s.companyRepo.GetByUUID(companyUUID)
+		if err != nil {
+			return nil, 0, 0, fmt.Errorf("company not found: %w", err)
+		}
+		query = query.Where("employees.company_id = ?", company.ID)
 	}
 
 	if search != "" {
 		likeQuery := "%" + search + "%"
-		query = query.Where("first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ?", likeQuery, likeQuery, likeQuery, likeQuery)
+		query = query.Where("users.first_name LIKE ? OR users.last_name LIKE ? OR users.email LIKE ? OR users.phone LIKE ?", likeQuery, likeQuery, likeQuery, likeQuery)
 	}
 
-	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, 0, fmt.Errorf("failed to count total users: %w", err)
+	}
+
+	if err := query.Offset(offset).Limit(limit).Order("users.created_at DESC").Find(&users).Error; err != nil {
 		return nil, 0, 0, fmt.Errorf("failed to query users: %w", err)
 	}
 
