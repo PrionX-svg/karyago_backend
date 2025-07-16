@@ -1,7 +1,7 @@
+```markdown
 # 🧾 HRIS - Company Management API
 
-Documentation for **Company** management endpoints in the HRIS system, including create, retrieve, update, and delete
-operations.
+Documentation for **Company** management endpoints in the HRIS system, including create, retrieve, update, and delete operations.
 
 ---
 
@@ -9,7 +9,7 @@ operations.
 
 ```
 
-http://localhost:8080/api/v1/companies
+[http://localhost:8080/api/v1/companies](http://localhost:8080/api/v1/companies)
 
 ````
 
@@ -119,6 +119,58 @@ Example: `/get/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
 
 ---
 
+## 🔎 Get Company By User UUID
+
+**GET** `/get-by-user/:uuid`
+Example: `/get-by-user/265edc19-3544-45c8-a887-a7ca5d67455d`
+
+### Response (✅ Company Found)
+
+```json
+{
+  "data": {
+    "uuid": "2d1f05da-5fa4-4977-80bc-8d0d3b031bf3",
+    "logo": "/uuid-date-namafile",
+    "name": "PT Teknologi Nusantara",
+    "address": "Jl. Merdeka No.123, Jakarta",
+    "email": "info@teknologi.co.id",
+    "phone": "021-12345678",
+    "user": {
+      "uuid": "265edc19-3544-45c8-a887-a7ca5d67455d",
+      "firstname": "Marco",
+      "lastname": "Melandri"
+    }
+  },
+  "message": "Successfully retrieved company by user UUID",
+  "status": "success"
+}
+```
+
+### Response (⚠️ User Not Found)
+
+```json
+{
+  "message": "User not found",
+  "status": "error"
+}
+```
+
+**HTTP Status**: `404 Not Found`
+
+### Response (ℹ️ No Company Found for User)
+
+```json
+{
+  "data": null,
+  "message": "No company found for this user",
+  "status": "success"
+}
+```
+
+**HTTP Status**: `200 OK`
+
+---
+
 ## ✏️ Update Company
 
 **PATCH** `/update/:uuid`
@@ -186,4 +238,7 @@ Example: `/delete/cd041c00-9808-4d85-8a2e-5ca9af9f938f`
   "message": "Company deleted successfully",
   "status": "success"
 }
+```
+
+```
 ```
