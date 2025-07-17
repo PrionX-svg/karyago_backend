@@ -12,6 +12,7 @@ import (
 
 type UserEducationService interface {
 	Create(request request.UserEducationReq, userID uint) (response.UserEducationResponse, error)
+	GetAll() ([]response.UserEducationResponse, error)
 }
 
 type userEducationService struct {
@@ -73,4 +74,37 @@ func (s *userEducationService) Create(request request.UserEducationReq, userID u
 	}
 
 	return userEducationResponse, nil
+}
+
+
+func (userEducationService *userEducationService) GetAll() ([]response.UserEducationResponse, error) {
+	userEducations, err := userEducationService.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var userEducationResponses []response.UserEducationResponse
+
+	for _, edu := range userEducations {
+		fullname := edu.User.FirstName + " " + edu.User.LastName
+		userEducationResponses = append(userEducationResponses, response.UserEducationResponse{
+			UUID:      edu.UUID,
+			Name:      edu.Name,
+			Location:  edu.Location,
+			StartDate: edu.StartDate.Format("2006-01-02"),
+			EndDate:   edu.EndDate.Format("2006-01-02"),
+			Grade:     edu.Grade,
+			User: struct {
+				UUID     string `json:"uuid"`
+				FullName string `json:"fullname"`
+				Email    string `json:"email"`
+			}{
+				UUID:     edu.User.UUID,
+				FullName: fullname,
+				Email:    edu.User.Email,
+			},
+		})
+	}
+
+	return userEducationResponses, nil
 }

@@ -46,10 +46,14 @@ func (h *UserEducationHandler) Create(c *fiber.Ctx) error {
 	return pkg.Created(c, userEducation, "User education created successfully")
 }
 
-// func (h *UserEducationHandler) GetAll() ([]models.UserEducation, error) {
-// 	userEducations, err := h.service.GetAll()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return userEducations, nil
-// }
+func (h *UserEducationHandler) GetAll(c *fiber.Ctx) error {
+	userEducations, err := h.service.GetAll()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to retrieve user educations",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(userEducations)
+}

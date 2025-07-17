@@ -19,7 +19,7 @@ func SetupUserEducationRoutes (router fiber.Router, db *gorm.DB) {
 	userEducation.Use(middlewares.JWTMiddleware)
 
 	userEducation.Post("/create", middlewares.RequirePermission("user-education.create"), userEducationHandler.Create)
-	// userEducation.Get("/get-all", middlewares.RequirePermission("user-education.view-all"), userEducationHandler.GetAll)
+	userEducation.Get("/get-all", middlewares.RequirePermission("user-education.view-all"), userEducationHandler.GetAll)
 	// userEducation.Get("/get/:uuid", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByUUID)
 	// userEducation.Get("/get-by-user/:uuid", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByUserUUID)
 	// userEducation.Patch("/update/:uuid", middlewares.RequirePermission("user-education.update"), userEducationHandler.Update)
