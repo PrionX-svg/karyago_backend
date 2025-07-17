@@ -8,6 +8,7 @@ import (
 	"hris_backend/internal/request"
 	"hris_backend/pkg"
 	"io"
+	"log"
 	"mime/multipart"
 	"time"
 )
@@ -120,19 +121,28 @@ func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID u
 
 	for i, row := range rows {
 		if i == 0 {
-			continue
+			continue // Skip header
 		}
 
 		if len(row) < 9 {
+			log.Printf("row %d skipped: insufficient columns", i+1)
 			continue
 		}
 
+		// Cek user sudah ada berdasarkan email
 		existingUser, err := s.userRepo.FindByEmail(row[2])
 		if err == nil && existingUser.ID != 0 {
+			log.Printf("row %d skipped: user with email %s already exists", i+1, row[2])
 			continue
 		}
 
-		dob, _ := time.Parse("2006-01-02", row[5])
+		// Parse tanggal lahir
+		dob, err := time.Parse("2006-01-02", row[5])
+		if err != nil {
+			log.Printf("row %d skipped: invalid DOB format (%s)", i+1, row[5])
+			continue
+		}
+
 		isFreelance := row[6] == "true"
 
 		req := request.UserEmployeeReq{
@@ -147,19 +157,26 @@ func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID u
 			CompanyUUID: companyUUID,
 		}
 
-		role, _ := s.roleRepo.FindByName(row[7])
-		branch, _ := s.branchRepo.FindByName(row[8])
-
-		if role.ID == 0 {
+		// Get Role dan Branch berdasarkan nama
+		role, err := s.roleRepo.FindByName(row[7])
+		if err != nil || role.ID == 0 {
+			log.Printf("row %d skipped: role '%s' not found", i+1, row[7])
 			continue
 		}
-
 		req.RoleUUID = role.UUID
-		if branch.ID != 0 {
+
+		branch, err := s.branchRepo.FindByName(row[8])
+		if err == nil && branch.ID != 0 {
 			req.BranchUUID = branch.UUID
 		}
 
-		_ = s.userService.CreateUser(req, creatorID)
+		_, err = s.userService.CreateUser(req, creatorID)
+		if err != nil {
+			log.Printf("row %d failed to create user: %v", i+1, err)
+			continue
+		}
+
+		log.Printf("row %d user created: %s %s", i+1, row[0], row[1])
 	}
 
 	return nil

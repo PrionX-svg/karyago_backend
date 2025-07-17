@@ -31,7 +31,8 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 	}
 
 	creatorID := c.Locals("user_id").(uint)
-	if err := h.userService.CreateUser(req, creatorID); err != nil {
+	createdUser, err := h.userService.CreateUser(req, creatorID)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create user",
 			"error":   err.Error(),
@@ -39,7 +40,8 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "User created successfully",
+		"message": "success",
+		"data":    createdUser,
 	})
 }
 
