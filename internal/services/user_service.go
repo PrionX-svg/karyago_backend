@@ -587,9 +587,37 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			return fmt.Errorf("cannot update employee that has been terminated")
 		}
 
-		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
+		company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
 		if err != nil {
-			return fmt.Errorf("role not found: %w", err)
+			return fmt.Errorf("company not found: %w", err)
+		}
+
+		// Fallback role to "employee" if RoleUUID not provided
+		var role *models.Role
+		if req.RoleUUID == "" {
+			role, err = s.roleRepo.FindByNameAndCompanyID("employee", req.CompanyUUID)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					newRole := &models.Role{
+						UUID:      uuid.NewString(),
+						Name:      "employee",
+						CompanyID: &company.ID,
+						CreatedBy: modifierID,
+						ModifyBy:  modifierID,
+					}
+					if err := s.roleRepo.Create(newRole); err != nil {
+						return fmt.Errorf("failed to create role 'employee': %w", err)
+					}
+					role = newRole
+				} else {
+					return fmt.Errorf("failed to fetch fallback role: %w", err)
+				}
+			}
+		} else {
+			role, err = s.roleRepo.FindByUUID(req.RoleUUID)
+			if err != nil {
+				return fmt.Errorf("role not found: %w", err)
+			}
 		}
 
 		var branchID *uint
