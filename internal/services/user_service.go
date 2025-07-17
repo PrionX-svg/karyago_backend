@@ -28,7 +28,7 @@ type userService struct {
 }
 
 type UserService interface {
-	CreateUser(req request.UserEmployeeReq, creatorID uint) error
+	CreateUser(req request.UserEmployeeReq, creatorID uint) (response.UserWithEmployeeResponse, error)
 	GetMe(userID uint) (*response.UserWithEmployeeResponse, error)
 	GetAllUsers(companyUUID string) ([]response.UserWithEmployeeResponse, error)
 	GetUserByUUID(userUUID string, companyUUID string) (*response.UserWithEmployeeResponse, error)
@@ -61,8 +61,10 @@ func NewUserService(
 	}
 }
 
-func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) (response.UserWithEmployeeResponse, error) {
+	var result response.UserWithEmployeeResponse
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 		var role *models.Role
 
@@ -98,12 +100,14 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) er
 		}
 
 		var branchID *uint
+		var branchData *models.Branch
 		if req.BranchUUID != "" {
 			branch, err := s.branchRepo.FindByUUID(req.BranchUUID)
 			if err != nil {
 				return fmt.Errorf("branch not found: %w", err)
 			}
 			branchID = &branch.ID
+			branchData = branch
 		}
 
 		hashedPassword, err := pkg.HashPassword(req.Password)
@@ -177,8 +181,42 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) er
 			}
 		}(user.Email, user.FirstName, otp.UUID)
 
+		// Fill the response
+		result = response.UserWithEmployeeResponse{
+			UserUUID:     user.UUID,
+			EmployeeUUID: employee.UUID,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			FullName:     user.FirstName + " " + user.LastName,
+			Email:        user.Email,
+			Phone:        user.Phone,
+			Gender:       user.Gender,
+			DOB:          user.DOB,
+			IsFreelance:  employee.IsFreelance,
+			Role:         role.Name,
+			Branch: struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: req.BranchUUID,
+				Name: func() string {
+					if branchData != nil {
+						return branchData.Name
+					}
+					return ""
+				}(),
+			},
+			Company: &struct {
+				UUID string `json:"uuid"`
+			}{
+				UUID: req.CompanyUUID,
+			},
+		}
+
 		return nil
 	})
+
+	return result, err
 }
 
 func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, error) {
