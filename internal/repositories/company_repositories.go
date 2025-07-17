@@ -51,7 +51,7 @@ func (r *companyRepositories) GetAll() ([]models.Company, error) {
 
 func (r *companyRepositories) GetByID(id uint) (models.Company, error) {
 	var company models.Company
-	err := r.db.Select("uuid").First(&company, id).Error
+	err := r.db.Select("uuid", "name").First(&company, id).Error
 	return company, err
 }
 
@@ -87,9 +87,6 @@ func (r *companyRepositories) GetByUserUUID(uuid string) (*models.Company, error
 
 	return &company, err
 }
-
-
-
 
 func (r *companyRepositories) UpdateWithUser(company *models.Company) (models.Company, error) {
 	if err := r.db.Save(company).Error; err != nil {

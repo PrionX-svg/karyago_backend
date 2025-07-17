@@ -208,8 +208,10 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) (r
 			},
 			Company: &struct {
 				UUID string `json:"uuid"`
+				Name string `json:"name"`
 			}{
 				UUID: req.CompanyUUID,
+				Name: company.Name,
 			},
 		}
 
@@ -244,6 +246,11 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 		}
 	}
 
+	company, err := s.companyRepo.GetByUserID(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("company not found: %w", err)
+	}
+
 	return &response.UserWithEmployeeResponse{
 		UserUUID:     user.UUID,
 		EmployeeUUID: employee.UUID,
@@ -260,6 +267,10 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
 		}{UUID: branchUUID, Name: branchName},
+		Company: &struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}{UUID: company.UUID, Name: company.Name},
 	}, nil
 }
 
@@ -478,10 +489,12 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 		}
 
 		var companyUUIDStr string
+		var companyName string
 		if employee.CompanyID != nil {
 			company, err := s.companyRepo.GetByID(*employee.CompanyID)
 			if err == nil {
 				companyUUIDStr = company.UUID
+				companyName = company.Name
 			}
 		}
 
@@ -517,7 +530,8 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 			}{UUID: branchUUIDStr, Name: branchName},
 			Company: &struct {
 				UUID string `json:"uuid"`
-			}{UUID: companyUUIDStr},
+				Name string `json:"name"`
+			}{UUID: companyUUIDStr, Name: companyName},
 			Termination: termination,
 		})
 	}
@@ -687,8 +701,10 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			},
 			Company: &struct {
 				UUID string `json:"uuid"`
+				Name string `json:"name"`
 			}{
 				UUID: req.CompanyUUID,
+				Name: company.Name,
 			},
 		}
 
