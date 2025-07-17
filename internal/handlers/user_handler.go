@@ -57,7 +57,9 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	}
 
 	modifierID := c.Locals("user_id").(uint)
-	if err := h.userService.UpdateUser(userUUID, req, modifierID); err != nil {
+
+	userData, err := h.userService.UpdateUser(userUUID, req, modifierID)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update user",
 			"error":   err.Error(),
@@ -65,7 +67,8 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "User updated successfully",
+		"message": "success",
+		"data":    userData,
 	})
 }
 

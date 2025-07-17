@@ -36,7 +36,7 @@ type UserService interface {
 		page, limit int,
 		search, roleUUID, branchUUID, isTerminated, companyUUID string,
 	) ([]response.UserWithEmployeeResponse, int64, int64, error)
-	UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) error
+	UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) (response.UserWithEmployeeResponse, error)
 	DeleteUser(userUUID, companyUUID, reason string) error
 	RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error
 }
@@ -571,8 +571,10 @@ func (s *userService) RehireEmployee(userUUID, companyUUID string, req request.R
 	})
 }
 
-func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) (response.UserWithEmployeeResponse, error) {
+	var result response.UserWithEmployeeResponse
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		user, err := s.userRepo.GetByUUID(userUUID)
 		if err != nil {
 			return fmt.Errorf("user not found: %w", err)
@@ -592,7 +594,6 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			return fmt.Errorf("company not found: %w", err)
 		}
 
-		// Fallback role to "employee" if RoleUUID not provided
 		var role *models.Role
 		if req.RoleUUID == "" {
 			role, err = s.roleRepo.FindByNameAndCompanyID("employee", req.CompanyUUID)
@@ -621,12 +622,14 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 		}
 
 		var branchID *uint
+		var branchData *models.Branch
 		if req.BranchUUID != "" {
 			branch, err := s.branchRepo.FindByUUID(req.BranchUUID)
 			if err != nil {
 				return fmt.Errorf("branch not found: %w", err)
 			}
 			branchID = &branch.ID
+			branchData = branch
 		}
 
 		user.FirstName = req.FirstName
@@ -657,8 +660,42 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			return fmt.Errorf("failed to update employee: %w", err)
 		}
 
+		// Build the same response as in CreateUser
+		result = response.UserWithEmployeeResponse{
+			UserUUID:     user.UUID,
+			EmployeeUUID: employee.UUID,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			FullName:     user.FirstName + " " + user.LastName,
+			Email:        user.Email,
+			Phone:        user.Phone,
+			Gender:       user.Gender,
+			DOB:          user.DOB,
+			IsFreelance:  employee.IsFreelance,
+			Role:         role.Name,
+			Branch: struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: req.BranchUUID,
+				Name: func() string {
+					if branchData != nil {
+						return branchData.Name
+					}
+					return ""
+				}(),
+			},
+			Company: &struct {
+				UUID string `json:"uuid"`
+			}{
+				UUID: req.CompanyUUID,
+			},
+		}
+
 		return nil
 	})
+
+	return result, err
 }
 
 func (s *userService) DeleteUser(userUUID, companyUUID, reason string) error {
