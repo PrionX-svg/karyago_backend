@@ -181,7 +181,6 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) (r
 			}
 		}(user.Email, user.FirstName, otp.UUID)
 
-		// Fill the response
 		result = response.UserWithEmployeeResponse{
 			UserUUID:     user.UUID,
 			EmployeeUUID: employee.UUID,
@@ -193,7 +192,13 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) (r
 			Gender:       user.Gender,
 			DOB:          user.DOB,
 			IsFreelance:  employee.IsFreelance,
-			Role:         role.Name,
+			Role: struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
@@ -262,7 +267,13 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 		Gender:       user.Gender,
 		DOB:          user.DOB,
 		IsFreelance:  employee.IsFreelance,
-		Role:         role.Name,
+		Role: struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}{
+			UUID: role.UUID,
+			Name: role.Name,
+		},
 		Branch: struct {
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
@@ -336,7 +347,13 @@ func (s *userService) GetAllUsers(companyUUID string) ([]response.UserWithEmploy
 			Gender:       user.Gender,
 			DOB:          user.DOB,
 			IsFreelance:  emp.IsFreelance,
-			Role:         role.Name,
+			Role: struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
@@ -403,7 +420,13 @@ func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*respo
 		Gender:       user.Gender,
 		DOB:          user.DOB,
 		IsFreelance:  employee.IsFreelance,
-		Role:         role.Name,
+		Role: struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}{
+			UUID: role.UUID,
+			Name: role.Name,
+		},
 		Branch: struct {
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
@@ -523,7 +546,13 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 			Gender:       user.Gender,
 			DOB:          user.DOB,
 			IsFreelance:  employee.IsFreelance,
-			Role:         role.Name,
+			Role: struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
@@ -674,7 +703,6 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			return fmt.Errorf("failed to update employee: %w", err)
 		}
 
-		// Build the same response as in CreateUser
 		result = response.UserWithEmployeeResponse{
 			UserUUID:     user.UUID,
 			EmployeeUUID: employee.UUID,
@@ -686,7 +714,13 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			Gender:       user.Gender,
 			DOB:          user.DOB,
 			IsFreelance:  employee.IsFreelance,
-			Role:         role.Name,
+			Role: struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
 			Branch: struct {
 				UUID string `json:"uuid"`
 				Name string `json:"name"`

@@ -13,8 +13,11 @@ type UserWithEmployeeResponse struct {
 	Gender       *string    `json:"gender"`
 	DOB          *time.Time `json:"dob"`
 	IsFreelance  bool       `json:"is_freelance"`
-	Role         string     `json:"role"`
-	Branch       struct {
+	Role         struct {
+		UUID string `json:"uuid"`
+		Name string `json:"name"`
+	} `json:"role"`
+	Branch struct {
 		UUID string `json:"uuid"`
 		Name string `json:"name"`
 	} `json:"branch"`
