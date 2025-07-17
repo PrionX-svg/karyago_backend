@@ -10,6 +10,7 @@ import (
 	"hris_backend/routes/company"
 	"hris_backend/routes/department"
 	departmentgroup "hris_backend/routes/department_group"
+	usereducation "hris_backend/routes/user_education"
 	"hris_backend/routes/employment_history"
 	"hris_backend/routes/role"
 	"hris_backend/routes/user"
@@ -49,4 +50,5 @@ func SetupRoutes(app *fiber.App) {
 	departmentgroup.SetupDepartmentGroupRoutes(v1, db)
 	department.SetupDepartmentRoutes(v1, db)
 	employment_history.SetupEmploymentHistoryRoutes(v1, db)
+	usereducation.SetupUserEducationRoutes(v1, db)
 }
