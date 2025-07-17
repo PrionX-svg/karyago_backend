@@ -74,20 +74,19 @@ func (r *userEducationRepository) GetByUUID(uuid string) (*models.UserEducation,
 }
 
 func (r *userEducationRepository) GetByUserUUID(uuid string) ([]models.UserEducation, error) {
-	var userEducations []models.UserEducation
-
+	var educations []models.UserEducation
 	err := r.db.
-		Preload("User", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "uuid", "first_name", "last_name", "email")
-		}).
-		Where("user_uuid = ?", uuid).
-		Find(&userEducations).Error
+		Joins("JOIN users ON users.id = user_educations.user_id").
+		Where("users.uuid = ?", uuid).
+		Preload("User").
+		Find(&educations).Error
 
 	if err != nil {
 		return nil, err
 	}
-	return userEducations, nil
+	return educations, nil
 }
+
 
 func (r *userEducationRepository) Update(userEducation *models.UserEducation) error {
 	if err := r.db.Save(userEducation).Error; err != nil {
@@ -99,3 +98,4 @@ func (r *userEducationRepository) Update(userEducation *models.UserEducation) er
 func (r *userEducationRepository) Delete(uuid string) error {
 	return r.db.Where("uuid = ?", uuid).Delete(&models.UserEducation{}).Error
 }
+ 

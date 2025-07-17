@@ -20,8 +20,9 @@ func SetupUserEducationRoutes (router fiber.Router, db *gorm.DB) {
 
 	userEducation.Post("/create", middlewares.RequirePermission("user-education.create"), userEducationHandler.Create)
 	userEducation.Get("/get-all", middlewares.RequirePermission("user-education.view-all"), userEducationHandler.GetAll)
-	// userEducation.Get("/get/:uuid", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByUUID)
-	// userEducation.Get("/get-by-user/:uuid", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByUserUUID)
-	// userEducation.Patch("/update/:uuid", middlewares.RequirePermission("user-education.update"), userEducationHandler.Update)
-	// userEducation.Delete("/delete/:uuid", middlewares.RequirePermission("user-education.delete"), userEducationHandler.Delete)
+	userEducation.Get("/get-by-id/:id", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByID)
+	userEducation.Get("/get-by-uuid/:uuid", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByUUID)
+	userEducation.Get("/get-by-user/:uuid", middlewares.RequirePermission("user-education.view"), userEducationHandler.GetByUserUUID)
+	userEducation.Patch("/update/:uuid", middlewares.RequirePermission("user-education.update"), userEducationHandler.Update)
+	userEducation.Delete("/delete/:uuid", middlewares.RequirePermission("user-education.delete"), userEducationHandler.Delete)
 }
