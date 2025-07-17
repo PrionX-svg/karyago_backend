@@ -169,8 +169,6 @@ func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, 
 	return res, nil
 }
 
-
-
 func (s *companyServices) Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error) {
 	if err := pkg.Validate.Struct(request); err != nil {
 		return response.CompanyResponse{}, err
@@ -188,7 +186,7 @@ func (s *companyServices) Update(uuid string, request request.CompanyReq) (respo
 	company.Phone = request.Phone
 	company.ModifyBy = company.UserId
 
-	updated, err := s.companyRepo.UpdateWithUser(&company)
+	updated, err := s.companyRepo.UpdateWithUser(company)
 	if err != nil {
 		return response.CompanyResponse{}, err
 	}
@@ -226,7 +224,7 @@ func (s *companyServices) Delete(uuid string) (response.CompanyResponse, error) 
 		return response.CompanyResponse{}, fmt.Errorf("cannot delete company because it still has branches")
 	}
 
-	if err := s.companyRepo.Delete(&company); err != nil {
+	if err := s.companyRepo.Delete(company); err != nil {
 		return response.CompanyResponse{}, fmt.Errorf("failed to delete company: %w", err)
 	}
 

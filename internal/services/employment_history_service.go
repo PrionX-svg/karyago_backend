@@ -12,8 +12,8 @@ import (
 )
 
 type EmploymentHistoryService interface {
-	Create(req request.EmploymentHistoryRequest, creatorID uint) error
-	Update(uuid string, req request.EmploymentHistoryRequest, modifierID uint) error
+	Create(req request.EmploymentHistoryRequest, creatorID uint) (response.EmploymentHistoryResponse, error)
+	Update(uuid string, req request.EmploymentHistoryRequest, modifierID uint) (response.EmploymentHistoryResponse, error)
 	Delete(uuid string) error
 	GetByUUID(uuid string) (*response.EmploymentHistoryResponse, error)
 	GetByEmployeeUUID(uuid string) ([]response.EmploymentHistoryResponse, error)
@@ -46,33 +46,50 @@ func NewEmploymentHistoryService(
 	}
 }
 
-func (s *employmentHistoryService) Create(req request.EmploymentHistoryRequest, creatorID uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+func (s *employmentHistoryService) Create(
+	req request.EmploymentHistoryRequest,
+	creatorID uint,
+) (response.EmploymentHistoryResponse, error) {
+	var returnValue response.EmploymentHistoryResponse
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		employee, err := s.employeeRepo.FindByUUID(req.EmployeeUUID)
 		if err != nil {
 			return fmt.Errorf("employee not found: %w", err)
 		}
 
-		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
-		if err != nil {
-			return fmt.Errorf("role not found: %w", err)
+		var role *models.Role
+		if req.RoleUUID == nil || *req.RoleUUID == "" {
+			role, err = s.roleRepo.FindByName("Employee")
+			if err != nil {
+				return fmt.Errorf("default role 'Employee' not found: %w", err)
+			}
+		} else {
+			role, err = s.roleRepo.FindByUUID(*req.RoleUUID)
+			if err != nil {
+				return fmt.Errorf("role not found: %w", err)
+			}
 		}
 
 		var companyID *uint
+		var company models.Company
 		if req.CompanyUUID != "" {
-			company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
+			companyVal, err := s.companyRepo.GetByUUID(req.CompanyUUID)
 			if err != nil {
 				return fmt.Errorf("company not found: %w", err)
 			}
+			company = *companyVal
 			companyID = &company.ID
 		}
 
 		var branchID *uint
+		var branch models.Branch
 		if req.BranchUUID != "" {
-			branch, err := s.branchRepo.FindByUUID(req.BranchUUID)
+			branchVal, err := s.branchRepo.FindByUUID(req.BranchUUID)
 			if err != nil {
 				return fmt.Errorf("branch not found: %w", err)
 			}
+			branch = *branchVal
 			branchID = &branch.ID
 		}
 
@@ -91,34 +108,97 @@ func (s *employmentHistoryService) Create(req request.EmploymentHistoryRequest, 
 			ModifyBy:   creatorID,
 		}
 
-		return s.historyRepo.Create(history)
+		if err := s.historyRepo.Create(history); err != nil {
+			return fmt.Errorf("failed to create employment history: %w", err)
+		}
+
+		returnValue = response.EmploymentHistoryResponse{
+			UUID: history.UUID,
+			Employee: response.SimpleEmployeeResponse{
+				UUID:     employee.UUID,
+				FullName: employee.User.FirstName + " " + employee.User.LastName,
+				Email:    employee.User.Email,
+			},
+			Company: func() *response.SimpleCompanyResponse {
+				if companyID != nil {
+					return &response.SimpleCompanyResponse{
+						UUID: company.UUID,
+						Name: company.Name,
+					}
+				}
+				return nil
+			}(),
+			Branch: func() *response.SimpleBranchResponse {
+				if branchID != nil {
+					return &response.SimpleBranchResponse{
+						UUID: branch.UUID,
+						Name: branch.Name,
+					}
+				}
+				return nil
+			}(),
+			Role: response.SimpleRoleResponse{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
+			Position:  history.Position,
+			IsPresent: history.IsPresent,
+			StartDate: history.StartDate,
+			EndDate:   history.EndDate,
+			Notes:     history.Notes,
+		}
+
+		return nil
 	})
+
+	return returnValue, err
 }
 
-func (s *employmentHistoryService) Update(uuid string, req request.EmploymentHistoryRequest, modifierID uint) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+func (s *employmentHistoryService) Update(uuid string, req request.EmploymentHistoryRequest, modifierID uint) (response.EmploymentHistoryResponse, error) {
+	var returnValue response.EmploymentHistoryResponse
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		history, err := s.historyRepo.FindByUUID(uuid)
 		if err != nil {
 			return fmt.Errorf("employment history not found: %w", err)
 		}
 
-		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
+		employee, err := s.employeeRepo.FindByID(history.EmployeeID)
 		if err != nil {
-			return fmt.Errorf("role not found: %w", err)
+			return fmt.Errorf("employee not found: %w", err)
 		}
 
-		var companyID *uint
+		var role *models.Role
+		if req.RoleUUID == nil || *req.RoleUUID == "" {
+			role, err = s.roleRepo.FindByName("Employee")
+			if err != nil {
+				return fmt.Errorf("default role 'Employee' not found: %w", err)
+			}
+		} else {
+			role, err = s.roleRepo.FindByUUID(*req.RoleUUID)
+			if err != nil {
+				return fmt.Errorf("role not found: %w", err)
+			}
+		}
+
+		var (
+			company   *models.Company
+			companyID *uint
+		)
 		if req.CompanyUUID != "" {
-			company, err := s.companyRepo.GetByUUID(req.CompanyUUID)
+			company, err = s.companyRepo.GetByUUID(req.CompanyUUID)
 			if err != nil {
 				return fmt.Errorf("company not found: %w", err)
 			}
 			companyID = &company.ID
 		}
 
-		var branchID *uint
+		var (
+			branch   *models.Branch
+			branchID *uint
+		)
 		if req.BranchUUID != "" {
-			branch, err := s.branchRepo.FindByUUID(req.BranchUUID)
+			branch, err = s.branchRepo.FindByUUID(req.BranchUUID)
 			if err != nil {
 				return fmt.Errorf("branch not found: %w", err)
 			}
@@ -135,8 +215,44 @@ func (s *employmentHistoryService) Update(uuid string, req request.EmploymentHis
 		history.Notes = req.Notes
 		history.ModifyBy = modifierID
 
-		return s.historyRepo.Update(&history)
+		if err := s.historyRepo.Update(&history); err != nil {
+			return err
+		}
+
+		returnValue = response.EmploymentHistoryResponse{
+			UUID: history.UUID,
+			Employee: response.SimpleEmployeeResponse{
+				UUID:     employee.UUID,
+				FullName: employee.User.FirstName + " " + employee.User.LastName,
+				Email:    employee.User.Email,
+			},
+			Company: func() *response.SimpleCompanyResponse {
+				if company != nil {
+					return &response.SimpleCompanyResponse{UUID: company.UUID, Name: company.Name}
+				}
+				return nil
+			}(),
+			Branch: func() *response.SimpleBranchResponse {
+				if branch != nil {
+					return &response.SimpleBranchResponse{UUID: branch.UUID, Name: branch.Name}
+				}
+				return nil
+			}(),
+			Role: response.SimpleRoleResponse{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
+			Position:  history.Position,
+			IsPresent: history.IsPresent,
+			StartDate: history.StartDate,
+			EndDate:   history.EndDate,
+			Notes:     history.Notes,
+		}
+
+		return nil
 	})
+
+	return returnValue, err
 }
 
 func (s *employmentHistoryService) Delete(uuid string) error {
