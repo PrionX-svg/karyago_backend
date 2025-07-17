@@ -30,7 +30,8 @@ func (h *EmploymentHistoryHandler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.service.Create(req, userID); err != nil {
+	result, err := h.service.Create(req, userID)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create employment history",
 			"error":   err.Error(),
@@ -39,6 +40,7 @@ func (h *EmploymentHistoryHandler) Create(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Employment history created successfully",
+		"data":    result,
 	})
 }
 
@@ -65,7 +67,9 @@ func (h *EmploymentHistoryHandler) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.service.Update(historyUUID, req, userID); err != nil {
+	// Ubah pemanggilan ke service supaya return-nya response
+	updatedHistory, err := h.service.Update(historyUUID, req, userID)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update employment history",
 			"error":   err.Error(),
@@ -74,6 +78,7 @@ func (h *EmploymentHistoryHandler) Update(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Employment history updated successfully",
+		"data":    updatedHistory,
 	})
 }
 

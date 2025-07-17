@@ -38,7 +38,26 @@ Creates a new Employment History with employee details.
 
 ```json
 {
-  "message": "Employment History created successfully"
+  "data": {
+    "uuid": "1de3e9f3-9a2b-4af1-9150-9265e2ba38de",
+    "employee": {
+      "uuid": "906b0b9d-4eaf-42c2-a76c-c3c4e9471466",
+      "full_name": "John Doe 7",
+      "email": "john.doe8@example.com"
+    },
+    "company": {
+      "uuid": "86a9688c-53b4-42c8-b3c1-819fd6ad1d9f",
+      "name": "PT Teknologi Nusantara 2"
+    },
+    "role": {
+      "uuid": "5012037e-9c1c-4245-8339-a5ff9e741ed7",
+      "name": "employee"
+    },
+    "position": "Senior Backend Developer",
+    "is_present": true,
+    "start_date": "2023-08-01T00:00:00Z"
+  },
+  "message": "Employment history created successfully"
 }
 ```
 
@@ -150,7 +169,26 @@ Update employment history fields.
 
 ```json
 {
-  "message": "Employment History updated successfully"
+  "data": {
+    "uuid": "1de3e9f3-9a2b-4af1-9150-9265e2ba38de",
+    "employee": {
+      "uuid": "906b0b9d-4eaf-42c2-a76c-c3c4e9471466",
+      "full_name": "John Doe 7",
+      "email": "john.doe8@example.com"
+    },
+    "company": {
+      "uuid": "86a9688c-53b4-42c8-b3c1-819fd6ad1d9f",
+      "name": "PT Teknologi Nusantara 2"
+    },
+    "role": {
+      "uuid": "5012037e-9c1c-4245-8339-a5ff9e741ed7",
+      "name": "employee"
+    },
+    "position": "Senior Backend Developer",
+    "is_present": true,
+    "start_date": "2023-08-01T00:00:00Z"
+  },
+  "message": "Employment history updated successfully"
 }
 ```
 
