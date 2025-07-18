@@ -19,7 +19,8 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	companyRepo := repositories.NewCompanyRepository(db)
 
 	userService := services.NewUserService(db, userRepo, otpRepo, roleRepo, branchRepo, employeeRepo, companyRepo)
-	userExcelService := services.NewUserExcelService(userService, companyRepo, roleRepo, branchRepo, userRepo, employeeRepo)
+	employmentHistoryService := services.NewEmploymentHistoryService(db, repositories.NewEmploymentHistoryRepository(db), employeeRepo, roleRepo, companyRepo, branchRepo)
+	userExcelService := services.NewUserExcelService(userService, companyRepo, roleRepo, branchRepo, userRepo, employeeRepo, employmentHistoryService)
 	userHandler := handlers.NewUserHandler(userService, userExcelService)
 
 	user := router.Group("/users")
@@ -34,6 +35,6 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	user.Patch("/update/:uuid", middlewares.RequirePermission("user.update"), userHandler.UpdateUser)
 	user.Patch("/rehire/:uuid", middlewares.RequirePermission("user.rehire"), userHandler.RehireUser)
 
-	user.Get("/export", middlewares.RequirePermission("user.export"), userHandler.ExportUsersToExcel)
+	user.Get("/export", middlewares.RequirePermission("user.export"), userHandler.ExportUsersTemplateToExcel)
 	user.Post("/import", middlewares.RequirePermission("user.import"), userHandler.ImportUsersFromExcel)
 }

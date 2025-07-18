@@ -4,27 +4,30 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/xuri/excelize/v2"
+	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
-	"hris_backend/pkg"
+	"hris_backend/internal/response"
 	"io"
 	"log"
 	"mime/multipart"
+	"strings"
 	"time"
 )
 
 type UserExcelService interface {
-	ExportUsersToExcel(companyUUID string) ([]byte, error)
-	ImportUsersFromExcel(file multipart.File, creatorID uint, companyUUID string) error
+	ExportUsersTemplateToExcel() ([]byte, error)
+	ImportUsersFromExcel(file multipart.File, creatorID uint, companyUUID string) ([]response.UserWithEmployeeAndHistoryResponse, error)
 }
 
 type userExcelService struct {
-	userService  UserService
-	companyRepo  repositories.CompanyRepositories
-	roleRepo     repositories.RoleRepositories
-	branchRepo   repositories.BranchRepository
-	userRepo     repositories.UserRepository
-	employeeRepo repositories.EmployeeRepository
+	userService              UserService
+	companyRepo              repositories.CompanyRepositories
+	roleRepo                 repositories.RoleRepositories
+	branchRepo               repositories.BranchRepository
+	userRepo                 repositories.UserRepository
+	employeeRepo             repositories.EmployeeRepository
+	employmentHistoryService EmploymentHistoryService
 }
 
 func NewUserExcelService(
@@ -34,64 +37,53 @@ func NewUserExcelService(
 	branchRepo repositories.BranchRepository,
 	userRepo repositories.UserRepository,
 	employeeRepo repositories.EmployeeRepository,
+	employmentHistoryService EmploymentHistoryService,
 ) UserExcelService {
 	return &userExcelService{
-		userService:  userService,
-		companyRepo:  companyRepo,
-		roleRepo:     roleRepo,
-		branchRepo:   branchRepo,
-		userRepo:     userRepo,
-		employeeRepo: employeeRepo,
+		userService:              userService,
+		companyRepo:              companyRepo,
+		roleRepo:                 roleRepo,
+		branchRepo:               branchRepo,
+		userRepo:                 userRepo,
+		employeeRepo:             employeeRepo,
+		employmentHistoryService: employmentHistoryService,
 	}
 }
 
-func (s *userExcelService) ExportUsersToExcel(companyUUID string) ([]byte, error) {
-	users, err := s.userService.GetAllUsers(companyUUID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get users: %w", err)
-	}
-
+func (s *userExcelService) ExportUsersTemplateToExcel() ([]byte, error) {
 	f := excelize.NewFile()
 	sheet := "Users"
-	_, err = f.NewSheet(sheet)
+	_, err := f.NewSheet(sheet)
 	if err != nil {
 		return nil, err
 	}
 
 	headers := []string{
-		"First Name", "Last Name", "Email", "Phone", "Gender", "DOB", "Is Freelance", "Role", "Branch",
+		"First Name",
+		"Last Name",
+		"Email",
+		"Password",
+		"Phone",
+		"Timezone",
+		"Is Freelance",
+
+		"Gender",
+		"DOB",
+
+		"Company UUID",
+		"Branch UUID",
+		"Role UUID",
+		"Position",
+		"Is Present",
+		"Start Date",
+		"End Date",
+		"Notes",
 	}
 
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		err := f.SetCellValue(sheet, cell, h)
-		if err != nil {
+		if err := f.SetCellValue(sheet, cell, h); err != nil {
 			return nil, err
-		}
-	}
-
-	for i, user := range users {
-		row := i + 2
-		values := []interface{}{
-			user.FirstName, user.LastName, user.Email, user.Phone,
-			pkg.DerefString(user.Gender),
-			func() string {
-				if user.DOB != nil {
-					return user.DOB.Format("2006-01-02")
-				}
-				return ""
-			}(),
-			user.IsFreelance,
-			user.Role,
-			user.Branch.Name,
-		}
-
-		for j, val := range values {
-			cell, _ := excelize.CoordinatesToCellName(j+1, row)
-			err := f.SetCellValue(sheet, cell, val)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 
@@ -103,81 +95,172 @@ func (s *userExcelService) ExportUsersToExcel(companyUUID string) ([]byte, error
 	return buf.Bytes(), nil
 }
 
-func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID uint, companyUUID string) error {
+func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID uint, companyUUID string) ([]response.UserWithEmployeeAndHistoryResponse, error) {
+	var importedUsers []response.UserWithEmployeeAndHistoryResponse
+
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return fmt.Errorf("failed to read uploaded file: %w", err)
+		return nil, fmt.Errorf("failed to read uploaded file: %w", err)
 	}
 
 	f, err := excelize.OpenReader(bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("failed to parse excel: %w", err)
+		return nil, fmt.Errorf("failed to parse excel: %w", err)
 	}
 
 	rows, err := f.GetRows("Users")
 	if err != nil {
-		return fmt.Errorf("failed to get rows: %w", err)
+		return nil, fmt.Errorf("failed to get rows: %w", err)
+	}
+
+	company, err := s.companyRepo.GetByUUID(companyUUID)
+	if err != nil || company.ID == 0 {
+		return nil, fmt.Errorf("company not found: %s", companyUUID)
 	}
 
 	for i, row := range rows {
 		if i == 0 {
-			continue // Skip header
+			continue // Skip header row
 		}
 
-		if len(row) < 9 {
-			log.Printf("row %d skipped: insufficient columns", i+1)
+		if len(row) < 17 {
+			log.Printf("Row %d skipped: insufficient columns (got %d, expected 17)", i+1, len(row))
 			continue
 		}
 
-		// Cek user sudah ada berdasarkan email
-		existingUser, err := s.userRepo.FindByEmail(row[2])
-		if err == nil && existingUser.ID != 0 {
-			log.Printf("row %d skipped: user with email %s already exists", i+1, row[2])
+		email := strings.TrimSpace(row[2])
+		if email == "" {
+			log.Printf("Row %d skipped: empty email", i+1)
 			continue
 		}
 
-		// Parse tanggal lahir
-		dob, err := time.Parse("2006-01-02", row[5])
+		existingUser, _ := s.userRepo.FindByEmail(email)
+		if existingUser.ID != 0 {
+			log.Printf("Row %d skipped: user with email %s already exists", i+1, email)
+			continue
+		}
+
+		dob, err := time.Parse("2006-01-02", strings.TrimSpace(row[8]))
 		if err != nil {
-			log.Printf("row %d skipped: invalid DOB format (%s)", i+1, row[5])
+			log.Printf("Row %d skipped: invalid DOB format (%s)", i+1, row[8])
 			continue
 		}
 
-		isFreelance := row[6] == "true"
+		isFreelance := strings.EqualFold(strings.TrimSpace(row[6]), "true")
+		isPresent := strings.EqualFold(strings.TrimSpace(row[13]), "true")
 
-		req := request.UserEmployeeReq{
-			FirstName:   row[0],
-			LastName:    row[1],
-			Email:       row[2],
-			Phone:       row[3],
-			Gender:      row[4],
+		startDate, err := time.Parse("2006-01-02", strings.TrimSpace(row[14]))
+		if err != nil {
+			log.Printf("Row %d skipped: invalid start date format (%s)", i+1, row[14])
+			continue
+		}
+
+		var endDate *time.Time
+		if len(row) > 15 && strings.TrimSpace(row[15]) != "" {
+			t, err := time.Parse("2006-01-02", strings.TrimSpace(row[15]))
+			if err != nil {
+				log.Printf("Row %d skipped: invalid end date format (%s)", i+1, row[15])
+				continue
+			}
+			endDate = &t
+		}
+
+		roleUUID := strings.TrimSpace(row[11])
+		role, err := s.roleRepo.FindByUUID(roleUUID)
+		if err != nil || role.ID == 0 {
+			log.Printf("Row %d skipped: role '%s' not found", i+1, roleUUID)
+			continue
+		}
+
+		var branch *models.Branch
+		branchUUID := strings.TrimSpace(row[10])
+		if branchUUID != "" {
+			b, err := s.branchRepo.FindByUUID(branchUUID)
+			if err == nil && b.ID != 0 {
+				branch = b
+			}
+		}
+
+		userReq := request.UserEmployeeReq{
+			FirstName:   strings.TrimSpace(row[0]),
+			LastName:    strings.TrimSpace(row[1]),
+			Email:       email,
+			Password:    strings.TrimSpace(row[3]),
+			Phone:       strings.TrimSpace(row[4]),
+			Gender:      strings.TrimSpace(row[7]),
 			DOB:         dob,
 			IsFreelance: isFreelance,
-			Password:    "default123",
 			CompanyUUID: companyUUID,
+			RoleUUID:    role.UUID,
+			BranchUUID: func() string {
+				if branch != nil {
+					return branch.UUID
+				}
+				return ""
+			}(),
 		}
 
-		// Get Role dan Branch berdasarkan nama
-		role, err := s.roleRepo.FindByName(row[7])
-		if err != nil || role.ID == 0 {
-			log.Printf("row %d skipped: role '%s' not found", i+1, row[7])
-			continue
-		}
-		req.RoleUUID = role.UUID
-
-		branch, err := s.branchRepo.FindByName(row[8])
-		if err == nil && branch.ID != 0 {
-			req.BranchUUID = branch.UUID
-		}
-
-		_, err = s.userService.CreateUser(req, creatorID)
+		userRes, err := s.userService.CreateUser(userReq, creatorID)
 		if err != nil {
-			log.Printf("row %d failed to create user: %v", i+1, err)
+			log.Printf("Row %d failed to create user: %v", i+1, err)
 			continue
 		}
 
-		log.Printf("row %d user created: %s %s", i+1, row[0], row[1])
+		historyReq := request.EmploymentHistoryRequest{
+			EmployeeUUID: userRes.EmployeeUUID,
+			CompanyUUID:  companyUUID,
+			BranchUUID:   userReq.BranchUUID,
+			RoleUUID:     &role.UUID,
+			Position:     strings.TrimSpace(row[12]),
+			IsPresent:    isPresent,
+			StartDate:    startDate,
+			EndDate:      endDate,
+		}
+
+		if len(row) > 16 && strings.TrimSpace(row[16]) != "" {
+			note := strings.TrimSpace(row[16])
+			historyReq.Notes = &note
+		}
+
+		historyRes, err := s.employmentHistoryService.Create(historyReq, creatorID)
+		if err != nil {
+			log.Printf("Row %d failed to create employment history: %v", i+1, err)
+			continue
+		}
+
+		importedUsers = append(importedUsers, response.UserWithEmployeeAndHistoryResponse{
+			UserUUID:     userRes.UserUUID,
+			EmployeeUUID: userRes.EmployeeUUID,
+			FirstName:    userRes.FirstName,
+			LastName:     userRes.LastName,
+			FullName:     fmt.Sprintf("%s %s", userRes.FirstName, userRes.LastName),
+			Email:        userRes.Email,
+			Phone:        userRes.Phone,
+			Gender:       userRes.Gender,
+			DOB:          userRes.DOB,
+			IsFreelance:  userRes.IsFreelance,
+			Role: &response.RoleSimpleResponse{
+				UUID: role.UUID,
+				Name: role.Name,
+			},
+			Branch: func() *response.BranchSimpleResponse {
+				if branch != nil {
+					return &response.BranchSimpleResponse{
+						UUID: branch.UUID,
+						Name: branch.Name,
+					}
+				}
+				return nil
+			}(),
+			Company: &response.CompanySimpleResponse{
+				UUID: company.UUID,
+				Name: company.Name,
+			},
+			Histories: []response.EmploymentHistoryResponse{historyRes},
+		})
+
+		log.Printf("Row %d: user %s created successfully", i+1, email)
 	}
 
-	return nil
+	return importedUsers, nil
 }
