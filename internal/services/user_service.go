@@ -245,15 +245,26 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 	var branchUUID, branchName string
 	if employee.BranchID != nil {
 		branch, err := s.branchRepo.FindByID(*employee.BranchID)
-		if err == nil {
+		if err == nil && branch != nil {
 			branchUUID = branch.UUID
 			branchName = branch.Name
 		}
 	}
 
+	var companyResp *struct {
+		UUID string `json:"uuid"`
+		Name string `json:"name"`
+	}
+
 	company, err := s.companyRepo.GetByUserID(user.ID)
-	if err != nil {
-		return nil, fmt.Errorf("company not found: %w", err)
+	if err == nil && company != nil {
+		companyResp = &struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}{
+			UUID: company.UUID,
+			Name: company.Name,
+		}
 	}
 
 	return &response.UserWithEmployeeResponse{
@@ -277,11 +288,11 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 		Branch: struct {
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
-		}{UUID: branchUUID, Name: branchName},
-		Company: &struct {
-			UUID string `json:"uuid"`
-			Name string `json:"name"`
-		}{UUID: company.UUID, Name: company.Name},
+		}{
+			UUID: branchUUID,
+			Name: branchName,
+		},
+		Company: companyResp,
 	}, nil
 }
 

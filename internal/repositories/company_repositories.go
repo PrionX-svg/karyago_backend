@@ -15,7 +15,7 @@ type CompanyRepositories interface {
 	GetByUserUUID(uuid string) (*models.Company, error)
 	UpdateWithUser(company *models.Company) (models.Company, error)
 	HasAnyBranch(companyID uint) (bool, error)
-	GetByUserID(userID uint) (models.Company, error)
+	GetByUserID(userID uint) (*models.Company, error)
 	Delete(targetCompany *models.Company) error
 }
 
@@ -114,10 +114,10 @@ func (r *companyRepositories) HasAnyBranch(companyID uint) (bool, error) {
 	return count > 0, nil
 }
 
-func (r *companyRepositories) GetByUserID(userID uint) (models.Company, error) {
+func (r *companyRepositories) GetByUserID(userID uint) (*models.Company, error) {
 	var company models.Company
 	err := r.db.Where("user_id = ?", userID).First(&company).Error
-	return company, err
+	return &company, err
 }
 
 func (r *companyRepositories) Delete(targetCompany *models.Company) error {
