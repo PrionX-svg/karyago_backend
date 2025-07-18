@@ -12,7 +12,8 @@ import (
 
 func SetupUserEducationRoutes (router fiber.Router, db *gorm.DB) {
 	userEducationRepo := repositories.NewUserEducationRepository(db)
-	userEducationService := services.NewUserEducationService(userEducationRepo)
+	userRepo := repositories.NewUserRepository(db)
+	userEducationService := services.NewUserEducationService(userEducationRepo, userRepo)
 	userEducationHandler := handlers.NewUserEducationHandler(userEducationService)
 
 	userEducation := router.Group("/user-educations")
