@@ -131,7 +131,7 @@ func (s *userExcelService) ImportUsersFromExcel(
 		if i == 0 {
 			continue // skip header
 		}
-		if len(row) < 14 {
+		if len(row) < 12 {
 			log.Printf("Row %d skipped: not enough columns", i+1)
 			continue
 		}
