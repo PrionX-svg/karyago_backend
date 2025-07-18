@@ -19,7 +19,7 @@ type UserExcelService interface {
 	ImportUsersFromExcel(
 		file multipart.File,
 		creatorID uint,
-		companyUUID, branchUUID, roleUUID string,
+		companyUUID, roleUUID string,
 	) ([]response.UserWithEmployeeAndHistoryResponse, error)
 }
 
@@ -98,7 +98,7 @@ func (s *userExcelService) ExportUsersTemplateToExcel() ([]byte, error) {
 func (s *userExcelService) ImportUsersFromExcel(
 	file multipart.File,
 	creatorID uint,
-	companyUUID, branchUUID, roleUUID string,
+	companyUUID, roleUUID string,
 ) ([]response.UserWithEmployeeAndHistoryResponse, error) {
 	var importedUsers []response.UserWithEmployeeAndHistoryResponse
 
@@ -120,11 +120,6 @@ func (s *userExcelService) ImportUsersFromExcel(
 	company, err := s.companyRepo.GetByUUID(companyUUID)
 	if err != nil || company.ID == 0 {
 		return nil, fmt.Errorf("company not found: %s", companyUUID)
-	}
-
-	branch, err := s.branchRepo.FindByUUID(branchUUID)
-	if err != nil || branch.ID == 0 {
-		return nil, fmt.Errorf("branch not found: %s", branchUUID)
 	}
 
 	role, err := s.roleRepo.FindByUUID(roleUUID)
@@ -194,7 +189,6 @@ func (s *userExcelService) ImportUsersFromExcel(
 			DOB:         dob,
 			IsFreelance: isFreelance,
 			CompanyUUID: companyUUID,
-			BranchUUID:  branchUUID,
 			RoleUUID:    roleUUID,
 		}
 
@@ -207,7 +201,6 @@ func (s *userExcelService) ImportUsersFromExcel(
 		historyReq := request.EmploymentHistoryRequest{
 			EmployeeUUID: userRes.EmployeeUUID,
 			CompanyUUID:  companyUUID,
-			BranchUUID:   branchUUID,
 			RoleUUID:     &roleUUID,
 			Position:     strings.TrimSpace(row[9]),
 			IsPresent:    isPresent,
@@ -236,10 +229,6 @@ func (s *userExcelService) ImportUsersFromExcel(
 			Role: &response.RoleSimpleResponse{
 				UUID: role.UUID,
 				Name: role.Name,
-			},
-			Branch: &response.BranchSimpleResponse{
-				UUID: branch.UUID,
-				Name: branch.Name,
 			},
 			Company: &response.CompanySimpleResponse{
 				UUID: company.UUID,
