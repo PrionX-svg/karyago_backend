@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/xuri/excelize/v2"
-	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
 	"hris_backend/internal/response"
@@ -20,9 +19,7 @@ type UserExcelService interface {
 	ImportUsersFromExcel(
 		file multipart.File,
 		creatorID uint,
-		companyUUID string,
-		branchUUID string,
-		roleUUID string,
+		companyUUID, branchUUID, roleUUID string,
 	) ([]response.UserWithEmployeeAndHistoryResponse, error)
 }
 
@@ -101,9 +98,7 @@ func (s *userExcelService) ExportUsersTemplateToExcel() ([]byte, error) {
 func (s *userExcelService) ImportUsersFromExcel(
 	file multipart.File,
 	creatorID uint,
-	companyUUID string,
-	branchUUID string,
-	roleUUID string,
+	companyUUID, branchUUID, roleUUID string,
 ) ([]response.UserWithEmployeeAndHistoryResponse, error) {
 	var importedUsers []response.UserWithEmployeeAndHistoryResponse
 
@@ -127,13 +122,22 @@ func (s *userExcelService) ImportUsersFromExcel(
 		return nil, fmt.Errorf("company not found: %s", companyUUID)
 	}
 
+	branch, err := s.branchRepo.FindByUUID(branchUUID)
+	if err != nil || branch.ID == 0 {
+		return nil, fmt.Errorf("branch not found: %s", branchUUID)
+	}
+
+	role, err := s.roleRepo.FindByUUID(roleUUID)
+	if err != nil || role.ID == 0 {
+		return nil, fmt.Errorf("role not found: %s", roleUUID)
+	}
+
 	for i, row := range rows {
 		if i == 0 {
-			continue
+			continue // skip header
 		}
-
-		if len(row) < 17 {
-			log.Printf("Row %d skipped: insufficient columns (got %d, expected 17)", i+1, len(row))
+		if len(row) < 14 {
+			log.Printf("Row %d skipped: not enough columns", i+1)
 			continue
 		}
 
@@ -155,36 +159,29 @@ func (s *userExcelService) ImportUsersFromExcel(
 			continue
 		}
 
-		isFreelance := strings.EqualFold(strings.TrimSpace(row[6]), "true")
-		isPresent := strings.EqualFold(strings.TrimSpace(row[13]), "true")
+		isFreelance := strings.EqualFold(strings.TrimSpace(row[6]), "true") || strings.EqualFold(strings.TrimSpace(row[6]), "yes")
+		isPresent := strings.EqualFold(strings.TrimSpace(row[10]), "true") || strings.EqualFold(strings.TrimSpace(row[10]), "yes")
 
-		startDate, err := time.Parse("2006-01-02", strings.TrimSpace(row[14]))
+		startDate, err := time.Parse("2006-01-02", strings.TrimSpace(row[11]))
 		if err != nil {
-			log.Printf("Row %d skipped: invalid start date format (%s)", i+1, row[14])
+			log.Printf("Row %d skipped: invalid start date (%s)", i+1, row[11])
 			continue
 		}
 
 		var endDate *time.Time
-		if len(row) > 15 && strings.TrimSpace(row[15]) != "" {
-			t, err := time.Parse("2006-01-02", strings.TrimSpace(row[15]))
+		if len(row) > 12 && strings.TrimSpace(row[12]) != "" {
+			t, err := time.Parse("2006-01-02", strings.TrimSpace(row[12]))
 			if err != nil {
-				log.Printf("Row %d skipped: invalid end date format (%s)", i+1, row[15])
+				log.Printf("Row %d skipped: invalid end date (%s)", i+1, row[12])
 				continue
 			}
 			endDate = &t
 		}
 
-		role, err := s.roleRepo.FindByUUID(roleUUID)
-		if err != nil || role.ID == 0 {
-			return nil, fmt.Errorf("role not found: %s", roleUUID)
-		}
-
-		var branch *models.Branch
-		if branchUUID != "" {
-			b, err := s.branchRepo.FindByUUID(branchUUID)
-			if err == nil && b.ID != 0 {
-				branch = b
-			}
+		var notes *string
+		if len(row) > 13 && strings.TrimSpace(row[13]) != "" {
+			n := strings.TrimSpace(row[13])
+			notes = &n
 		}
 
 		userReq := request.UserEmployeeReq{
@@ -197,8 +194,8 @@ func (s *userExcelService) ImportUsersFromExcel(
 			DOB:         dob,
 			IsFreelance: isFreelance,
 			CompanyUUID: companyUUID,
-			RoleUUID:    role.UUID,
 			BranchUUID:  branchUUID,
+			RoleUUID:    roleUUID,
 		}
 
 		userRes, err := s.userService.CreateUser(userReq, creatorID)
@@ -210,17 +207,13 @@ func (s *userExcelService) ImportUsersFromExcel(
 		historyReq := request.EmploymentHistoryRequest{
 			EmployeeUUID: userRes.EmployeeUUID,
 			CompanyUUID:  companyUUID,
-			BranchUUID:   userReq.BranchUUID,
-			RoleUUID:     &role.UUID,
-			Position:     strings.TrimSpace(row[12]),
+			BranchUUID:   branchUUID,
+			RoleUUID:     &roleUUID,
+			Position:     strings.TrimSpace(row[9]),
 			IsPresent:    isPresent,
 			StartDate:    startDate,
 			EndDate:      endDate,
-		}
-
-		if len(row) > 16 && strings.TrimSpace(row[16]) != "" {
-			note := strings.TrimSpace(row[16])
-			historyReq.Notes = &note
+			Notes:        notes,
 		}
 
 		historyRes, err := s.employmentHistoryService.Create(historyReq, creatorID)
@@ -244,15 +237,10 @@ func (s *userExcelService) ImportUsersFromExcel(
 				UUID: role.UUID,
 				Name: role.Name,
 			},
-			Branch: func() *response.BranchSimpleResponse {
-				if branch != nil {
-					return &response.BranchSimpleResponse{
-						UUID: branch.UUID,
-						Name: branch.Name,
-					}
-				}
-				return nil
-			}(),
+			Branch: &response.BranchSimpleResponse{
+				UUID: branch.UUID,
+				Name: branch.Name,
+			},
 			Company: &response.CompanySimpleResponse{
 				UUID: company.UUID,
 				Name: company.Name,
@@ -260,7 +248,7 @@ func (s *userExcelService) ImportUsersFromExcel(
 			Histories: []response.EmploymentHistoryResponse{historyRes},
 		})
 
-		log.Printf("Row %d: user %s created successfully", i+1, email)
+		log.Printf("Row %d: user %s imported", i+1, email)
 	}
 
 	return importedUsers, nil
