@@ -42,7 +42,7 @@ func SetupRoutes(app *fiber.App) {
 		os.Getenv("R2_ENDPOINT"),
 		os.Getenv("R2_ACCESS_KEY"),
 		os.Getenv("R2_SECRET_KEY"),
-		false,
+		true,
 	)
 	if err != nil {
 		log.Fatalf("Failed to initialize R2 client: %v", err)
