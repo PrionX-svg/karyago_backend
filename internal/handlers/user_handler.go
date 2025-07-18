@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"hris_backend/internal/request"
 	"hris_backend/internal/services"
@@ -226,13 +227,8 @@ func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	return pkg.Success(c, nil, "User marked as terminated successfully")
 }
 
-func (h *UserHandler) ExportUsersToExcel(c *fiber.Ctx) error {
-	companyUUID := c.Query("company_uuid")
-	if companyUUID == "" {
-		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
-	}
-
-	excelData, err := h.userExcelService.ExportUsersToExcel(companyUUID)
+func (h *UserHandler) ExportUsersTemplateToExcel(c *fiber.Ctx) error {
+	excelData, err := h.userExcelService.ExportUsersTemplateToExcel()
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
@@ -260,7 +256,7 @@ func (h *UserHandler) ImportUsersFromExcel(c *fiber.Ctx) error {
 	}(file)
 
 	creatorID, ok := c.Locals("user_id").(uint)
-	if !ok {
+	if !ok || creatorID == 0 {
 		return pkg.Error(c, fiber.StatusUnauthorized, "unauthorized")
 	}
 
@@ -269,9 +265,10 @@ func (h *UserHandler) ImportUsersFromExcel(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
 	}
 
-	if err := h.userExcelService.ImportUsersFromExcel(file, creatorID, companyUUID); err != nil {
+	users, err := h.userExcelService.ImportUsersFromExcel(file, creatorID, companyUUID)
+	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return pkg.Success(c, nil, "Import completed successfully")
+	return pkg.Success(c, users, fmt.Sprintf("Import completed: %d users added", len(users)))
 }
