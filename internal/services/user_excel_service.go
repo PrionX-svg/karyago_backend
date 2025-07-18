@@ -17,7 +17,13 @@ import (
 
 type UserExcelService interface {
 	ExportUsersTemplateToExcel() ([]byte, error)
-	ImportUsersFromExcel(file multipart.File, creatorID uint, companyUUID string) ([]response.UserWithEmployeeAndHistoryResponse, error)
+	ImportUsersFromExcel(
+		file multipart.File,
+		creatorID uint,
+		companyUUID string,
+		branchUUID string,
+		roleUUID string,
+	) ([]response.UserWithEmployeeAndHistoryResponse, error)
 }
 
 type userExcelService struct {
@@ -70,9 +76,6 @@ func (s *userExcelService) ExportUsersTemplateToExcel() ([]byte, error) {
 		"Gender",
 		"DOB",
 
-		"Company UUID",
-		"Branch UUID",
-		"Role UUID",
 		"Position",
 		"Is Present",
 		"Start Date",
@@ -95,7 +98,13 @@ func (s *userExcelService) ExportUsersTemplateToExcel() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID uint, companyUUID string) ([]response.UserWithEmployeeAndHistoryResponse, error) {
+func (s *userExcelService) ImportUsersFromExcel(
+	file multipart.File,
+	creatorID uint,
+	companyUUID string,
+	branchUUID string,
+	roleUUID string,
+) ([]response.UserWithEmployeeAndHistoryResponse, error) {
 	var importedUsers []response.UserWithEmployeeAndHistoryResponse
 
 	data, err := io.ReadAll(file)
@@ -120,7 +129,7 @@ func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID u
 
 	for i, row := range rows {
 		if i == 0 {
-			continue // Skip header row
+			continue
 		}
 
 		if len(row) < 17 {
@@ -165,15 +174,12 @@ func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID u
 			endDate = &t
 		}
 
-		roleUUID := strings.TrimSpace(row[11])
 		role, err := s.roleRepo.FindByUUID(roleUUID)
 		if err != nil || role.ID == 0 {
-			log.Printf("Row %d skipped: role '%s' not found", i+1, roleUUID)
-			continue
+			return nil, fmt.Errorf("role not found: %s", roleUUID)
 		}
 
 		var branch *models.Branch
-		branchUUID := strings.TrimSpace(row[10])
 		if branchUUID != "" {
 			b, err := s.branchRepo.FindByUUID(branchUUID)
 			if err == nil && b.ID != 0 {
@@ -192,12 +198,7 @@ func (s *userExcelService) ImportUsersFromExcel(file multipart.File, creatorID u
 			IsFreelance: isFreelance,
 			CompanyUUID: companyUUID,
 			RoleUUID:    role.UUID,
-			BranchUUID: func() string {
-				if branch != nil {
-					return branch.UUID
-				}
-				return ""
-			}(),
+			BranchUUID:  branchUUID,
 		}
 
 		userRes, err := s.userService.CreateUser(userReq, creatorID)

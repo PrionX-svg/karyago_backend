@@ -265,7 +265,17 @@ func (h *UserHandler) ImportUsersFromExcel(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
 	}
 
-	users, err := h.userExcelService.ImportUsersFromExcel(file, creatorID, companyUUID)
+	branchUUID := c.FormValue("branch_uuid")
+	if branchUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "branch_uuid is required")
+	}
+
+	roleUUID := c.FormValue("role_uuid")
+	if roleUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "role_uuid is required")
+	}
+
+	users, err := h.userExcelService.ImportUsersFromExcel(file, creatorID, companyUUID, branchUUID, roleUUID)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
