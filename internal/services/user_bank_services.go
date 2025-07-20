@@ -26,8 +26,8 @@ type userBankService struct {
 	userRepo repositories.UserRepository
 }
 
-func NewUserBankService(repo repositories.UserBankRepository, userRepo repositories.UserRepository) userBankService {
-	return userBankService{
+func NewUserBankService(repo repositories.UserBankRepository, userRepo repositories.UserRepository) UserBankService {
+	return &userBankService{
 		repo:     repo,
 		userRepo: userRepo,
 	}
