@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -82,6 +83,8 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 }
 
 func (u *Uploader) Delete(fileName string) error {
+	fileName = strings.TrimPrefix(fileName, "/")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
