@@ -65,5 +65,5 @@ func SetupRoutes(app *fiber.App) {
 	department.SetupDepartmentRoutes(v1, db)
 	employment_history.SetupEmploymentHistoryRoutes(v1, db)
 	usereducation.SetupUserEducationRoutes(v1, db)
-	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET_NAME"))
+	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET"))
 }
