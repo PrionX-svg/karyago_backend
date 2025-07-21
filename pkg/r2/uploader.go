@@ -82,9 +82,21 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 }
 
 func (u *Uploader) Delete(fileName string) error {
-	err := u.Client.RemoveObject(context.Background(), u.BucketName, fileName, minio.RemoveObjectOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := u.Client.RemoveObject(ctx, u.BucketName, fileName, minio.RemoveObjectOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete file %s: %w", fileName, err)
 	}
+
+	_, statErr := u.Client.StatObject(ctx, u.BucketName, fileName, minio.StatObjectOptions{})
+	if statErr == nil {
+		return fmt.Errorf("file %s still exists after deletion", fileName)
+	}
+	if minio.ToErrorResponse(statErr).Code != "NoSuchKey" {
+		return fmt.Errorf("unexpected error after deletion: %w", statErr)
+	}
+
 	return nil
 }
