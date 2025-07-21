@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/url"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -60,10 +61,22 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 		return nil, fmt.Errorf("failed to upload to R2: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s/%s/%s", u.Client.EndpointURL().Host, u.BucketName, fileName)
+	reqParams := make(url.Values)
+	reqParams.Set("response-content-type", fileHeader.Header.Get("Content-Type"))
+
+	presignedURL, err := u.Client.PresignedGetObject(
+		context.Background(),
+		u.BucketName,
+		fileName,
+		5*time.Minute,
+		reqParams,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
 
 	return &UploadResult{
-		URL:      url,
+		URL:      presignedURL.String(),
 		FileName: fileName,
 	}, nil
 }
