@@ -21,7 +21,9 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 		})
 	}
 
-	url, err := h.UploadService.UploadImage(fileHeader, "uploads")
+	folder := c.FormValue("folder", "uploads")
+
+	url, err := h.UploadService.UploadImage(fileHeader, folder)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
