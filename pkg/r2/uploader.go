@@ -35,7 +35,7 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 	}
 	defer func() {
 		if cerr := file.Close(); cerr != nil {
-			fmt.Printf("Error closing file: %v\n", cerr)
+			fmt.Printf("error closing file: %v\n", cerr)
 		}
 	}()
 
@@ -46,9 +46,16 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 
 	fileName := fmt.Sprintf("%s/%d_%s", folder, time.Now().UnixNano(), fileHeader.Filename)
 
-	_, err = u.Client.PutObject(context.Background(), u.BucketName, fileName, &buf, int64(buf.Len()), minio.PutObjectOptions{
-		ContentType: fileHeader.Header.Get("Content-Type"),
-	})
+	_, err = u.Client.PutObject(
+		context.Background(),
+		u.BucketName,
+		fileName,
+		&buf,
+		int64(buf.Len()),
+		minio.PutObjectOptions{
+			ContentType: fileHeader.Header.Get("Content-Type"),
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to R2: %w", err)
 	}
