@@ -171,6 +171,38 @@ Example: `/get-by-user/265edc19-3544-45c8-a887-a7ca5d67455d`
 
 ---
 
+## 🔎 Get Companies By User UUID
+
+**GET** `/get-companies-by-user/:uuid`
+Example: `/get-companies-by-user/265edc19-3544-45c8-a887-a7ca5d67455d`
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "uuid": "86a9688c-53b4-42c8-b3c1-819fd6ad1d9f",
+      "logo": "/uuid-date-namafile",
+      "name": "PT Teknologi Nusantara 2",
+      "address": "Jl. Merdeka No.123, Jakarta",
+      "email": "info2@teknologi.co.id",
+      "phone": "021-12345678",
+      "user": {
+        "uuid": "02509f96-ff68-40f4-85c6-b314b40ea5a5",
+        "firstname": "Marco",
+        "lastname": "Melandri",
+        "role": "owner"
+      }
+    }
+  ],
+  "message": "Successfully retrieved companies by user UUID",
+  "status": "success"
+}
+```
+
+---
+
 ## ✏️ Update Company
 
 **PATCH** `/update/:uuid`

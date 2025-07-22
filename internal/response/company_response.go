@@ -8,8 +8,9 @@ type CompanyResponse struct {
 	Email   string `json:"email"`
 	Phone   string `json:"phone"`
 	User    struct {
-		UUID      string `json:"uuid"`
-		FirstName string `json:"firstname"`
-		LastName  string `json:"lastname"`
+		UUID      string  `json:"uuid"`
+		FirstName string  `json:"firstname"`
+		LastName  string  `json:"lastname"`
+		Role      *string `json:"role,omitempty"`
 	} `json:"user"`
 }

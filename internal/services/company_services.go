@@ -16,6 +16,7 @@ type CompanyServices interface {
 	GetAll() ([]response.CompanyResponse, error)
 	GetByUUID(uuid string) (response.CompanyResponse, error)
 	GetByUserUUID(uuid string) (response.CompanyResponse, error)
+	GetCompaniesByUserUUID(userUUID string) ([]response.CompanyResponse, error)
 	Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error)
 	Delete(uuid string) (response.CompanyResponse, error)
 }
@@ -24,13 +25,15 @@ type companyServices struct {
 	companyRepo  repositories.CompanyRepositories
 	userRepo     repositories.UserRepository
 	employeeRepo repositories.EmployeeRepository
+	roleRepo     repositories.RoleRepositories
 }
 
-func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo repositories.UserRepository, employeeRepo repositories.EmployeeRepository) CompanyServices {
+func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo repositories.UserRepository, employeeRepo repositories.EmployeeRepository, roleRepo repositories.RoleRepositories) CompanyServices {
 	return &companyServices{
 		companyRepo:  companyRepo,
 		userRepo:     userRepo,
 		employeeRepo: employeeRepo,
+		roleRepo:     roleRepo,
 	}
 }
 
@@ -81,9 +84,10 @@ func (s *companyServices) Create(request request.CompanyReq) (response.CompanyRe
 		Email:   createdCompany.Email,
 		Phone:   createdCompany.Phone,
 		User: struct {
-			UUID      string `json:"uuid"`
-			FirstName string `json:"firstname"`
-			LastName  string `json:"lastname"`
+			UUID      string  `json:"uuid"`
+			FirstName string  `json:"firstname"`
+			LastName  string  `json:"lastname"`
+			Role      *string `json:"role,omitempty"`
 		}{
 			UUID:      user.UUID,
 			FirstName: user.FirstName,
@@ -151,7 +155,7 @@ func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, 
 	}
 
 	if c == nil {
-		return response.CompanyResponse{}, nil // user exists, no company
+		return response.CompanyResponse{}, nil
 	}
 
 	res := response.CompanyResponse{
@@ -167,6 +171,54 @@ func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, 
 	res.User.LastName = c.User.LastName
 
 	return res, nil
+}
+
+func (s *companyServices) GetCompaniesByUserUUID(userUUID string) ([]response.CompanyResponse, error) {
+	companies, err := s.companyRepo.FindAllByUserUUID(userUUID)
+	if err != nil {
+		if err.Error() == "user-not-found" {
+			return nil, fmt.Errorf("user-not-found")
+		}
+		return nil, err
+	}
+
+	var result []response.CompanyResponse
+
+	for _, c := range companies {
+		var roleName *string
+
+		employee, err := s.employeeRepo.FindByUserID(c.User.ID)
+		if err == nil && employee != nil {
+			role, err := s.roleRepo.FindByID(employee.RoleID)
+			if err == nil && role != nil {
+				roleName = &role.Name
+			}
+		}
+
+		res := response.CompanyResponse{
+			UUID:    c.UUID,
+			Logo:    c.Logo,
+			Name:    c.Name,
+			Address: c.Address,
+			Email:   c.Email,
+			Phone:   c.Phone,
+			User: struct {
+				UUID      string  `json:"uuid"`
+				FirstName string  `json:"firstname"`
+				LastName  string  `json:"lastname"`
+				Role      *string `json:"role,omitempty"`
+			}{
+				UUID:      c.User.UUID,
+				FirstName: c.User.FirstName,
+				LastName:  c.User.LastName,
+				Role:      roleName,
+			},
+		}
+
+		result = append(result, res)
+	}
+
+	return result, nil
 }
 
 func (s *companyServices) Update(uuid string, request request.CompanyReq) (response.CompanyResponse, error) {
@@ -199,9 +251,10 @@ func (s *companyServices) Update(uuid string, request request.CompanyReq) (respo
 		Email:   updated.Email,
 		Phone:   updated.Phone,
 		User: struct {
-			UUID      string `json:"uuid"`
-			FirstName string `json:"firstname"`
-			LastName  string `json:"lastname"`
+			UUID      string  `json:"uuid"`
+			FirstName string  `json:"firstname"`
+			LastName  string  `json:"lastname"`
+			Role      *string `json:"role,omitempty"`
 		}{
 			UUID:      updated.User.UUID,
 			FirstName: updated.User.FirstName,
@@ -236,9 +289,10 @@ func (s *companyServices) Delete(uuid string) (response.CompanyResponse, error) 
 		Email:   company.Email,
 		Phone:   company.Phone,
 		User: struct {
-			UUID      string `json:"uuid"`
-			FirstName string `json:"firstname"`
-			LastName  string `json:"lastname"`
+			UUID      string  `json:"uuid"`
+			FirstName string  `json:"firstname"`
+			LastName  string  `json:"lastname"`
+			Role      *string `json:"role,omitempty"`
 		}{
 			UUID:      company.User.UUID,
 			FirstName: company.User.FirstName,

@@ -14,7 +14,8 @@ func SetupCompanyRoutes(router fiber.Router, db *gorm.DB) {
 	companyRepo := repositories.NewCompanyRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 	employeeRepo := repositories.NewEmployeeRepository(db)
-	companyService := services.NewCompanyService(companyRepo, userRepo, employeeRepo)
+	roleRepo := repositories.NewRoleRepositories(db)
+	companyService := services.NewCompanyService(companyRepo, userRepo, employeeRepo, roleRepo)
 	companyHandler := handlers.NewCompanyHandler(companyService)
 
 	company := router.Group("/companies")
@@ -24,6 +25,7 @@ func SetupCompanyRoutes(router fiber.Router, db *gorm.DB) {
 	company.Get("/get-all", middlewares.RequirePermission("company.view-all"), companyHandler.GetAll)
 	company.Get("/get/:uuid", middlewares.RequirePermission("company.view"), companyHandler.GetByUUID)
 	company.Get("/get-by-user/:uuid", middlewares.RequirePermission("company.view"), companyHandler.GetByUserUUID)
+	company.Get("/get-companies-by-user/:uuid", middlewares.RequirePermission("company.view-companies"), companyHandler.GetCompaniesByUserUUID)
 	company.Patch("/update/:uuid", middlewares.RequirePermission("company.update"), companyHandler.Update)
 	company.Delete("/delete/:uuid", middlewares.RequirePermission("company.delete"), companyHandler.Delete)
 }
