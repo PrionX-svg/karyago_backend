@@ -9,10 +9,12 @@ import (
 	"hris_backend/routes/auth"
 	"hris_backend/routes/branch"
 	"hris_backend/routes/company"
+	"hris_backend/routes/company_detail_shift"
 	"hris_backend/routes/department"
 	departmentgroup "hris_backend/routes/department_group"
 	"hris_backend/routes/employment_history"
 	"hris_backend/routes/role"
+	"hris_backend/routes/shift"
 	"hris_backend/routes/upload"
 	"hris_backend/routes/user"
 	usereducation "hris_backend/routes/user_education"
@@ -40,9 +42,9 @@ func SetupRoutes(app *fiber.App) {
 
 	r2Client, err := r2.NewR2Client(
 		os.Getenv("R2_ENDPOINT"),
-		os.Getenv("R2_ACCESS_KEY_ID"),
-		os.Getenv("R2_SECRET_ACCESS_KEY"),
-		true,
+		os.Getenv("R2_ACCESS_KEY"),
+		os.Getenv("R2_SECRET_KEY"),
+		false,
 	)
 	if err != nil {
 		log.Fatalf("Failed to initialize R2 client: %v", err)
@@ -66,4 +68,6 @@ func SetupRoutes(app *fiber.App) {
 	employment_history.SetupEmploymentHistoryRoutes(v1, db)
 	usereducation.SetupUserEducationRoutes(v1, db)
 	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET"))
+	shift.SetupShiftRoutes(v1, db)
+	company_detail_shift.SetupCompanyDetailShiftRoutes(v1, db)
 }
