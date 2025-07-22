@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"fmt"
 	"hris_backend/internal/models"
 
 	"gorm.io/gorm"
@@ -16,6 +17,7 @@ type CompanyRepositories interface {
 	UpdateWithUser(company *models.Company) (models.Company, error)
 	HasAnyBranch(companyID uint) (bool, error)
 	GetByUserID(userID uint) (*models.Company, error)
+	FindAllByUserUUID(userUUID string) ([]*models.Company, error)
 	Delete(targetCompany *models.Company) error
 }
 
@@ -118,6 +120,20 @@ func (r *companyRepositories) GetByUserID(userID uint) (*models.Company, error) 
 	var company models.Company
 	err := r.db.Where("user_id = ?", userID).First(&company).Error
 	return &company, err
+}
+
+func (r *companyRepositories) FindAllByUserUUID(userUUID string) ([]*models.Company, error) {
+	var user models.User
+	if err := r.db.Where("uuid = ?", userUUID).First(&user).Error; err != nil {
+		return nil, fmt.Errorf("user-not-found")
+	}
+
+	var companies []*models.Company
+	err := r.db.Preload("User").
+		Where("created_by = ?", user.ID).
+		Find(&companies).Error
+
+	return companies, err
 }
 
 func (r *companyRepositories) Delete(targetCompany *models.Company) error {

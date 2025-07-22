@@ -14,7 +14,7 @@ var actionsByResource = map[string][]string{
 	"permission":           {"view", "view-all", "create", "update", "delete"},
 	"role":                 {"view", "view-uuid", "view-name", "view-all", "create", "update", "delete"},
 	"branch":               {"view", "view-all", "create", "update", "delete"},
-	"company":              {"view", "view-all", "create", "update", "delete"},
+	"company":              {"view", "view-all", "view-companies", "create", "update", "delete"},
 	"user_detail":          {"view", "create", "update", "delete"},
 	"user":                 {"view", "view-all", "view-all-datatable", "create", "update", "delete", "rehire", "export", "import"},
 	"department_group":     {"view", "view-all", "view-all-dt", "create", "update", "delete"},

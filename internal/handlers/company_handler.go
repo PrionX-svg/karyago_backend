@@ -13,6 +13,7 @@ type CompanyHandler interface {
 	GetAll(c *fiber.Ctx) error
 	GetByUUID(c *fiber.Ctx) error
 	GetByUserUUID(c *fiber.Ctx) error
+	GetCompaniesByUserUUID(c *fiber.Ctx) error
 	Update(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
 }
@@ -81,7 +82,22 @@ func (h *companyHandler) GetByUserUUID(c *fiber.Ctx) error {
 	return pkg.Success(c, company, "Successfully retrieved company by user UUID")
 }
 
+func (h *companyHandler) GetCompaniesByUserUUID(c *fiber.Ctx) error {
+	userUUID := c.Params("uuid")
+	if userUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "UUID is required")
+	}
 
+	companies, err := h.companyServices.GetCompaniesByUserUUID(userUUID)
+	if err != nil {
+		if err.Error() == "user-not-found" {
+			return pkg.Error(c, fiber.StatusNotFound, "User not found")
+		}
+		return pkg.Error(c, fiber.StatusInternalServerError, "Something went wrong")
+	}
+
+	return pkg.Success(c, companies, "Successfully retrieved companies by user UUID")
+}
 
 func (h *companyHandler) Update(c *fiber.Ctx) error {
 	uuid := c.Params("uuid")
