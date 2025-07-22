@@ -94,6 +94,23 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 	}, nil
 }
 
+func (u *Uploader) GetPresignedURL(fileName string) (string, error) {
+	reqParams := make(url.Values)
+	reqParams.Set("response-content-type", "image/webp")
+
+	presignedURL, err := u.Client.PresignedGetObject(
+		context.Background(),
+		u.BucketName,
+		fileName,
+		5*time.Minute,
+		reqParams,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+	return presignedURL.String(), nil
+}
+
 func (u *Uploader) Delete(fileName string) error {
 	fileName = strings.TrimPrefix(fileName, "/")
 

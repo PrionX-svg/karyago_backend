@@ -7,6 +7,7 @@ import (
 	"hris_backend/internal/request"
 	"hris_backend/internal/response"
 	"hris_backend/pkg"
+	"hris_backend/pkg/r2"
 
 	"github.com/google/uuid"
 )
@@ -26,14 +27,22 @@ type companyServices struct {
 	userRepo     repositories.UserRepository
 	employeeRepo repositories.EmployeeRepository
 	roleRepo     repositories.RoleRepositories
+	uploader     r2.Uploader
 }
 
-func NewCompanyService(companyRepo repositories.CompanyRepositories, userRepo repositories.UserRepository, employeeRepo repositories.EmployeeRepository, roleRepo repositories.RoleRepositories) CompanyServices {
+func NewCompanyService(
+	companyRepo repositories.CompanyRepositories,
+	userRepo repositories.UserRepository,
+	employeeRepo repositories.EmployeeRepository,
+	roleRepo repositories.RoleRepositories,
+	uploader r2.Uploader,
+) CompanyServices {
 	return &companyServices{
 		companyRepo:  companyRepo,
 		userRepo:     userRepo,
 		employeeRepo: employeeRepo,
 		roleRepo:     roleRepo,
+		uploader:     uploader,
 	}
 }
 
@@ -78,7 +87,7 @@ func (s *companyServices) Create(request request.CompanyReq) (response.CompanyRe
 
 	resp := response.CompanyResponse{
 		UUID:    createdCompany.UUID,
-		Logo:    createdCompany.Logo,
+		Logo:    s.generatePresignedLogoURL(createdCompany.Logo),
 		Name:    createdCompany.Name,
 		Address: createdCompany.Address,
 		Email:   createdCompany.Email,
@@ -108,7 +117,7 @@ func (s *companyServices) GetAll() ([]response.CompanyResponse, error) {
 	for _, c := range companies {
 		res := response.CompanyResponse{
 			UUID:    c.UUID,
-			Logo:    c.Logo,
+			Logo:    s.generatePresignedLogoURL(c.Logo),
 			Name:    c.Name,
 			Address: c.Address,
 			Email:   c.Email,
@@ -132,7 +141,7 @@ func (s *companyServices) GetByUUID(uuid string) (response.CompanyResponse, erro
 
 	res := response.CompanyResponse{
 		UUID:    c.UUID,
-		Logo:    c.Logo,
+		Logo:    s.generatePresignedLogoURL(c.Logo),
 		Name:    c.Name,
 		Address: c.Address,
 		Email:   c.Email,
@@ -160,7 +169,7 @@ func (s *companyServices) GetByUserUUID(uuid string) (response.CompanyResponse, 
 
 	res := response.CompanyResponse{
 		UUID:    c.UUID,
-		Logo:    c.Logo,
+		Logo:    s.generatePresignedLogoURL(c.Logo),
 		Name:    c.Name,
 		Address: c.Address,
 		Email:   c.Email,
@@ -197,7 +206,7 @@ func (s *companyServices) GetCompaniesByUserUUID(userUUID string) ([]response.Co
 
 		res := response.CompanyResponse{
 			UUID:    c.UUID,
-			Logo:    c.Logo,
+			Logo:    s.generatePresignedLogoURL(c.Logo),
 			Name:    c.Name,
 			Address: c.Address,
 			Email:   c.Email,
@@ -301,4 +310,16 @@ func (s *companyServices) Delete(uuid string) (response.CompanyResponse, error) 
 	}
 
 	return resp, nil
+}
+
+func (s *companyServices) generatePresignedLogoURL(fileName string) string {
+	if fileName == "" {
+		return ""
+	}
+	url, err := s.uploader.GetPresignedURL(fileName)
+	if err != nil {
+		fmt.Printf("failed to get presigned URL for logo: %v\n", err)
+		return ""
+	}
+	return url
 }

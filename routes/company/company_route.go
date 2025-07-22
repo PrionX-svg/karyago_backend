@@ -1,21 +1,24 @@
 package company
 
 import (
+	"github.com/minio/minio-go/v7"
 	"hris_backend/internal/handlers"
 	"hris_backend/internal/middlewares"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/services"
+	"hris_backend/pkg/r2"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-func SetupCompanyRoutes(router fiber.Router, db *gorm.DB) {
+func SetupCompanyRoutes(router fiber.Router, db *gorm.DB, r2Client *minio.Client, bucketName string) {
+	uploader := r2.NewUploader(r2Client, bucketName)
 	companyRepo := repositories.NewCompanyRepository(db)
 	userRepo := repositories.NewUserRepository(db)
 	employeeRepo := repositories.NewEmployeeRepository(db)
 	roleRepo := repositories.NewRoleRepositories(db)
-	companyService := services.NewCompanyService(companyRepo, userRepo, employeeRepo, roleRepo)
+	companyService := services.NewCompanyService(companyRepo, userRepo, employeeRepo, roleRepo, *uploader)
 	companyHandler := handlers.NewCompanyHandler(companyService)
 
 	company := router.Group("/companies")

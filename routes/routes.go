@@ -60,7 +60,7 @@ func SetupRoutes(app *fiber.App) {
 	role.SetupRolePermissionRoutes(v1, db)
 	role.SetupPermissionRoutes(v1, db)
 	branch.SetupBranchRoutes(v1, db)
-	company.SetupCompanyRoutes(v1, db)
+	company.SetupCompanyRoutes(v1, db, r2Client, os.Getenv("R2_BUCKET"))
 	user.SetupUserDetailRoutes(v1, db)
 	user.SetupUserRoutes(v1, db)
 	departmentgroup.SetupDepartmentGroupRoutes(v1, db)
