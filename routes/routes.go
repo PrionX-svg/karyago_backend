@@ -40,8 +40,8 @@ func SetupRoutes(app *fiber.App) {
 
 	r2Client, err := r2.NewR2Client(
 		os.Getenv("R2_ENDPOINT"),
-		os.Getenv("R2_ACCESS_KEY"),
-		os.Getenv("R2_SECRET_KEY"),
+		os.Getenv("R2_ACCESS_KEY_ID"),
+		os.Getenv("R2_SECRET_ACCESS_KEY"),
 		true,
 	)
 	if err != nil {
@@ -65,5 +65,5 @@ func SetupRoutes(app *fiber.App) {
 	department.SetupDepartmentRoutes(v1, db)
 	employment_history.SetupEmploymentHistoryRoutes(v1, db)
 	usereducation.SetupUserEducationRoutes(v1, db)
-	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET_NAME"))
+	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET"))
 }

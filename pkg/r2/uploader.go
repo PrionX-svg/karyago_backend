@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -35,7 +37,7 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 	}
 	defer func() {
 		if cerr := file.Close(); cerr != nil {
-			fmt.Printf("Error closing file: %v\n", cerr)
+			fmt.Printf("error closing file: %v\n", cerr)
 		}
 	}()
 
@@ -46,25 +48,58 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 
 	fileName := fmt.Sprintf("%s/%d_%s", folder, time.Now().UnixNano(), fileHeader.Filename)
 
-	_, err = u.Client.PutObject(context.Background(), u.BucketName, fileName, &buf, int64(buf.Len()), minio.PutObjectOptions{
-		ContentType: fileHeader.Header.Get("Content-Type"),
-	})
+	_, err = u.Client.PutObject(
+		context.Background(),
+		u.BucketName,
+		fileName,
+		&buf,
+		int64(buf.Len()),
+		minio.PutObjectOptions{
+			ContentType: fileHeader.Header.Get("Content-Type"),
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to R2: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s/%s/%s", u.Client.EndpointURL().Host, u.BucketName, fileName)
+	reqParams := make(url.Values)
+	reqParams.Set("response-content-type", fileHeader.Header.Get("Content-Type"))
+
+	presignedURL, err := u.Client.PresignedGetObject(
+		context.Background(),
+		u.BucketName,
+		fileName,
+		5*time.Minute,
+		reqParams,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
 
 	return &UploadResult{
-		URL:      url,
+		URL:      presignedURL.String(),
 		FileName: fileName,
 	}, nil
 }
 
 func (u *Uploader) Delete(fileName string) error {
-	err := u.Client.RemoveObject(context.Background(), u.BucketName, fileName, minio.RemoveObjectOptions{})
+	fileName = strings.TrimPrefix(fileName, "/")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := u.Client.RemoveObject(ctx, u.BucketName, fileName, minio.RemoveObjectOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete file %s: %w", fileName, err)
 	}
+
+	_, statErr := u.Client.StatObject(ctx, u.BucketName, fileName, minio.StatObjectOptions{})
+	if statErr == nil {
+		return fmt.Errorf("file %s still exists after deletion", fileName)
+	}
+	if minio.ToErrorResponse(statErr).Code != "NoSuchKey" {
+		return fmt.Errorf("unexpected error after deletion: %w", statErr)
+	}
+
 	return nil
 }
