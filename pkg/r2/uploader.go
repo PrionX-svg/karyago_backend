@@ -4,18 +4,20 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
+	"image"
 	"mime/multipart"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/chai2010/webp"
 	"github.com/minio/minio-go/v7"
 )
 
 type UploadResult struct {
-	URL      string
-	FileName string
+	URL      string `json:"url"`
+	FileName string `json:"file_name"`
 }
 
 type Uploader struct {
@@ -35,27 +37,34 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 	if err != nil {
 		return nil, fmt.Errorf("failed to open uploaded file: %w", err)
 	}
-	defer func() {
-		if cerr := file.Close(); cerr != nil {
-			fmt.Printf("error closing file: %v\n", cerr)
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Printf("failed to close file: %v\n", err)
 		}
-	}()
+	}(file)
 
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, file); err != nil {
-		return nil, fmt.Errorf("failed to read file into buffer: %w", err)
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %w", err)
 	}
 
-	fileName := fmt.Sprintf("%s/%d_%s", folder, time.Now().UnixNano(), fileHeader.Filename)
+	var webpBuf bytes.Buffer
+	if err := webp.Encode(&webpBuf, img, &webp.Options{Lossless: false, Quality: 80}); err != nil {
+		return nil, fmt.Errorf("failed to encode to webp: %w", err)
+	}
+
+	originalName := strings.TrimSuffix(fileHeader.Filename, filepath.Ext(fileHeader.Filename))
+	fileName := fmt.Sprintf("%s/%d_%s.webp", folder, time.Now().UnixNano(), originalName)
 
 	_, err = u.Client.PutObject(
 		context.Background(),
 		u.BucketName,
 		fileName,
-		&buf,
-		int64(buf.Len()),
+		&webpBuf,
+		int64(webpBuf.Len()),
 		minio.PutObjectOptions{
-			ContentType: fileHeader.Header.Get("Content-Type"),
+			ContentType: "image/webp",
 		},
 	)
 	if err != nil {
@@ -63,7 +72,7 @@ func (u *Uploader) Upload(fileHeader *multipart.FileHeader, folder string) (*Upl
 	}
 
 	reqParams := make(url.Values)
-	reqParams.Set("response-content-type", fileHeader.Header.Get("Content-Type"))
+	reqParams.Set("response-content-type", "image/webp")
 
 	presignedURL, err := u.Client.PresignedGetObject(
 		context.Background(),

@@ -3,6 +3,7 @@ module hris_backend
 go 1.24.4
 
 require (
+	github.com/chai2010/webp v1.4.0
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/golang-jwt/jwt/v5 v5.2.2
