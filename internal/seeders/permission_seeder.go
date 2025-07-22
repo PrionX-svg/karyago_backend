@@ -11,14 +11,16 @@ import (
 )
 
 var actionsByResource = map[string][]string{
-	"permission":       {"view", "view-all", "create", "update", "delete"},
-	"role":             {"view", "view-uuid", "view-name", "view-all", "create", "update", "delete"},
-	"branch":           {"view", "view-all", "create", "update", "delete"},
-	"company":          {"view", "view-all", "create", "update", "delete"},
-	"user_detail":      {"view", "create", "update", "delete"},
-	"user":             {"view", "view-all", "view-all-datatable", "create", "update", "delete", "rehire", "export", "import"},
-	"department_group": {"view", "view-all", "view-all-dt", "create", "update", "delete"},
-	"department":       {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"permission":           {"view", "view-all", "create", "update", "delete"},
+	"role":                 {"view", "view-uuid", "view-name", "view-all", "create", "update", "delete"},
+	"branch":               {"view", "view-all", "create", "update", "delete"},
+	"company":              {"view", "view-all", "create", "update", "delete"},
+	"user_detail":          {"view", "create", "update", "delete"},
+	"user":                 {"view", "view-all", "view-all-datatable", "create", "update", "delete", "rehire", "export", "import"},
+	"department_group":     {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"department":           {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"shift":                {"view", "view-all", "create", "update", "delete"},
+	"company_detail_shift": {"view", "view-all", "create", "update", "delete", "view-by-shift-id"},
 }
 
 var customPermissions = []models.Permission{
