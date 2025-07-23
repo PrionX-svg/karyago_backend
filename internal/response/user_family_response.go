@@ -1,10 +1,16 @@
 package response
 
 type UserFamilyResponse struct {
-	UUID    string   `json:"uuid"`
 	Status  bool     `json:"status"`
 	Count   uint     `json:"count"`
-	Members []string `json:"members"`
+
+	Members []struct {
+		UUID    string `json:"uuid"`
+		Name     string `json:"name"`
+		Relation string `json:"relation"`
+		Phone    string `json:"phone"`
+
+	} `json:"members"`
 
 	User struct {
 		UUID     string `json:"uuid"`

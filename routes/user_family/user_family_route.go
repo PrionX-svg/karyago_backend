@@ -24,6 +24,6 @@ func SetupUserFamilyRoutes(router fiber.Router, db *gorm.DB) {
 	userFamily.Get("/get-by-id/:id", middlewares.RequirePermission("user-family.view"), userFamilyHandler.GetByID)
 	userFamily.Get("/get-by-uuid/:uuid", middlewares.RequirePermission("user-family.view"), userFamilyHandler.GetByUUID)
 	userFamily.Get("/get-by-user/:uuid", middlewares.RequirePermission("user-family.view"), userFamilyHandler.GetByUserUUID)
-	userFamily.Patch("/update/:uuid", middlewares.RequirePermission("user-family.update"), userFamilyHandler.Update)
+	userFamily.Patch("/update/:user_uuid", middlewares.RequirePermission("user-family.update"), userFamilyHandler.Update)
 	userFamily.Delete("/delete/:uuid", middlewares.RequirePermission("user-family.delete"), userFamilyHandler.Delete)
 }

@@ -9,12 +9,14 @@ type UserFamily struct {
 	UUID     string    `gorm:"type:char(36);not null;unique" json:"uuid"`
 	UserID   uint       `gorm:"not null" json:"user_id"`
 	Status   bool      `gorm:"not null" json:"status"`
-	Count    uint       `gorm:"not null" json:"count"`
-	Member   string  `gorm:"type:varchar(255)" json:"member"`
+	Name   string    `gorm:"type:varchar(255)" json:"name"`
+	Relation string    `gorm:"type:varchar(100)" json:"relation"`
+	Phone   string    `gorm:"type:varchar(20)" json:"phone"`
 	CreateAt time.Time `gorm:"autoCreateTime" json:"create_at"`
-	CreateBy string    `gorm:"type:varchar(100)" json:"create_by"`
+	CreateBy uint    `gorm:"type:varchar(100)" json:"create_by"`
 	ModifyAt time.Time `gorm:"autoUpdateTime" json:"modify_at"`
-	ModifyBy string    `gorm:"type:varchar(100)" json:"modify_by"`
+	ModifyBy uint    `gorm:"type:varchar(100)" json:"modify_by"`
 
 	User User `gorm:"foreignKey:UserID" json:"user"`
 }
+

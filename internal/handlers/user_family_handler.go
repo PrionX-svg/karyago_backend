@@ -108,7 +108,7 @@ func (h *userFamilyHandler) GetByUUID(c *fiber.Ctx) error {
 }
 
 func (h *userFamilyHandler) GetByUserUUID(c *fiber.Ctx) error {
-	uuid := c.Params("user_uuid")
+	uuid := c.Params("uuid")
 
 	res, err := h.service.GetByUserUUID(uuid)
 	if err != nil {
@@ -132,11 +132,11 @@ func (h *userFamilyHandler) Update(c *fiber.Ctx) error {
 			"message": "Invalid request body",
 		})
 	}
-
-	uuid := c.Params("uuid")
+	
+	useruUUID := c.Params("user_uuid")
 	actorID := c.Locals("user_id").(uint)
 
-	res, err := h.service.Update(uuid, req, actorID)
+	res, err := h.service.Update(useruUUID, req, actorID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
