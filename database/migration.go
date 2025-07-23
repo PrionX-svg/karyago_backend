@@ -20,6 +20,7 @@ func MigrationAll() {
 		&models.Department{},
 		&models.EmploymentHistory{},
 		&models.UserEducation{},
+		&models.UserBank{},
 		&models.UserExperience{},
 		&models.Shift{},
 		&models.CompanyDetailShift{},

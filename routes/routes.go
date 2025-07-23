@@ -16,6 +16,7 @@ import (
 	"hris_backend/routes/upload"
 	"hris_backend/routes/user"
 	usereducation "hris_backend/routes/user_education"
+	userbanks "hris_backend/routes/user_bank"
 	userexperience "hris_backend/routes/user_experience"
 	"log"
 	"os"
@@ -73,4 +74,5 @@ func SetupRoutes(app *fiber.App) {
 	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET"))
 	shift.SetupShiftRoutes(v1, db)
 	company_detail_shift.SetupCompanyDetailShiftRoutes(v1, db)
+	userbanks.SetupUserBankRoutes(v1, db)
 }
