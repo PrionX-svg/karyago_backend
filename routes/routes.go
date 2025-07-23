@@ -18,6 +18,7 @@ import (
 	userbanks "hris_backend/routes/user_bank"
 	usereducation "hris_backend/routes/user_education"
 	userexperience "hris_backend/routes/user_experience"
+	userfamily "hris_backend/routes/user_family"
 	"log"
 	"os"
 	"time"
@@ -75,4 +76,5 @@ func SetupRoutes(app *fiber.App) {
 	shift.SetupShiftRoutes(v1, db)
 	company_detail_shift.SetupCompanyDetailShiftRoutes(v1, db)
 	userbanks.SetupUserBankRoutes(v1, db)
+	userfamily.SetupUserFamilyRoutes(v1, db)
 }
