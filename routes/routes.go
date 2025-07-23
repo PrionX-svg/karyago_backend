@@ -10,7 +10,6 @@ import (
 	"hris_backend/routes/company_detail_shift"
 	"hris_backend/routes/department"
 	departmentgroup "hris_backend/routes/department_group"
-	usereducation "hris_backend/routes/user_education"
 	"hris_backend/routes/employment_history"
 	"hris_backend/routes/role"
 	"hris_backend/routes/shift"
