@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
@@ -22,11 +23,12 @@ type UserEducationService interface {
 
 type userEducationService struct {
 	repo repositories.UserEducationRepository
+	userRepo repositories.UserRepository
 }
-
-func NewUserEducationService(repo repositories.UserEducationRepository) UserEducationService {
+func NewUserEducationService(repo repositories.UserEducationRepository, userRepo repositories.UserRepository) UserEducationService {
 	return &userEducationService{
-		repo: repo,
+		repo:    repo,
+		userRepo: userRepo,
 	}
 }
 
@@ -35,9 +37,15 @@ func (s *userEducationService) Create(request request.UserEducationReq, userID u
 		return response.UserEducationResponse{}, err
 	}
 
+
+	user, err := s.userRepo.GetByUUID(request.UserUUID)
+	if err != nil {
+		return response.UserEducationResponse{}, fmt.Errorf("invalid user UUID")
+	}
+
 	userEducation := &models.UserEducation{
 		UUID:      uuid.NewString(),
-		UserID:    userID,
+		UserID:    user.ID,
 		Name:      request.Name,
 		Location:  request.Location,
 		StartDate: request.StartDate,

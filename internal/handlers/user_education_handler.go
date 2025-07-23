@@ -35,7 +35,12 @@ func (h *UserEducationHandler) Create(c *fiber.Ctx) error {
 
 	userEducation, err := h.service.Create(req, userID); 
 	if err != nil {
-		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to create user education")
+
+		if err.Error() == "invalid user UUID" {
+			return pkg.Error(c, fiber.StatusBadRequest, err.Error())
+		}
+	
+		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
 	return pkg.Created(c, userEducation, "User education created successfully")

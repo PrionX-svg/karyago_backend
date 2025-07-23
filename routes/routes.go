@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"hris_backend/database"
 	"hris_backend/pkg"
 	"hris_backend/pkg/r2"
@@ -12,15 +10,20 @@ import (
 	"hris_backend/routes/company_detail_shift"
 	"hris_backend/routes/department"
 	departmentgroup "hris_backend/routes/department_group"
+	usereducation "hris_backend/routes/user_education"
 	"hris_backend/routes/employment_history"
 	"hris_backend/routes/role"
 	"hris_backend/routes/shift"
 	"hris_backend/routes/upload"
 	"hris_backend/routes/user"
 	usereducation "hris_backend/routes/user_education"
+	userexperience "hris_backend/routes/user_experience"
 	"log"
 	"os"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func SetupRoutes(app *fiber.App) {
@@ -67,6 +70,7 @@ func SetupRoutes(app *fiber.App) {
 	department.SetupDepartmentRoutes(v1, db)
 	employment_history.SetupEmploymentHistoryRoutes(v1, db)
 	usereducation.SetupUserEducationRoutes(v1, db)
+	userexperience.SetupUserExperienceRoutes(v1, db)
 	upload.SetupUploadRoutes(v1, r2Client, os.Getenv("R2_BUCKET"))
 	shift.SetupShiftRoutes(v1, db)
 	company_detail_shift.SetupCompanyDetailShiftRoutes(v1, db)
