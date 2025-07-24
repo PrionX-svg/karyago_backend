@@ -38,7 +38,10 @@ Create a new department group.
     "name": "Departemen Finance",
     "desc": "Departemen yang mengatur keuangan perusahaan",
     "company_uuid": "22a27dcb-a6ea-4574-8a65-a3fabb8efd0e",
-    "responsible_uuid": null
+    "responsible": {
+      "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+      "name": "Vincentius Marco Melandri"
+    }
   },
   "message": "Department Group Created Successfully",
   "status": "success"
@@ -59,14 +62,17 @@ Retrieve the list of all department groups.
 {
   "data": [
     {
-      "uuid": "4a1cc34e-02a9-4c91-aa74-cd311cd77c29",
-      "name": "Departemen Finance",
-      "desc": "Departemen yang mengatur keuangan perusahaan",
-      "company_uuid": "22a27dcb-a6ea-4574-8a65-a3fabb8efd0e",
-      "responsible_uuid": null
+      "uuid": "5a8b9325-4e36-4d2c-ab5d-3748918ce306",
+      "company_uuid": "a11920c8-f9d8-414a-a0dc-910b1d29da03",
+      "responsible": {
+        "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+        "name": "Vincentius Marco Melandri"
+      },
+      "name": "Departemen Finance Updated",
+      "desc": "Update untuk departemen keuangan"
     }
   ],
-  "message": "Success get all department groups",
+  "message": "Successfully get all department groups",
   "status": "success"
 }
 ```
@@ -83,13 +89,16 @@ Example: `/get/b397aa7a-6dbe-45d6-931a-43d7cf0c94f9`
 ```json
 {
   "data": {
-    "uuid": "b397aa7a-6dbe-45d6-931a-43d7cf0c94f9",
-    "name": "Departemen Finance",
-    "desc": "Departemen yang mengatur keuangan perusahaan",
-    "company_uuid": "22a27dcb-a6ea-4574-8a65-a3fabb8efd0e",
-    "responsible_uuid": null
+    "uuid": "5a8b9325-4e36-4d2c-ab5d-3748918ce306",
+    "company_uuid": "a11920c8-f9d8-414a-a0dc-910b1d29da03",
+    "responsible": {
+      "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+      "name": "Vincentius Marco Melandri"
+    },
+    "name": "Departemen Finance Updated",
+    "desc": "Update untuk departemen keuangan"
   },
-  "message": "Success get department group",
+  "message": "Succesfully get department group",
   "status": "success"
 }
 ```
@@ -116,11 +125,14 @@ Example: `/update/1d44d3ac-8bcb-4823-80c7-cdb8dc9173cf`
 ```json
 {
   "data": {
-    "uuid": "1d44d3ac-8bcb-4823-80c7-cdb8dc9173cf",
+    "uuid": "5a8b9325-4e36-4d2c-ab5d-3748918ce306",
+    "company_uuid": "a11920c8-f9d8-414a-a0dc-910b1d29da03",
+    "responsible": {
+      "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+      "name": "Vincentius Marco Melandri"
+    },
     "name": "Departemen Finance Updated",
-    "desc": "Update untuk departemen keuangan",
-    "company_uuid": "22a27dcb-a6ea-4574-8a65-a3fabb8efd0e",
-    "responsible_uuid": null
+    "desc": "Update untuk departemen keuangan"
   },
   "message": "Department Group Updated Successfully",
   "status": "success"
@@ -139,11 +151,14 @@ Example: `/delete/4a1cc34e-02a9-4c91-aa74-cd311cd77c29`
 ```json
 {
   "data": {
-    "uuid": "4a1cc34e-02a9-4c91-aa74-cd311cd77c29",
-    "name": "Departemen Finance",
-    "desc": "Departemen yang mengatur keuangan perusahaan",
-    "company_uuid": "22a27dcb-a6ea-4574-8a65-a3fabb8efd0e",
-    "responsible_uuid": null
+    "uuid": "5a8b9325-4e36-4d2c-ab5d-3748918ce306",
+    "company_uuid": "a11920c8-f9d8-414a-a0dc-910b1d29da03",
+    "responsible": {
+      "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+      "name": "Vincentius Marco Melandri"
+    },
+    "name": "Departemen Finance Updated",
+    "desc": "Update untuk departemen keuangan"
   },
   "message": "Department Group Deleted Successfully",
   "status": "success"
@@ -179,16 +194,19 @@ GET /get-all/dt?page=1&limit=10&search=finance&company_uuid=22a27dcb-a6ea-4574-8
 {
   "data": [
     {
-      "uuid": "4a1cc34e-02a9-4c91-aa74-cd311cd77c29",
-      "name": "Departemen Finance",
-      "desc": "Departemen yang mengatur keuangan perusahaan",
-      "company_uuid": "22a27dcb-a6ea-4574-8a65-a3fabb8efd0e",
-      "responsible_uuid": "d3a2bc5f-5526-4cc6-b3ea-f541ee6aee2f"
+      "uuid": "5a8b9325-4e36-4d2c-ab5d-3748918ce306",
+      "company_uuid": "a11920c8-f9d8-414a-a0dc-910b1d29da03",
+      "responsible": {
+        "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+        "name": "Vincentius Marco Melandri"
+      },
+      "name": "Departemen Finance Updated",
+      "desc": "Update untuk departemen keuangan"
     }
   ],
-  "page": 1,
+  "filtered": 1,
   "limit": 10,
-  "total": 20,
-  "filtered": 1
+  "page": 1,
+  "total": 1
 }
 ```
