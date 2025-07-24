@@ -14,6 +14,7 @@ type EmployeeRepository interface {
 	FindByCompanyID(companyID uint) ([]models.Employee, error)
 	FindByDepartmentID(departmentID uint) ([]models.Employee, error)
 	FindByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error)
+	ClearDepartmentByDepartmentID(departmentID uint) error
 	FindTerminatedByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error)
 	Update(employee *models.Employee) error
 	DeleteByID(id uint) error
@@ -70,6 +71,12 @@ func (r *employeeRepository) FindByDepartmentID(departmentID uint) ([]models.Emp
 		return nil, err
 	}
 	return employees, nil
+}
+
+func (r *employeeRepository) ClearDepartmentByDepartmentID(departmentID uint) error {
+	return r.db.Model(&models.Employee{}).
+		Where("department_id = ?", departmentID).
+		Update("department_id", nil).Error
 }
 
 func (r *employeeRepository) FindByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error) {

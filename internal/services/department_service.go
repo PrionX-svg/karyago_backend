@@ -255,6 +255,10 @@ func (s *departmentServices) Delete(UUID string) (response.DepartmentResponse, e
 		return response.DepartmentResponse{}, err
 	}
 
+	if err := s.employeeRepo.ClearDepartmentByDepartmentID(dept.ID); err != nil {
+		return response.DepartmentResponse{}, err
+	}
+
 	if err := s.departmentRepo.Delete(UUID); err != nil {
 		return response.DepartmentResponse{}, err
 	}
