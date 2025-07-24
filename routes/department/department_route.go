@@ -13,8 +13,9 @@ import (
 func SetupDepartmentRoutes(router fiber.Router, db *gorm.DB) {
 	departmentGroupRepo := repositories.NewDepartmentGroupRepositories(db)
 	departmentRepo := repositories.NewDepartmentRepositories(db)
+	employeeRepo := repositories.NewEmployeeRepository(db)
 
-	departmentService := services.NewDepartmentServices(departmentRepo, departmentGroupRepo)
+	departmentService := services.NewDepartmentServices(departmentRepo, departmentGroupRepo, employeeRepo)
 	departmentHandler := handlers.NewDepartmentHandler(departmentService)
 
 	department := router.Group("/departments")

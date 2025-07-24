@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
@@ -51,25 +52,35 @@ func (s *departmentGroupServices) Create(request request.DepartmentGroupReq) (re
 		Desc:            request.Desc,
 	}
 
+	var responsibleUser *models.User
 	if request.ResponsibleUUID != "" {
 		responsible, err := s.userRepo.GetByUUID(request.ResponsibleUUID)
 		if err != nil {
 			return response.DepartmentGroupResponse{}, err
 		}
 		newDepartmentGroup.ResponsibleID = responsible.ID
+		responsibleUser = &responsible
 	}
 
 	if err := s.departmentGroupRepo.Create(&newDepartmentGroup); err != nil {
 		return response.DepartmentGroupResponse{}, err
 	}
 
-	return response.DepartmentGroupResponse{
-		UUID:            newDepartmentGroup.UUID,
-		CompanyUUID:     request.CompanyUUID,
-		ResponsibleUUID: request.ResponsibleUUID,
-		Name:            newDepartmentGroup.Name,
-		Desc:            newDepartmentGroup.Desc,
-	}, nil
+	resp := response.DepartmentGroupResponse{
+		UUID:        newDepartmentGroup.UUID,
+		CompanyUUID: request.CompanyUUID,
+		Name:        newDepartmentGroup.Name,
+		Desc:        newDepartmentGroup.Desc,
+	}
+
+	if responsibleUser != nil {
+		resp.Responsible = &response.ResponsibleResponse{
+			UUID: responsibleUser.UUID,
+			Name: fmt.Sprintf("%s %s", responsibleUser.FirstName, responsibleUser.LastName),
+		}
+	}
+
+	return resp, nil
 }
 
 func (s *departmentGroupServices) GetAll() ([]response.DepartmentGroupResponse, error) {
@@ -86,12 +97,24 @@ func (s *departmentGroupServices) GetAll() ([]response.DepartmentGroupResponse, 
 		}
 
 		res := response.DepartmentGroupResponse{
-			UUID:            group.UUID,
-			CompanyUUID:     company.UUID,
-			ResponsibleUUID: group.ResponsibleUUID,
-			Name:            group.Name,
-			Desc:            group.Desc,
+			UUID:        group.UUID,
+			CompanyUUID: company.UUID,
+			Name:        group.Name,
+			Desc:        group.Desc,
 		}
+
+		if group.ResponsibleID != 0 {
+			user, err := s.userRepo.GetByID(group.ResponsibleID)
+			if err != nil {
+				return nil, err
+			}
+
+			res.Responsible = &response.ResponsibleResponse{
+				UUID: user.UUID,
+				Name: fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+			}
+		}
+
 		responses = append(responses, res)
 	}
 
@@ -110,11 +133,22 @@ func (s *departmentGroupServices) FindByUUID(UUID string) (*response.DepartmentG
 	}
 
 	res := &response.DepartmentGroupResponse{
-		UUID:            group.UUID,
-		CompanyUUID:     company.UUID,
-		ResponsibleUUID: group.ResponsibleUUID,
-		Name:            group.Name,
-		Desc:            group.Desc,
+		UUID:        group.UUID,
+		CompanyUUID: company.UUID,
+		Name:        group.Name,
+		Desc:        group.Desc,
+	}
+
+	if group.ResponsibleID != 0 {
+		user, err := s.userRepo.GetByID(group.ResponsibleID)
+		if err != nil {
+			return nil, err
+		}
+
+		res.Responsible = &response.ResponsibleResponse{
+			UUID: user.UUID,
+			Name: fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+		}
 	}
 
 	return res, nil
@@ -135,22 +169,23 @@ func (s *departmentGroupServices) GetDataTable(page, limit int, search, companyU
 
 	var responses []response.DepartmentGroupResponse
 	for _, group := range groups {
-		var responsibleUUID string
-		if group.ResponsibleID != 0 {
-			responsible, err := s.userRepo.GetByID(group.ResponsibleID)
-			if err != nil {
-				continue
-			}
-			responsibleUUID = responsible.UUID
+		res := response.DepartmentGroupResponse{
+			UUID:        group.UUID,
+			CompanyUUID: company.UUID,
+			Name:        group.Name,
+			Desc:        group.Desc,
 		}
 
-		res := response.DepartmentGroupResponse{
-			UUID:            group.UUID,
-			CompanyUUID:     company.UUID,
-			ResponsibleUUID: responsibleUUID,
-			Name:            group.Name,
-			Desc:            group.Desc,
+		if group.ResponsibleID != 0 {
+			user, err := s.userRepo.GetByID(group.ResponsibleID)
+			if err == nil {
+				res.Responsible = &response.ResponsibleResponse{
+					UUID: user.UUID,
+					Name: fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+				}
+			}
 		}
+
 		responses = append(responses, res)
 	}
 
@@ -170,6 +205,7 @@ func (s *departmentGroupServices) Update(UUID string, departmentGroupReq request
 	departmentGroup.Name = departmentGroupReq.Name
 	departmentGroup.Desc = departmentGroupReq.Desc
 
+	var responsibleUser *models.User
 	if departmentGroupReq.ResponsibleUUID != "" {
 		responsible, err := s.userRepo.GetByUUID(departmentGroupReq.ResponsibleUUID)
 		if err != nil {
@@ -177,6 +213,10 @@ func (s *departmentGroupServices) Update(UUID string, departmentGroupReq request
 		}
 		departmentGroup.ResponsibleID = responsible.ID
 		departmentGroup.ResponsibleUUID = responsible.UUID
+		responsibleUser = &responsible
+	} else {
+		departmentGroup.ResponsibleID = 0
+		departmentGroup.ResponsibleUUID = ""
 	}
 
 	if err := s.departmentGroupRepo.Update(departmentGroup); err != nil {
@@ -188,19 +228,35 @@ func (s *departmentGroupServices) Update(UUID string, departmentGroupReq request
 		return response.DepartmentGroupResponse{}, err
 	}
 
-	return response.DepartmentGroupResponse{
-		UUID:            departmentGroup.UUID,
-		CompanyUUID:     company.UUID,
-		ResponsibleUUID: departmentGroup.ResponsibleUUID,
-		Name:            departmentGroup.Name,
-		Desc:            departmentGroup.Desc,
-	}, nil
+	resp := response.DepartmentGroupResponse{
+		UUID:        departmentGroup.UUID,
+		CompanyUUID: company.UUID,
+		Name:        departmentGroup.Name,
+		Desc:        departmentGroup.Desc,
+	}
+
+	if responsibleUser != nil {
+		resp.Responsible = &response.ResponsibleResponse{
+			UUID: responsibleUser.UUID,
+			Name: fmt.Sprintf("%s %s", responsibleUser.FirstName, responsibleUser.LastName),
+		}
+	}
+
+	return resp, nil
 }
 
 func (s *departmentGroupServices) Delete(UUID string) (response.DepartmentGroupResponse, error) {
 	departmentGroup, err := s.departmentGroupRepo.FindByUUID(UUID)
 	if err != nil {
 		return response.DepartmentGroupResponse{}, err
+	}
+
+	var responsibleUser *models.User
+	if departmentGroup.ResponsibleID != 0 {
+		user, err := s.userRepo.GetByID(departmentGroup.ResponsibleID)
+		if err == nil {
+			responsibleUser = &user
+		}
 	}
 
 	if err := s.departmentGroupRepo.Delete(UUID); err != nil {
@@ -212,11 +268,19 @@ func (s *departmentGroupServices) Delete(UUID string) (response.DepartmentGroupR
 		return response.DepartmentGroupResponse{}, err
 	}
 
-	return response.DepartmentGroupResponse{
-		UUID:            departmentGroup.UUID,
-		CompanyUUID:     company.UUID,
-		ResponsibleUUID: departmentGroup.ResponsibleUUID,
-		Name:            departmentGroup.Name,
-		Desc:            departmentGroup.Desc,
-	}, nil
+	resp := response.DepartmentGroupResponse{
+		UUID:        departmentGroup.UUID,
+		CompanyUUID: company.UUID,
+		Name:        departmentGroup.Name,
+		Desc:        departmentGroup.Desc,
+	}
+
+	if responsibleUser != nil {
+		resp.Responsible = &response.ResponsibleResponse{
+			UUID: responsibleUser.UUID,
+			Name: fmt.Sprintf("%s %s", responsibleUser.FirstName, responsibleUser.LastName),
+		}
+	}
+
+	return resp, nil
 }

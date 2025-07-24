@@ -211,6 +211,31 @@ func (h *UserHandler) RehireUser(c *fiber.Ctx) error {
 	})
 }
 
+func (h *UserHandler) UpdateEmployeeDepartment(c *fiber.Ctx) error {
+	userUUID := c.Params("uuid")
+
+	var req request.UpdateDepartmentReq
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
+	}
+
+	modifierID := c.Locals("user_id").(uint)
+
+	if err := h.userService.UpdateEmployeeDepartment(userUUID, req.DepartmentUUID, modifierID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update employee department",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
+}
+
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	userUUID := c.Params("uuid")
 	companyUUID := c.Query("company_uuid")
