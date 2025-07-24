@@ -22,12 +22,14 @@ type DepartmentServices interface {
 type departmentServices struct {
 	departmentRepo      repositories.DepartmentRepositories
 	departmentGroupRepo repositories.DepartmentGroupRepositories
+	employeeRepo        repositories.EmployeeRepository
 }
 
-func NewDepartmentServices(departmentRepo repositories.DepartmentRepositories, departmentGroupRepo repositories.DepartmentGroupRepositories) DepartmentServices {
+func NewDepartmentServices(departmentRepo repositories.DepartmentRepositories, departmentGroupRepo repositories.DepartmentGroupRepositories, employeeRepo repositories.EmployeeRepository) DepartmentServices {
 	return &departmentServices{
 		departmentRepo:      departmentRepo,
 		departmentGroupRepo: departmentGroupRepo,
+		employeeRepo:        employeeRepo,
 	}
 }
 
@@ -55,10 +57,14 @@ func (s *departmentServices) Create(req request.DepartmentReq) (response.Departm
 	}
 
 	return response.DepartmentResponse{
-		UUID:                newDepartment.UUID,
-		DepartmentGroupUUID: req.DepartmentGroupUUID,
-		Name:                newDepartment.Name,
-		Description:         newDepartment.Description,
+		UUID:        newDepartment.UUID,
+		Name:        newDepartment.Name,
+		Description: newDepartment.Description,
+		Group: response.DepartmentGroupMiniResponse{
+			UUID: group.UUID,
+			Name: group.Name,
+		},
+		Employees: []response.UserMiniResponse{},
 	}, nil
 }
 
@@ -75,11 +81,29 @@ func (s *departmentServices) GetAll() ([]response.DepartmentResponse, error) {
 			return nil, err
 		}
 
+		employees, err := s.employeeRepo.FindByDepartmentID(dept.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		var employeeResponses []response.UserMiniResponse
+		for _, emp := range employees {
+			employeeResponses = append(employeeResponses, response.UserMiniResponse{
+				UUID:  emp.User.UUID,
+				Name:  emp.User.FirstName + " " + emp.User.LastName,
+				Email: emp.User.Email,
+			})
+		}
+
 		responses = append(responses, response.DepartmentResponse{
-			UUID:                dept.UUID,
-			DepartmentGroupUUID: group.UUID,
-			Name:                dept.Name,
-			Description:         dept.Description,
+			UUID:        dept.UUID,
+			Name:        dept.Name,
+			Description: dept.Description,
+			Group: response.DepartmentGroupMiniResponse{
+				UUID: group.UUID,
+				Name: group.Name,
+			},
+			Employees: employeeResponses,
 		})
 	}
 
@@ -97,11 +121,29 @@ func (s *departmentServices) FindByUUID(UUID string) (*response.DepartmentRespon
 		return nil, err
 	}
 
+	employees, err := s.employeeRepo.FindByDepartmentID(dept.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var employeeResponses []response.UserMiniResponse
+	for _, emp := range employees {
+		employeeResponses = append(employeeResponses, response.UserMiniResponse{
+			UUID:  emp.User.UUID,
+			Name:  emp.User.FirstName + " " + emp.User.LastName,
+			Email: emp.User.Email,
+		})
+	}
+
 	res := &response.DepartmentResponse{
-		UUID:                dept.UUID,
-		DepartmentGroupUUID: group.UUID,
-		Name:                dept.Name,
-		Description:         dept.Description,
+		UUID:        dept.UUID,
+		Name:        dept.Name,
+		Description: dept.Description,
+		Group: response.DepartmentGroupMiniResponse{
+			UUID: group.UUID,
+			Name: group.Name,
+		},
+		Employees: employeeResponses,
 	}
 
 	return res, nil
@@ -133,14 +175,32 @@ func (s *departmentServices) GetDataTable(page, limit int, search, companyUUID, 
 	for _, dept := range departments {
 		group, err := s.departmentGroupRepo.FindByUUIDFromID(dept.DepartmentGroupID)
 		if err != nil {
-			continue // atau log error-nya
+			continue
+		}
+
+		employees, err := s.employeeRepo.FindByDepartmentID(dept.ID)
+		if err != nil {
+			continue
+		}
+
+		var employeeResponses []response.UserMiniResponse
+		for _, emp := range employees {
+			employeeResponses = append(employeeResponses, response.UserMiniResponse{
+				UUID:  emp.User.UUID,
+				Name:  emp.User.FirstName + " " + emp.User.LastName,
+				Email: emp.User.Email,
+			})
 		}
 
 		res := response.DepartmentResponse{
-			UUID:                dept.UUID,
-			DepartmentGroupUUID: group.UUID,
-			Name:                dept.Name,
-			Description:         dept.Description,
+			UUID:        dept.UUID,
+			Name:        dept.Name,
+			Description: dept.Description,
+			Group: response.DepartmentGroupMiniResponse{
+				UUID: group.UUID,
+				Name: group.Name,
+			},
+			Employees: employeeResponses,
 		}
 		responses = append(responses, res)
 	}
@@ -173,10 +233,14 @@ func (s *departmentServices) Update(UUID string, req request.DepartmentReq) (res
 	}
 
 	return response.DepartmentResponse{
-		UUID:                dept.UUID,
-		DepartmentGroupUUID: group.UUID,
-		Name:                dept.Name,
-		Description:         dept.Description,
+		UUID:        dept.UUID,
+		Name:        dept.Name,
+		Description: dept.Description,
+		Group: response.DepartmentGroupMiniResponse{
+			UUID: group.UUID,
+			Name: group.Name,
+		},
+		Employees: []response.UserMiniResponse{},
 	}, nil
 }
 
@@ -196,9 +260,13 @@ func (s *departmentServices) Delete(UUID string) (response.DepartmentResponse, e
 	}
 
 	return response.DepartmentResponse{
-		UUID:                dept.UUID,
-		DepartmentGroupUUID: group.UUID,
-		Name:                dept.Name,
-		Description:         dept.Description,
+		UUID:        dept.UUID,
+		Name:        dept.Name,
+		Description: dept.Description,
+		Group: response.DepartmentGroupMiniResponse{
+			UUID: group.UUID,
+			Name: group.Name,
+		},
+		Employees: []response.UserMiniResponse{},
 	}, nil
 }

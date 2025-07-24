@@ -34,10 +34,14 @@ Create a new department.
 ```json
 {
   "data": {
-    "uuid": "generated-department-uuid",
-    "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
-    "name": "Pajak",
-    "description": "Handles tax, employee relations, and organizational development."
+    "uuid": "aa0a22ae-63cd-4809-b9e5-161604aeceea",
+    "name": "HR",
+    "description": "Handles tax, employee relations, and organizational development.",
+    "department_group": {
+      "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+      "name": "Departemen Finance"
+    },
+    "employees": []
   },
   "message": "Department created",
   "status": "success"
@@ -58,10 +62,30 @@ Retrieve the list of all departments.
 {
   "data": [
     {
-      "uuid": "f3f70505-8de6-42cf-bffd-6ac94fb3459e",
-      "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
+      "uuid": "8991f837-958c-452c-8e5a-24cc13881a80",
       "name": "Pajak",
-      "description": "Handles tax, employee relations, and organizational development."
+      "description": "Handles tax, employee relations, and organizational development.",
+      "department_group": {
+        "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+        "name": "Departemen Finance"
+      },
+      "employees": [
+        {
+          "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+          "name": "Vincentius Marco Melandri",
+          "email": "marcomelandri808@gmail.com"
+        }
+      ]
+    },
+    {
+      "uuid": "aa0a22ae-63cd-4809-b9e5-161604aeceea",
+      "name": "HR",
+      "description": "Handles tax, employee relations, and organizational development.",
+      "department_group": {
+        "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+        "name": "Departemen Finance"
+      },
+      "employees": null
     }
   ],
   "message": "Successfully get all departments",
@@ -81,10 +105,20 @@ Example: `/get/f3f70505-8de6-42cf-bffd-6ac94fb3459e`
 ```json
 {
   "data": {
-    "uuid": "f3f70505-8de6-42cf-bffd-6ac94fb3459e",
-    "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
+    "uuid": "8991f837-958c-452c-8e5a-24cc13881a80",
     "name": "Pajak",
-    "description": "Handles tax, employee relations, and organizational development."
+    "description": "Handles tax, employee relations, and organizational development.",
+    "department_group": {
+      "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+      "name": "Departemen Finance"
+    },
+    "employees": [
+      {
+        "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+        "name": "Vincentius Marco Melandri",
+        "email": "marcomelandri808@gmail.com"
+      }
+    ]
   },
   "message": "Successfully get department",
   "status": "success"
@@ -113,10 +147,14 @@ Example: `/update/f3f70505-8de6-42cf-bffd-6ac94fb3459e`
 ```json
 {
   "data": {
-    "uuid": "f3f70505-8de6-42cf-bffd-6ac94fb3459e",
-    "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
-    "name": "Pajak Update",
-    "description": "Handles tax and financial planning."
+    "uuid": "aa0a22ae-63cd-4809-b9e5-161604aeceea",
+    "name": "HR",
+    "description": "Handles tax, employee relations, and organizational development.",
+    "department_group": {
+      "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+      "name": "Departemen Finance"
+    },
+    "employees": []
   },
   "message": "Department updated",
   "status": "success"
@@ -135,10 +173,14 @@ Example: `/delete/f3f70505-8de6-42cf-bffd-6ac94fb3459e`
 ```json
 {
   "data": {
-    "uuid": "f3f70505-8de6-42cf-bffd-6ac94fb3459e",
-    "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
-    "name": "Pajak",
-    "description": "Handles tax, employee relations, and organizational development."
+    "uuid": "aa0a22ae-63cd-4809-b9e5-161604aeceea",
+    "name": "HR",
+    "description": "Handles tax, employee relations, and organizational development.",
+    "department_group": {
+      "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+      "name": "Departemen Finance"
+    },
+    "employees": []
   },
   "message": "Department deleted",
   "status": "success"
@@ -175,19 +217,35 @@ GET /api/v1/departments/get-all/dt?page=1&limit=10&search=pajak&company_uuid=86a
 {
   "data": [
     {
-      "uuid": "f3f70505-8de6-42cf-bffd-6ac94fb3459e",
-      "department_group_uuid": "0ad96968-1f92-4199-87b4-d22b5c725023",
+      "uuid": "aa0a22ae-63cd-4809-b9e5-161604aeceea",
+      "name": "HR",
+      "description": "Handles tax, employee relations, and organizational development.",
+      "department_group": {
+        "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+        "name": "Departemen Finance"
+      },
+      "employees": null
+    },
+    {
+      "uuid": "8991f837-958c-452c-8e5a-24cc13881a80",
       "name": "Pajak",
-      "description": "Handles tax, employee relations, and organizational development."
+      "description": "Handles tax, employee relations, and organizational development.",
+      "department_group": {
+        "uuid": "73022eb0-53aa-41bd-8c8b-f583514b9248",
+        "name": "Departemen Finance"
+      },
+      "employees": [
+        {
+          "uuid": "04262c91-6268-44cb-bd86-0bcf51da849d",
+          "name": "Vincentius Marco Melandri",
+          "email": "marcomelandri808@gmail.com"
+        }
+      ]
     }
   ],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 20,
-    "filtered": 1
-  },
-  "message": "Successfully fetched department datatable",
-  "status": "success"
+  "filtered": 2,
+  "limit": 10,
+  "page": 1,
+  "total": 2
 }
 ```

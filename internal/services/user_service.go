@@ -18,13 +18,14 @@ import (
 )
 
 type userService struct {
-	db           *gorm.DB
-	userRepo     repositories.UserRepository
-	otpRepo      repositories.OTPRepositories
-	roleRepo     repositories.RoleRepositories
-	companyRepo  repositories.CompanyRepositories
-	branchRepo   repositories.BranchRepository
-	employeeRepo repositories.EmployeeRepository
+	db             *gorm.DB
+	userRepo       repositories.UserRepository
+	otpRepo        repositories.OTPRepositories
+	roleRepo       repositories.RoleRepositories
+	companyRepo    repositories.CompanyRepositories
+	branchRepo     repositories.BranchRepository
+	employeeRepo   repositories.EmployeeRepository
+	departmentRepo repositories.DepartmentRepositories
 }
 
 type UserService interface {
@@ -37,6 +38,7 @@ type UserService interface {
 		search, roleUUID, branchUUID, isTerminated, companyUUID string,
 	) ([]response.UserWithEmployeeResponse, int64, int64, error)
 	UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) (response.UserWithEmployeeResponse, error)
+	UpdateEmployeeDepartment(userUUID string, departmentUUID string, modifierID uint) error
 	DeleteUser(userUUID, companyUUID, reason string) error
 	RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error
 }
@@ -49,15 +51,17 @@ func NewUserService(
 	branchRepo repositories.BranchRepository,
 	employeeRepo repositories.EmployeeRepository,
 	companyRepo repositories.CompanyRepositories,
+	departmentRepo repositories.DepartmentRepositories,
 ) UserService {
 	return &userService{
-		db:           db,
-		userRepo:     userRepo,
-		otpRepo:      otpRepo,
-		roleRepo:     roleRepo,
-		branchRepo:   branchRepo,
-		employeeRepo: employeeRepo,
-		companyRepo:  companyRepo,
+		db:             db,
+		userRepo:       userRepo,
+		otpRepo:        otpRepo,
+		roleRepo:       roleRepo,
+		branchRepo:     branchRepo,
+		employeeRepo:   employeeRepo,
+		companyRepo:    companyRepo,
+		departmentRepo: departmentRepo,
 	}
 }
 
@@ -757,6 +761,42 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 	})
 
 	return result, err
+}
+
+func (s *userService) UpdateEmployeeDepartment(userUUID string, departmentUUID string, modifierID uint) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		user, err := s.userRepo.GetByUUID(userUUID)
+		if err != nil {
+			return fmt.Errorf("user not found: %w", err)
+		}
+
+		employee, err := s.employeeRepo.FindByUserID(user.ID)
+		if err != nil {
+			return fmt.Errorf("employee not found: %w", err)
+		}
+
+		if employee.TerminatedAt != nil {
+			return fmt.Errorf("cannot update department for terminated employee")
+		}
+
+		var departmentID *uint
+		if departmentUUID != "" {
+			department, err := s.departmentRepo.FindByUUID(departmentUUID)
+			if err != nil {
+				return fmt.Errorf("department not found: %w", err)
+			}
+			departmentID = &department.ID
+		}
+
+		employee.DepartmentID = departmentID
+		employee.ModifyBy = modifierID
+
+		if err := s.employeeRepo.Update(employee); err != nil {
+			return fmt.Errorf("failed to update employee department: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (s *userService) DeleteUser(userUUID, companyUUID, reason string) error {

@@ -12,6 +12,7 @@ type EmployeeRepository interface {
 	FindByUUID(uuid string) (*models.Employee, error)
 	FindByUserID(userID uint) (*models.Employee, error)
 	FindByCompanyID(companyID uint) ([]models.Employee, error)
+	FindByDepartmentID(departmentID uint) ([]models.Employee, error)
 	FindByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error)
 	FindTerminatedByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error)
 	Update(employee *models.Employee) error
@@ -57,6 +58,15 @@ func (r *employeeRepository) FindByUserID(userID uint) (*models.Employee, error)
 func (r *employeeRepository) FindByCompanyID(companyID uint) ([]models.Employee, error) {
 	var employees []models.Employee
 	if err := r.db.Where("company_id = ?", companyID).Find(&employees).Error; err != nil {
+		return nil, err
+	}
+	return employees, nil
+}
+
+func (r *employeeRepository) FindByDepartmentID(departmentID uint) ([]models.Employee, error) {
+	var employees []models.Employee
+	err := r.db.Preload("User").Where("department_id = ?", departmentID).Find(&employees).Error
+	if err != nil {
 		return nil, err
 	}
 	return employees, nil
