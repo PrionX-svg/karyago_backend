@@ -11,6 +11,7 @@ type EventRepository interface {
 	GetAll() ([]models.Event, error)
 	GetByID(id uint) (*models.Event, error)
 	GetByUUID(uuid string) (*models.Event, error)
+	GetByCompanyUUID(uuid string) ([]models.Event, error)
 	Update(event *models.Event) error
 	Delete(uuid string) error
 }
@@ -68,6 +69,22 @@ func (r *eventRepository) GetByUUID(uuid string) (*models.Event, error) {
 		return nil, err
 	}
 	return &event, nil
+}
+
+func (r *eventRepository) GetByCompanyUUID(uuid string) ([]models.Event, error) {
+	var events []models.Event
+	err := r.db.
+		Joins("JOIN companies ON companies.id = events.company_id").
+		Where("companies.uuid = ?", uuid).
+		Preload("Company", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "uuid", "name")
+		}).
+		Find(&events).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
 }
 
 func (r *eventRepository) Update(event *models.Event) error {
