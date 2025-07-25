@@ -22,6 +22,10 @@ var actionsByResource = map[string][]string{
 	"shift":                {"view", "view-all", "create", "update", "delete"},
 	"company_detail_shift": {"view", "view-all", "create", "update", "delete", "view-by-shift-id"},
 	"user_family":          {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"user_education":       {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"user_experience":      {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"user_bank":            {"view", "view-all", "view-all-dt", "create", "update", "delete"},
+	"event":                {"view", "view-all", "create", "update", "delete", "view-by-company"},
 }
 
 var customPermissions = []models.Permission{

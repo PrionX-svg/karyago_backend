@@ -25,6 +25,7 @@ func MigrationAll() {
 		&models.Shift{},
 		&models.CompanyDetailShift{},
 		&models.UserFamily{},
+		&models.Event{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)
