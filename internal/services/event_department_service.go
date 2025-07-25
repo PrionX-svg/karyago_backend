@@ -15,7 +15,7 @@ type EventDepartmentServices interface {
 	GetByUUID(uuid string) (response.EventDepartmentResponse, error)
 	Update(uuid string, req request.EventDepartmentRequest) (response.EventDepartmentResponse, error)
 	Delete(uuid string) (response.EventDepartmentResponse, error)
-	GetByGroupID(groupID uint) ([]response.EventDepartmentResponse, error)
+	GetByGroupUUID(groupUUID string) ([]response.EventDepartmentResponse, error)
 }
 
 type eventDepartmentServices struct {
@@ -168,19 +168,19 @@ func (s *eventDepartmentServices) Delete(uuid string) (response.EventDepartmentR
 	}, nil
 }
 
-func (s *eventDepartmentServices) GetByGroupID(groupID uint) ([]response.EventDepartmentResponse, error) {
-	depts, err := s.deptRepo.FindAllByGroupID(groupID)
+func (s *eventDepartmentServices) GetByGroupUUID(groupUUID string) ([]response.EventDepartmentResponse, error) {
+	group, err := s.groupRepo.GetByUUID(groupUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	depts, err := s.deptRepo.FindAllByGroupID(group.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	var result []response.EventDepartmentResponse
 	for _, d := range depts {
-		groupUUID := ""
-		if d.EventDepartmentGroup != nil {
-			groupUUID = d.EventDepartmentGroup.UUID
-		}
-
 		result = append(result, response.EventDepartmentResponse{
 			UUID:        d.UUID,
 			GroupUUID:   groupUUID,

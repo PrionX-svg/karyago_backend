@@ -26,6 +26,6 @@ func SetupEventDepartmentRoutes(router fiber.Router, db *gorm.DB) {
 	group.Get("/get/:uuid", middlewares.RequirePermission("event_department.view"), deptHandler.GetByUUID)
 	group.Patch("/update/:uuid", middlewares.RequirePermission("event_department.update"), deptHandler.Update)
 	group.Delete("/delete/:uuid", middlewares.RequirePermission("event_department.delete"), deptHandler.Delete)
-	group.Get("/get-by-group-id/:group_id", middlewares.RequirePermission("event_department.view-by-group"), deptHandler.GetByGroupID)
+	group.Get("/get-by-group-id/:group_uuid", middlewares.RequirePermission("event_department.view-by-group"), deptHandler.GetByGroupID)
 }
 

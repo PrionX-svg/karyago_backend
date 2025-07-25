@@ -95,17 +95,16 @@ func (h *eventDepartmentHandler) Delete(c *fiber.Ctx) error {
 	return pkg.Success(c, result, "Event Department deleted successfully")
 }
 
-func (h *eventDepartmentHandler) GetByGroupID(c *fiber.Ctx) error {
-	groupID, err := c.ParamsInt("group_id")
-	if err != nil || groupID <= 0 {
-		return pkg.Error(c, fiber.StatusBadRequest, "Invalid group_id")
+func (h *eventDepartmentHandler) GetByGroupUUID(c *fiber.Ctx) error {
+	groupUUID := c.Params("group_uuid")
+	if groupUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "Missing group_uuid")
 	}
 
-	result, err := h.service.GetByGroupID(uint(groupID))
+	result, err := h.service.GetByGroupUUID(groupUUID)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return pkg.Success(c, result, "Successfully retrieved departments by group ID")
+	return pkg.Success(c, result, "Successfully retrieved departments by group UUID")
 }
-
