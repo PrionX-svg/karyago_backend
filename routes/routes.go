@@ -8,10 +8,11 @@ import (
 	"hris_backend/routes/branch"
 	"hris_backend/routes/company"
 	"hris_backend/routes/company_detail_shift"
-	"hris_backend/routes/event"
 	"hris_backend/routes/department"
 	departmentgroup "hris_backend/routes/department_group"
 	"hris_backend/routes/employment_history"
+	"hris_backend/routes/event"
+	"hris_backend/routes/event/department_group"
 	"hris_backend/routes/role"
 	"hris_backend/routes/shift"
 	"hris_backend/routes/upload"
@@ -79,5 +80,5 @@ func SetupRoutes(app *fiber.App) {
 	userbanks.SetupUserBankRoutes(v1, db)
 	userfamily.SetupUserFamilyRoutes(v1, db)
 	event.SetupEventRoutes(v1, db)
-
+	department_group.SetupEventDepartmentGroupRoutes(v1, db)
 }

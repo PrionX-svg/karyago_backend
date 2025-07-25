@@ -26,6 +26,7 @@ var actionsByResource = map[string][]string{
 	"user_experience":      {"view", "view-all", "view-all-dt", "create", "update", "delete"},
 	"user_bank":            {"view", "view-all", "view-all-dt", "create", "update", "delete"},
 	"event":                {"view", "view-all", "create", "update", "delete", "view-by-company"},
+	"event_department_group": {"view", "view-all", "create", "update", "delete", "view-by-event-uuid"},
 }
 
 var customPermissions = []models.Permission{
