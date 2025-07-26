@@ -8,25 +8,25 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type EventDepartmentHandler interface {
+type EventItemHandler interface {
 	Create(c *fiber.Ctx) error
 	GetAll(c *fiber.Ctx) error
 	GetByUUID(c *fiber.Ctx) error
 	Update(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
-	GetByGroupUUID(c *fiber.Ctx) error
+	GetByEventUUID(c *fiber.Ctx) error
 }
 
-type eventDepartmentHandler struct {
-	service services.EventDepartmentServices
+type eventItemHandler struct {
+	service services.EventItemServices
 }
 
-func NewEventDepartmentHandler(service services.EventDepartmentServices) EventDepartmentHandler {
-	return &eventDepartmentHandler{service}
+func NewEventItemHandler(service services.EventItemServices) EventItemHandler {
+	return &eventItemHandler{service}
 }
 
-func (h *eventDepartmentHandler) Create(c *fiber.Ctx) error {
-	var req request.EventDepartmentRequest
+func (h *eventItemHandler) Create(c *fiber.Ctx) error {
+	var req request.EventItemRequest
 	if err := c.BodyParser(&req); err != nil {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse request")
 	}
@@ -36,19 +36,19 @@ func (h *eventDepartmentHandler) Create(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return pkg.Created(c, result, "Event Department created successfully")
+	return pkg.Created(c, result, "Event Item created successfully")
 }
 
-func (h *eventDepartmentHandler) GetAll(c *fiber.Ctx) error {
+func (h *eventItemHandler) GetAll(c *fiber.Ctx) error {
 	result, err := h.service.GetAll()
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return pkg.Success(c, result, "Successfully retrieved all Event Departments")
+	return pkg.Success(c, result, "Successfully retrieved all Event Items")
 }
 
-func (h *eventDepartmentHandler) GetByUUID(c *fiber.Ctx) error {
+func (h *eventItemHandler) GetByUUID(c *fiber.Ctx) error {
 	uuid := c.Params("uuid")
 	if uuid == "" {
 		return pkg.Error(c, fiber.StatusBadRequest, "UUID is required")
@@ -59,16 +59,16 @@ func (h *eventDepartmentHandler) GetByUUID(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusNotFound, err.Error())
 	}
 
-	return pkg.Success(c, result, "Successfully retrieved Event Department")
+	return pkg.Success(c, result, "Successfully retrieved Event Item")
 }
 
-func (h *eventDepartmentHandler) Update(c *fiber.Ctx) error {
+func (h *eventItemHandler) Update(c *fiber.Ctx) error {
 	uuid := c.Params("uuid")
 	if uuid == "" {
 		return pkg.Error(c, fiber.StatusBadRequest, "UUID is required")
 	}
 
-	var req request.EventDepartmentRequest
+	var req request.EventItemRequest
 	if err := c.BodyParser(&req); err != nil {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse request")
 	}
@@ -78,10 +78,10 @@ func (h *eventDepartmentHandler) Update(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return pkg.Success(c, result, "Event Department updated successfully")
+	return pkg.Success(c, result, "Event Item updated successfully")
 }
 
-func (h *eventDepartmentHandler) Delete(c *fiber.Ctx) error {
+func (h *eventItemHandler) Delete(c *fiber.Ctx) error {
 	uuid := c.Params("uuid")
 	if uuid == "" {
 		return pkg.Error(c, fiber.StatusBadRequest, "UUID is required")
@@ -92,19 +92,19 @@ func (h *eventDepartmentHandler) Delete(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusNotFound, err.Error())
 	}
 
-	return pkg.Success(c, result, "Event Department deleted successfully")
+	return pkg.Success(c, result, "Event Item deleted successfully")
 }
 
-func (h *eventDepartmentHandler) GetByGroupUUID(c *fiber.Ctx) error {
-	groupUUID := c.Params("group_uuid")
-	if groupUUID == "" {
-		return pkg.Error(c, fiber.StatusBadRequest, "Missing group_uuid")
+func (h *eventItemHandler) GetByEventUUID(c *fiber.Ctx) error {
+	eventUUID := c.Params("event_uuid")
+	if eventUUID == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "Missing event_uuid")
 	}
 
-	result, err := h.service.GetByGroupUUID(groupUUID)
+	result, err := h.service.GetByEventUUID(eventUUID)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
 
-	return pkg.Success(c, result, "Successfully retrieved departments by group UUID")
+	return pkg.Success(c, result, "Successfully retrieved items by event UUID")
 }
