@@ -26,5 +26,5 @@ func SetupEventItemRoutes(router fiber.Router, db *gorm.DB) {
 	group.Get("/get/:uuid", middlewares.RequirePermission("event_item.view"), itemHandler.GetByUUID)
 	group.Patch("/update/:uuid", middlewares.RequirePermission("event_item.update"), itemHandler.Update)
 	group.Delete("/delete/:uuid", middlewares.RequirePermission("event_item.delete"), itemHandler.Delete)
-	group.Get("/get-by-event-id/:event_uuid", middlewares.RequirePermission("event_item.view-by-event"), itemHandler.GetByEventUUID)
+	group.Get("/get-by-event-uuid/:event_uuid", middlewares.RequirePermission("event_item.view-by-event"), itemHandler.GetByEventUUID)
 }

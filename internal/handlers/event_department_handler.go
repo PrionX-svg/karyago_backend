@@ -14,7 +14,7 @@ type EventDepartmentHandler interface {
 	GetByUUID(c *fiber.Ctx) error
 	Update(c *fiber.Ctx) error
 	Delete(c *fiber.Ctx) error
-	GetByGroupID(c *fiber.Ctx) error
+	GetByGroupUUID(c *fiber.Ctx) error
 }
 
 type eventDepartmentHandler struct {
