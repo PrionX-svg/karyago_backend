@@ -12,6 +12,14 @@ import (
 )
 
 type EventUserService interface {
+	Create(request request.EventUserReq, userID uint) (response.EventUserResponse, error)
+	GetAll() ([]response.EventUserResponse, error)
+	GetByID(id uint) (response.EventUserResponse, error)
+	GetByUUID(uuid string) (response.EventUserResponse, error)
+	GetByUserUUID(uuid string) ([]response.EventUserResponse, error)
+	GetByEventUUID(uuid string) ([]response.EventUserResponse, error)
+	Update(uuid string, req request.EventUserReq, actorID uint) (response.EventUserResponse, error)
+	Delete(uuid string) (response.EventUserResponse, error)
 }
 
 type eventUserService struct {
@@ -35,12 +43,12 @@ func (s *eventUserService) Create(request request.EventUserReq, userID uint) (re
 
 	user, err := s.userRepo.GetByUUID(request.UserUUID)
 	if err != nil {
-		return response.EventUserResponse{}, fmt.Errorf("Invalid user UUID")
+		return response.EventUserResponse{}, fmt.Errorf("invalid user UUID")
 	}
 
 	event, err := s.eventRepo.GetByUUID(request.EventUUID)
 	if err != nil {
-		return response.EventUserResponse{}, fmt.Errorf("Invalid event UUID")
+		return response.EventUserResponse{}, fmt.Errorf("invalid event UUID")
 	}
 
 	eventUser := &models.EventUser{
@@ -276,12 +284,12 @@ func (s *eventUserService) Update(uuid string, req request.EventUserReq, actorID
 
 	user, err := s.userRepo.GetByUUID(req.UserUUID)
 	if err != nil {
-		return response.EventUserResponse{}, fmt.Errorf("Invalid user UUID")
+		return response.EventUserResponse{}, fmt.Errorf("invalid user UUID")
 	}
 
 	event, err := s.eventRepo.GetByUUID(req.EventUUID)
 	if err != nil {
-		return response.EventUserResponse{}, fmt.Errorf("Invalid event UUID")
+		return response.EventUserResponse{}, fmt.Errorf("invalid event UUID")
 	}
 
 	eventUser.UserID = user.ID
