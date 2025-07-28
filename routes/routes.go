@@ -23,6 +23,7 @@ import (
 	usereducation "hris_backend/routes/user_education"
 	userexperience "hris_backend/routes/user_experience"
 	userfamily "hris_backend/routes/user_family"
+	workarea "hris_backend/routes/event/workarea"
 	"log"
 	"os"
 	"time"
@@ -85,4 +86,5 @@ func SetupRoutes(app *fiber.App) {
 	department_group.SetupEventDepartmentGroupRoutes(v1, db)
 	eventdepartment.SetupEventDepartmentRoutes(v1, db)
   eventitems.SetupEventItemRoutes(v1, db)
+	workarea.SetupEventWorkAreaRoutes(v1, db)
 }
