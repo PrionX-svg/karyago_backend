@@ -75,12 +75,12 @@ func (r *eventUserRepository) GetByUserUUID(uuid string) ([]models.EventUser, er
 	var eventUsers []models.EventUser
 
 	err := r.db.
+		Joins("JOIN users ON users.id = event_users.user_id").
 		Joins("JOIN events ON events.id = event_users.event_id").
-		Joins("JOIN companies ON companies.id = events.company_id").
-		Where("companies.uuid = ?", uuid).
+		Where("users.uuid = ?", uuid).
 		Preload("User").
-		Preload("Event.Company", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "uuid", "name")
+		Preload("Event", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "uuid", "name", "start_date", "end_date") // include other fields if needed
 		}).
 		Find(&eventUsers).Error
 
@@ -89,16 +89,19 @@ func (r *eventUserRepository) GetByUserUUID(uuid string) ([]models.EventUser, er
 	}
 	return eventUsers, nil
 }
+
+
 
 func (r *eventUserRepository) GetByEventUUID(uuid string) ([]models.EventUser, error) {
 	var eventUsers []models.EventUser
 
 	err := r.db.
 		Joins("JOIN events ON events.id = event_users.event_id").
+		Joins("JOIN users ON users.id = event_users.user_id").
 		Where("events.uuid = ?", uuid).
 		Preload("User").
 		Preload("Event", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "uuid", "name") // Adjust if Event has a name
+			return db.Select("id", "uuid", "name", "start_date", "end_date")
 		}).
 		Find(&eventUsers).Error
 
@@ -107,6 +110,7 @@ func (r *eventUserRepository) GetByEventUUID(uuid string) ([]models.EventUser, e
 	}
 	return eventUsers, nil
 }
+
 
 func (r *eventUserRepository) Update(eventUser *models.EventUser) error {
 	return r.db.Save(eventUser).Error

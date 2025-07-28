@@ -16,8 +16,8 @@ type EventUserService interface {
 	GetAll() ([]response.EventUserResponse, error)
 	GetByID(id uint) (response.EventUserResponse, error)
 	GetByUUID(uuid string) (response.EventUserResponse, error)
-	GetByUserUUID(uuid string) ([]response.EventUserResponse, error)
-	GetByEventUUID(uuid string) ([]response.EventUserResponse, error)
+	GetByUserUUID(uuid string) (response.EventUserGroupedByUser, error)
+	GetByEventUUID(uuid string) (response.EventUserGroupedByEvent, error)
 	Update(uuid string, req request.EventUserReq, actorID uint) (response.EventUserResponse, error)
 	Delete(uuid string) (response.EventUserResponse, error)
 }
@@ -202,79 +202,62 @@ func (s *eventUserService) GetByUUID(uuid string) (response.EventUserResponse, e
 	return eventUserResponse, nil
 }
 
-func (s *eventUserService) GetByUserUUID(uuid string) ([]response.EventUserResponse, error) {
+func (s *eventUserService) GetByUserUUID(uuid string) (response.EventUserGroupedByUser, error) {
 	eventUsers, err := s.repo.GetByUserUUID(uuid)
-	if err != nil {
-		return nil, err
+	if err != nil || len(eventUsers) == 0 {
+		return response.EventUserGroupedByUser{}, err
 	}
 
-	var eventUserResponses []response.EventUserResponse
+	group := response.EventUserGroupedByUser{
+		User: response.UserSummary{
+			UUID:     eventUsers[0].User.UUID,
+			FullName: eventUsers[0].User.FirstName + " " + eventUsers[0].User.LastName,
+			Email:    eventUsers[0].User.Email,
+		},
+	}
 
 	for _, evUs := range eventUsers {
-		eventUserResponses = append(eventUserResponses, response.EventUserResponse{
-			UUID:      evUs.UUID,
-			User: struct {
-				UUID     string `json:"uuid"`
-				FullName string `json:"fullname"`
-				Email    string `json:"email"`
-			}{
-				UUID:     evUs.User.UUID,
-				FullName: evUs.User.FirstName + " " + evUs.User.LastName,
-				Email:    evUs.User.Email,
-			},
-			Event: struct {
-				UUID      string `json:"uuid"`
-				Name      string `json:"name"`
-				StartDate string `json:"start_date"`
-				EndDate   string `json:"end_date"`
-			}{
-				UUID:      evUs.Event.UUID,
-				Name:      evUs.Event.Name,
-				StartDate: evUs.Event.StartDate.Format("2006-01-02 15:04:05"),
-				EndDate:   evUs.Event.EndDate.Format("2006-01-02 15:04:05"),
-			},
+		group.Events = append(group.Events, response.EventWithUUID{
+			EventUserUUID: evUs.UUID,
+			UUID:          evUs.Event.UUID,
+			Name:          evUs.Event.Name,
+			StartDate:     evUs.Event.StartDate.Format("2006-01-02 15:04:05"),
+			EndDate:       evUs.Event.EndDate.Format("2006-01-02 15:04:05"),
 		})
 	}
 
-	return eventUserResponses, nil
+	return group, nil
 }
 
-func (s *eventUserService) GetByEventUUID(uuid string) ([]response.EventUserResponse, error) {
+
+func (s *eventUserService) GetByEventUUID(uuid string) (response.EventUserGroupedByEvent, error) {
 	eventUsers, err := s.repo.GetByEventUUID(uuid)
-	if err != nil {
-		return nil, err
+	if err != nil || len(eventUsers) == 0 {
+		return response.EventUserGroupedByEvent{}, err
 	}
 
-	var eventUserResponses []response.EventUserResponse
+	group := response.EventUserGroupedByEvent{
+		Event: response.EventSummary{
+			UUID:      eventUsers[0].Event.UUID,
+			Name:      eventUsers[0].Event.Name,
+			StartDate: eventUsers[0].Event.StartDate.Format("2006-01-02 15:04:05"),
+			EndDate:   eventUsers[0].Event.EndDate.Format("2006-01-02 15:04:05"),
+		},
+	}
 
 	for _, evUs := range eventUsers {
-		eventUserResponses = append(eventUserResponses, response.EventUserResponse{
-			UUID:      evUs.UUID,
-			User: struct {
-				UUID     string `json:"uuid"`
-				FullName string `json:"fullname"`
-				Email    string `json:"email"`
-			}{
-				UUID:     evUs.User.UUID,
-				FullName: evUs.User.FirstName + " " + evUs.User.LastName,
-				Email:    evUs.User.Email,
-			},
-			Event: struct {
-				UUID      string `json:"uuid"`
-				Name      string `json:"name"`
-				StartDate string `json:"start_date"`
-				EndDate   string `json:"end_date"`
-			}{
-				UUID:      evUs.Event.UUID,
-				Name:      evUs.Event.Name,
-				StartDate: evUs.Event.StartDate.Format("2006-01-02 15:04:05"),
-				EndDate:   evUs.Event.EndDate.Format("2006-01-02 15:04:05"),
-			},
+		group.Users = append(group.Users, response.UserWithUUID{
+			EventUserUUID: evUs.UUID,
+			UUID:          evUs.User.UUID,
+			FullName:      evUs.User.FirstName + " " + evUs.User.LastName,
+			Email:         evUs.User.Email,
 		})
 	}
 
-	return eventUserResponses, nil
+	return group, nil
 }
+
+
 
 func (s *eventUserService) Update(uuid string, req request.EventUserReq, actorID uint) (response.EventUserResponse, error) {
 	eventUser, err := s.repo.GetByUUID(uuid)

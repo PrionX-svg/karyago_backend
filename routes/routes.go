@@ -15,6 +15,7 @@ import (
 	"hris_backend/routes/event/department_group"
 	eventdepartment "hris_backend/routes/event/department"
 	eventitems "hris_backend/routes/event/items"
+	eventuser "hris_backend/routes/event_user"
 	"hris_backend/routes/role"
 	"hris_backend/routes/shift"
 	"hris_backend/routes/upload"
@@ -85,4 +86,6 @@ func SetupRoutes(app *fiber.App) {
 	department_group.SetupEventDepartmentGroupRoutes(v1, db)
 	eventdepartment.SetupEventDepartmentRoutes(v1, db)
   eventitems.SetupEventItemRoutes(v1, db)
+	eventuser.SetupEventUserRoutes(v1, db)
+
 }
