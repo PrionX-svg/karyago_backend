@@ -29,6 +29,7 @@ func MigrationAll() {
 		&models.EventDepartmentGroup{},
 		&models.EventDepartment{},
 		&models.EventItem{},
+		&models.EventUser{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)

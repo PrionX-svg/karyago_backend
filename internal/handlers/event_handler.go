@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"hris_backend/internal/request"
 	"hris_backend/internal/services"
 	"hris_backend/pkg"
@@ -31,7 +30,6 @@ func NewEventHandler(service services.EventService) EventHandler {
 }
 
 func (h *eventHandler) Create(c *fiber.Ctx) error {
-	fmt.Print("Creating event... di handler nih coy\n")
 	var eventReq request.EventReq
 	if err := c.BodyParser(&eventReq); err != nil {
 		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse event")
