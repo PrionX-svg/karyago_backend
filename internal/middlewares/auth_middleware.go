@@ -33,7 +33,7 @@ func JWTMiddleware(c *fiber.Ctx) error {
 
 	if claims.ExpiresAt != nil {
 		timeRemaining := time.Until(claims.ExpiresAt.Time)
-		if timeRemaining < 15*time.Minute {
+		if timeRemaining < 30*time.Minute {
 			newToken, err := pkg.GenerateJWT(claims.UserID, claims.UserUUID, claims.Email, claims.Role)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to refresh token"})
@@ -42,10 +42,10 @@ func JWTMiddleware(c *fiber.Ctx) error {
 			c.Cookie(&fiber.Cookie{
 				Name:     "token",
 				Value:    newToken,
-				Expires:  time.Now().Add(1 * time.Hour),
 				HTTPOnly: true,
-				Secure:   os.Getenv("ENV") == "production",
-				SameSite: fiber.CookieSameSiteLaxMode,
+				Secure:   os.Getenv("APP_ENV") == "production",
+				Path:     "/",
+				Expires:  time.Now().Add(1 * time.Hour), 
 			})
 		}
 	}
