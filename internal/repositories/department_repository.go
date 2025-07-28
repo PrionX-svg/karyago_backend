@@ -1,14 +1,16 @@
 package repositories
 
 import (
-	"gorm.io/gorm"
 	"hris_backend/internal/models"
+
+	"gorm.io/gorm"
 )
 
 type DepartmentRepositories interface {
 	Create(department *models.Department) error
 	GetAll() ([]models.Department, error)
 	FindByUUID(UUID string) (*models.Department, error)
+	FindByID(id uint) (*models.Department, error)
 	GetDataTable(limit, offset int, search string, companyID uint, departmentGroupID *uint) ([]models.Department, int64, int64, error)
 	Update(department *models.Department) error
 	Delete(UUID string) error
@@ -44,6 +46,20 @@ func (r *departmentRepositories) FindByUUID(UUID string) (*models.Department, er
 		Table("departments").
 		Select("departments.*").
 		Where("departments.uuid = ?", UUID).
+		First(&department).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return &department, nil
+}
+
+func (r *departmentRepositories) FindByID(id uint) (*models.Department, error) {
+	var department models.Department
+	err := r.db.
+		Table("departments").
+		Select("departments.*").
+		Where("departments.id = ?", id).
 		First(&department).Error
 
 	if err != nil {

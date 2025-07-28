@@ -271,6 +271,23 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 		}
 	}
 
+	var department *struct {
+		UUID string `json:"uuid"`
+		Name string `json:"name"`
+	}
+	if employee.DepartmentID != nil {
+		dept, err := s.departmentRepo.FindByID(*employee.DepartmentID)
+		if err == nil && dept != nil {
+			department = &struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: dept.UUID,
+				Name: dept.Name,
+			}
+		}
+	}
+
 	return &response.UserWithEmployeeResponse{
 		UserUUID:     user.UUID,
 		EmployeeUUID: employee.UUID,
@@ -296,7 +313,8 @@ func (s *userService) GetMe(userID uint) (*response.UserWithEmployeeResponse, er
 			UUID: branchUUID,
 			Name: branchName,
 		},
-		Company: companyResp,
+		Company:    companyResp,
+		Department: department,
 	}, nil
 }
 
@@ -337,6 +355,23 @@ func (s *userService) GetAllUsers(companyUUID string) ([]response.UserWithEmploy
 			}
 		}
 
+		var department *struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}
+		if emp.DepartmentID != nil {
+			dept, err := s.departmentRepo.FindByID(*emp.DepartmentID)
+			if err == nil && dept != nil {
+				department = &struct {
+					UUID string `json:"uuid"`
+					Name string `json:"name"`
+				}{
+					UUID: dept.UUID,
+					Name: dept.Name,
+				}
+			}
+		}
+
 		var termination *struct {
 			Reason string     `json:"reason"`
 			Date   *time.Time `json:"date"`
@@ -373,6 +408,7 @@ func (s *userService) GetAllUsers(companyUUID string) ([]response.UserWithEmploy
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
 			}{UUID: branchUUID, Name: branchName},
+			Department:  department,
 			Termination: termination,
 		})
 	}
@@ -407,6 +443,23 @@ func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*respo
 		if err == nil {
 			branchUUID = branch.UUID
 			branchName = branch.Name
+		}
+	}
+
+	var department *struct {
+		UUID string `json:"uuid"`
+		Name string `json:"name"`
+	}
+	if employee.DepartmentID != nil {
+		dept, err := s.departmentRepo.FindByID(*employee.DepartmentID)
+		if err == nil && dept != nil {
+			department = &struct {
+				UUID string `json:"uuid"`
+				Name string `json:"name"`
+			}{
+				UUID: dept.UUID,
+				Name: dept.Name,
+			}
 		}
 	}
 
@@ -446,6 +499,7 @@ func (s *userService) GetUserByUUID(userUUID string, companyUUID string) (*respo
 			UUID string `json:"uuid"`
 			Name string `json:"name"`
 		}{UUID: branchUUID, Name: branchName},
+		Department:  department,
 		Termination: termination,
 	}, nil
 }
@@ -536,6 +590,23 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 			}
 		}
 
+		var department *struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}
+		if employee.DepartmentID != nil {
+			dept, err := s.departmentRepo.FindByID(*employee.DepartmentID)
+			if err == nil && dept != nil {
+				department = &struct {
+					UUID string `json:"uuid"`
+					Name string `json:"name"`
+				}{
+					UUID: dept.UUID,
+					Name: dept.Name,
+				}
+			}
+		}
+
 		var termination *struct {
 			Reason string     `json:"reason"`
 			Date   *time.Time `json:"date"`
@@ -576,6 +647,7 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 				UUID string `json:"uuid"`
 				Name string `json:"name"`
 			}{UUID: companyUUIDStr, Name: companyName},
+			Department:  department,
 			Termination: termination,
 		})
 	}
@@ -690,6 +762,23 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			branchData = branch
 		}
 
+		var department *struct {
+			UUID string `json:"uuid"`
+			Name string `json:"name"`
+		}
+		if employee.DepartmentID != nil {
+			dept, err := s.departmentRepo.FindByID(*employee.DepartmentID)
+			if err == nil && dept != nil {
+				department = &struct {
+					UUID string `json:"uuid"`
+					Name string `json:"name"`
+				}{
+					UUID: dept.UUID,
+					Name: dept.Name,
+				}
+			}
+		}
+
 		user.FirstName = req.FirstName
 		user.LastName = req.LastName
 		user.Phone = req.Phone
@@ -755,6 +844,7 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 				UUID: req.CompanyUUID,
 				Name: company.Name,
 			},
+			Department: department,
 		}
 
 		return nil

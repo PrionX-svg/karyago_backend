@@ -29,4 +29,8 @@ type UserWithEmployeeResponse struct {
 		UUID string `json:"uuid"`
 		Name string `json:"name"`
 	} `json:"company,omitempty"`
+	Department *struct {
+		UUID string `json:"uuid"`
+		Name string `json:"name"`
+	} `json:"department,omitempty"`
 }
