@@ -655,6 +655,7 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 	return result, total, int64(len(result)), nil
 }
 
+
 func (s *userService) RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		user, err := s.userRepo.GetByUUID(userUUID)
@@ -672,24 +673,8 @@ func (s *userService) RehireEmployee(userUUID, companyUUID string, req request.R
 			return fmt.Errorf("terminated employee not found: %w", err)
 		}
 
-		role, err := s.roleRepo.FindByUUID(req.RoleUUID)
-		if err != nil {
-			return fmt.Errorf("role not found: %w", err)
-		}
-
-		var branchID *uint
-		if req.BranchUUID != "" {
-			branch, err := s.branchRepo.FindByUUID(req.BranchUUID)
-			if err != nil {
-				return fmt.Errorf("branch not found: %w", err)
-			}
-			branchID = &branch.ID
-		}
-
 		employee.TerminatedAt = nil
 		employee.TerminationReason = nil
-		employee.RoleID = role.ID
-		employee.BranchID = branchID
 		employee.IsFreelance = req.IsFreelance
 		employee.ModifyBy = modifierID
 
