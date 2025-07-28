@@ -1,6 +1,6 @@
 package response
 
-type EventUser struct {
+type EventUserResponse struct {
 	UUID      string  `json:"uuid"`
 	User      struct {
 		UUID      string `json:"uuid"`
