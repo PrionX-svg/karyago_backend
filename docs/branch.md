@@ -11,9 +11,9 @@ operations.
 
 http://localhost:8080/api/v1/branches
 
-````
+```
 
----****
+---\*\*\*\*
 
 ## ➕ Create Branch
 
@@ -29,9 +29,10 @@ Create a new branch.
   "name": "Cabang Jakarta",
   "address": "Jl. Sudirman No. 100, Jakarta",
   "email": "jakarta.branch@company.com",
-  "phone": "021-98765432"
+  "phone": "021-98765432",
+  "image": "/test-image.webp"
 }
-````
+```
 
 ### Response
 
@@ -43,6 +44,7 @@ Create a new branch.
     "address": "Jl. Sudirman No. 100, Surabaya",
     "email": "Surabaya.branch@company.com",
     "phone": "021-98765432",
+  "image": "/test-image.webp"
     "company": {
       "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
       "logo": "/uuid-date-namafile",
@@ -76,6 +78,7 @@ Retrieve the list of all branches.
       "address": "Jl. Sudirman No. 100, Surabaya",
       "email": "Surabaya.branch@company.com",
       "phone": "021-98765432",
+  "image": "/test-image.webp"
       "company": {
         "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
         "logo": "/uuid-date-namafile",
@@ -95,7 +98,6 @@ Retrieve the list of all branches.
 
 ## 🔍 Get Branches By Company UUID
 
-
 **GET** `/get-by-company-uuid/:uuid`
 Example: `/get-by-company-uuid/8b21610d-8d24-4510-a324-77760a344242`
 
@@ -112,6 +114,7 @@ Retrieve the list of all branches by company UUID.
             "address": "Jl. Sudirman No. 100, Jakarta",
             "email": "jakarta.branch@company.com",
             "phone": "021-98765432",
+  "image": "/test-image.webp"
             "company": {
                 "uuid": "8b21610d-8d24-4510-a324-77760a344242",
                 "logo": "",
@@ -127,6 +130,7 @@ Retrieve the list of all branches by company UUID.
             "address": "Jl. Malioboro No. 100, Yogyakarta",
             "email": "jakarta.2ndbranch@company.com",
             "phone": "021-98765432",
+  "image": "/test-image.webp"
             "company": {
                 "uuid": "8b21610d-8d24-4510-a324-77760a344242",
                 "logo": "",
@@ -160,6 +164,7 @@ Example: `/get/8ec51987-9375-4151-9b3b-b9d2467669f8`
     "address": "Jl. Sudirman No. 100, Surabaya",
     "email": "Surabaya.branch@company.com",
     "phone": "021-98765432",
+  "image": "/test-image.webp"
     "company": {
       "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
       "logo": "/uuid-date-namafile",
@@ -189,7 +194,8 @@ Example: `/update/8ec51987-9375-4151-9b3b-b9d2467669f8`
   "name": "Cabang Tangerang",
   "address": "Jl. Tangerang No. 100, Tangerang",
   "email": "jakarta.branch@company.com",
-  "phone": "021-98765432"
+  "phone": "021-98765432",
+  "image": "/test-image.webp"
 }
 ```
 
@@ -203,6 +209,7 @@ Example: `/update/8ec51987-9375-4151-9b3b-b9d2467669f8`
     "address": "Jl. Tangerang No. 100, Tangerang",
     "email": "tangerang.branch@company.com",
     "phone": "021-98765432",
+      "image": "/test-image.webp"
     "company": {
       "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
       "logo": "/uuid-date-namafile",
@@ -234,6 +241,7 @@ Example: `/delete/8ec51987-9375-4151-9b3b-b9d2467669f8`
     "address": "Jl. Tangerang No. 100, Tangerang",
     "email": "tangerang.branch@company.com",
     "phone": "021-98765432",
+      "image": "/test-image.webp"
     "company": {
       "uuid": "026e99f5-a16c-488d-932f-ce332b60bc52",
       "logo": "/uuid-date-namafile",
