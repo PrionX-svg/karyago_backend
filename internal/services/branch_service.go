@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"hris_backend/internal/response"
+	"hris_backend/pkg/r2"
 
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
@@ -24,12 +25,14 @@ type BranchService interface {
 type branchService struct {
 	repo        repositories.BranchRepository
 	companyRepo repositories.CompanyRepositories
+	uploader    r2.Uploader
 }
 
-func NewBranchService(branchRepo repositories.BranchRepository, companyRepo repositories.CompanyRepositories) BranchService {
+func NewBranchService(branchRepo repositories.BranchRepository, companyRepo repositories.CompanyRepositories, uploader r2.Uploader) BranchService {
 	return &branchService{
 		repo:        branchRepo,
 		companyRepo: companyRepo,
+		uploader:    uploader,
 	}
 }
 
@@ -97,9 +100,14 @@ func (s *branchService) Get(uuid string) (response.BranchResponse, error) {
 		return response.BranchResponse{}, err
 	}
 
+	var imageURL string
+	if branch.Image != nil && *branch.Image != "" {
+		imageURL, _ = s.uploader.GetPresignedURL(*branch.Image)
+	}
+
 	result := response.BranchResponse{
 		UUID:    branch.UUID,
-		Image:   branch.Image,
+		Image:   &imageURL,
 		Name:    branch.Name,
 		Address: branch.Address,
 		Email:   branch.Email,
@@ -136,9 +144,14 @@ func (s *branchService) GetByCompanyUUID(uuid string) ([]response.BranchResponse
 
 	var results []response.BranchResponse
 	for _, branch := range branches {
+		var imageURL string
+		if branch.Image != nil && *branch.Image != "" {
+			imageURL, _ = s.uploader.GetPresignedURL(*branch.Image)
+		}
+
 		results = append(results, response.BranchResponse{
 			UUID:    branch.UUID,
-			Image:   branch.Image,
+			Image:   &imageURL,
 			Name:    branch.Name,
 			Address: branch.Address,
 			Email:   branch.Email,
@@ -269,9 +282,14 @@ func (s *branchService) List() ([]response.BranchResponse, error) {
 
 	var result []response.BranchResponse
 	for _, b := range branches {
+		var imageURL string
+		if b.Image != nil && *b.Image != "" {
+			imageURL, _ = s.uploader.GetPresignedURL(*b.Image)
+		}
+
 		result = append(result, response.BranchResponse{
 			UUID:    b.UUID,
-			Image:   b.Image,
+			Image:   &imageURL,
 			Name:    b.Name,
 			Address: b.Address,
 			Email:   b.Email,

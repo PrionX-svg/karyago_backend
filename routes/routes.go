@@ -12,9 +12,10 @@ import (
 	departmentgroup "hris_backend/routes/department_group"
 	"hris_backend/routes/employment_history"
 	"hris_backend/routes/event"
-	"hris_backend/routes/event/department_group"
 	eventdepartment "hris_backend/routes/event/department"
+	"hris_backend/routes/event/department_group"
 	eventitems "hris_backend/routes/event/items"
+	workarea "hris_backend/routes/event/workarea"
 	"hris_backend/routes/role"
 	"hris_backend/routes/shift"
 	"hris_backend/routes/upload"
@@ -23,7 +24,6 @@ import (
 	usereducation "hris_backend/routes/user_education"
 	userexperience "hris_backend/routes/user_experience"
 	userfamily "hris_backend/routes/user_family"
-	workarea "hris_backend/routes/event/workarea"
 	"log"
 	"os"
 	"time"
@@ -68,7 +68,7 @@ func SetupRoutes(app *fiber.App) {
 	role.SetupRoleRoutes(v1, db)
 	role.SetupRolePermissionRoutes(v1, db)
 	role.SetupPermissionRoutes(v1, db)
-	branch.SetupBranchRoutes(v1, db)
+	branch.SetupBranchRoutes(v1, db, r2Client, os.Getenv("R2_BUCKET"))
 	company.SetupCompanyRoutes(v1, db, r2Client, os.Getenv("R2_BUCKET"))
 	user.SetupUserDetailRoutes(v1, db)
 	user.SetupUserRoutes(v1, db)
@@ -85,6 +85,6 @@ func SetupRoutes(app *fiber.App) {
 	event.SetupEventRoutes(v1, db)
 	department_group.SetupEventDepartmentGroupRoutes(v1, db)
 	eventdepartment.SetupEventDepartmentRoutes(v1, db)
-  eventitems.SetupEventItemRoutes(v1, db)
+	eventitems.SetupEventItemRoutes(v1, db)
 	workarea.SetupEventWorkAreaRoutes(v1, db)
 }

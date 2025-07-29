@@ -1,18 +1,22 @@
 package branch
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 	"hris_backend/internal/handlers"
 	"hris_backend/internal/middlewares"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/services"
+	"hris_backend/pkg/r2"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/minio/minio-go/v7"
+	"gorm.io/gorm"
 )
 
-func SetupBranchRoutes(router fiber.Router, db *gorm.DB) {
+func SetupBranchRoutes(router fiber.Router, db *gorm.DB, r2Client *minio.Client, bucketName string) {
+	uploader := r2.NewUploader(r2Client, bucketName)
 	branchRepo := repositories.NewBranchRepository(db)
 	companyRepo := repositories.NewCompanyRepository(db)
-	branchService := services.NewBranchService(branchRepo, companyRepo)
+	branchService := services.NewBranchService(branchRepo, companyRepo, *uploader)
 	branchHandler := handlers.NewBranchHandler(branchService)
 
 	branch := router.Group("/branches")
