@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"hris_backend/internal/response"
 
-	"github.com/google/uuid"
 	"hris_backend/internal/models"
 	"hris_backend/internal/repositories"
 	"hris_backend/internal/request"
 	"hris_backend/pkg"
+
+	"github.com/google/uuid"
 )
 
 type BranchService interface {
@@ -45,6 +46,7 @@ func (s *branchService) Create(req request.BranchReq, actorID uint) (response.Br
 	newBranch := models.Branch{
 		UUID:      uuid.NewString(),
 		CompanyID: company.ID,
+		Image:     req.Image,
 		Name:      req.Name,
 		Address:   req.Address,
 		Email:     req.Email,
@@ -64,6 +66,7 @@ func (s *branchService) Create(req request.BranchReq, actorID uint) (response.Br
 
 	branchResp := response.BranchResponse{
 		UUID:    branchModel.UUID,
+		Image:   branchModel.Image,
 		Name:    branchModel.Name,
 		Address: branchModel.Address,
 		Email:   branchModel.Email,
@@ -96,6 +99,7 @@ func (s *branchService) Get(uuid string) (response.BranchResponse, error) {
 
 	result := response.BranchResponse{
 		UUID:    branch.UUID,
+		Image:   branch.Image,
 		Name:    branch.Name,
 		Address: branch.Address,
 		Email:   branch.Email,
@@ -134,6 +138,7 @@ func (s *branchService) GetByCompanyUUID(uuid string) ([]response.BranchResponse
 	for _, branch := range branches {
 		results = append(results, response.BranchResponse{
 			UUID:    branch.UUID,
+			Image:   branch.Image,
 			Name:    branch.Name,
 			Address: branch.Address,
 			Email:   branch.Email,
@@ -157,7 +162,7 @@ func (s *branchService) GetByCompanyUUID(uuid string) ([]response.BranchResponse
 	}
 
 	return results, nil
-	
+
 }
 
 func (s *branchService) Update(uuid string, req request.BranchReq, actorID uint) (response.BranchResponse, error) {
@@ -175,6 +180,7 @@ func (s *branchService) Update(uuid string, req request.BranchReq, actorID uint)
 		return response.BranchResponse{}, fmt.Errorf("invalid company UUID")
 	}
 
+	branch.Image = req.Image
 	branch.Name = req.Name
 	branch.Address = req.Address
 	branch.Email = req.Email
@@ -193,6 +199,7 @@ func (s *branchService) Update(uuid string, req request.BranchReq, actorID uint)
 
 	resp := response.BranchResponse{
 		UUID:    updatedBranch.UUID,
+		Image:   updatedBranch.Image,
 		Name:    updatedBranch.Name,
 		Address: updatedBranch.Address,
 		Email:   updatedBranch.Email,
@@ -229,6 +236,7 @@ func (s *branchService) Delete(uuid string) (response.BranchResponse, error) {
 
 	resp := response.BranchResponse{
 		UUID:    branch.UUID,
+		Image:   branch.Image,
 		Name:    branch.Name,
 		Address: branch.Address,
 		Email:   branch.Email,
@@ -263,6 +271,7 @@ func (s *branchService) List() ([]response.BranchResponse, error) {
 	for _, b := range branches {
 		result = append(result, response.BranchResponse{
 			UUID:    b.UUID,
+			Image:   b.Image,
 			Name:    b.Name,
 			Address: b.Address,
 			Email:   b.Email,
