@@ -131,8 +131,6 @@ func (h *EventShiftHandler) Update(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	fmt.Print("SAMPE DI SINI NIH AMAN")
-
 	shift, err := h.service.Update(uuid, req, userID)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, "Failed to update event shift")

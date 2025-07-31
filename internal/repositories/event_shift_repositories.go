@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"fmt"
 	"hris_backend/internal/models"
 
 	"gorm.io/gorm"
@@ -89,7 +88,6 @@ func (r *eventShiftRepository) GetByEventUUID(uuid string) ([]models.EventShift,
 }
 
 func (r *eventShiftRepository) Update(eventShift *models.EventShift) error {
-	fmt.Print("Error dalam repository")
 	if err := r.db.
 		Omit("Event"). // 👈 prevent GORM from touching the associated Event
 		Save(eventShift).Error; err != nil {

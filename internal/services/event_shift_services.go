@@ -178,12 +178,10 @@ func (s *eventShiftService) GetByEventUUID(uuid string) ([]response.EventShiftRe
 }
 
 func (s *eventShiftService) Update(uuid string, req request.EventShiftReq, actorID uint) (response.EventShiftResponse, error) {
-	fmt.Print("Update Event Shift Service dengan uuid : ", uuid)
 	shift, err := s.repo.GetByUUID(uuid)
 	if err != nil {
 		return response.EventShiftResponse{}, err
 	}
-	fmt.Print("\n\nberhasil get : ", uuid)
 	
 	shift.Name = req.Name
 	shift.Date = req.Date
@@ -192,10 +190,8 @@ func (s *eventShiftService) Update(uuid string, req request.EventShiftReq, actor
 	shift.ModifyBy = actorID
 	
 	if err := s.repo.Update(shift); err != nil {
-		fmt.Print("\nwah error!!!!")
 		return response.EventShiftResponse{}, err
 	}
-	fmt.Print("\n\nberhasil update : ", uuid)
 
 	return response.EventShiftResponse{
 		UUID:      shift.UUID,
