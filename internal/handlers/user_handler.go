@@ -235,6 +235,30 @@ func (h *UserHandler) UpdateEmployeeDepartment(c *fiber.Ctx) error {
 		"message": "success",
 	})
 }
+func (h *UserHandler) RemoveEmployeeFromDepartment(c *fiber.Ctx) error {
+	userUUID := c.Params("uuid")
+
+	var req request.UpdateDepartmentReq
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
+	}
+
+	modifierID := c.Locals("user_id").(uint)
+
+	if err := h.userService.RemoveEmployeeFromDepartment(userUUID, req.DepartmentUUID, modifierID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to remove employee from department",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
+}
 
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	userUUID := c.Params("uuid")

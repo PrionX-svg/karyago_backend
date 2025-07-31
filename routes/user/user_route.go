@@ -35,6 +35,7 @@ func SetupUserRoutes(router fiber.Router, db *gorm.DB) {
 	user.Delete("/delete/:uuid", middlewares.RequirePermission("user.delete"), userHandler.DeleteUser)
 	user.Patch("/update/:uuid", middlewares.RequirePermission("user.update"), userHandler.UpdateUser)
 	user.Patch("/update-department/:uuid", middlewares.RequirePermission("user.update-department"), userHandler.UpdateEmployeeDepartment)
+	user.Patch("/remove-from-department/:uuid", middlewares.RequirePermission("user.remove-from-department"), userHandler.RemoveEmployeeFromDepartment)
 	user.Patch("/rehire/:uuid", middlewares.RequirePermission("user.rehire"), userHandler.RehireUser)
 
 	user.Get("/export", middlewares.RequirePermission("user.export"), userHandler.ExportUsersTemplateToExcel)
