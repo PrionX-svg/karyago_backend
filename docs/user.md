@@ -1,3 +1,4 @@
+```markdown
 # 📘 HRIS - User API
 
 Documentation for **User** management endpoints in the HRIS system, including create, retrieve, update,
@@ -9,9 +10,9 @@ and delete operations.
 
 ```
 
-http://localhost:8080/api/v1/users
+[http://localhost:8080/api/v1/users](http://localhost:8080/api/v1/users)
 
-```
+````
 
 ---
 
@@ -36,7 +37,7 @@ Creates a new user with employee details.
   "gender": "male",
   "is_freelance": false
 }
-```
+````
 
 ### Response
 
@@ -233,6 +234,68 @@ Update user/employee fields such as DOB, gender, and freelance status.
 
 ---
 
+## 🏷️ Assign / Remove User from Department
+
+### ➕ Assign Employee to Department
+
+**PATCH** `/update-department/:uuid`
+
+Assigns a user (employee) to a department.
+
+#### Example
+
+```
+/update-department/f5793cf1-36cc-49eb-835a-781c6865f333
+```
+
+#### Request Body
+
+```json
+{
+  "department_uuid": "64d59a63-761d-4777-8b00-3aefc4974a60"
+}
+```
+
+#### Response
+
+```json
+{
+  "message": "Employee assigned to department successfully"
+}
+```
+
+---
+
+### ➖ Remove Employee from Department
+
+**PATCH** `/remove-from-department/:uuid`
+
+Removes the department association from a user. Typically this will nullify the user's `department` field.
+
+#### Example
+
+```
+/remove-from-department/f5793cf1-36cc-49eb-835a-781c6865f333
+```
+
+#### Request Body
+
+```json
+{
+  "department_uuid": "64d59a63-761d-4777-8b00-3aefc4974a60"
+}
+```
+
+#### Response
+
+```json
+{
+  "message": "Employee removed from department successfully"
+}
+```
+
+---
+
 ## ❌ Delete User
 
 **DELETE** `/delete/:uuid`
@@ -331,8 +394,8 @@ Generates an Excel file containing all users and their employee data.
 
 ### Response
 
-- Downloads an `.xlsx` file.
-- Sheet name: `Users`
+* Downloads an `.xlsx` file.
+* Sheet name: `Users`
 
 ### Excel Columns
 
@@ -358,8 +421,8 @@ Imports users in bulk from an Excel (`.xlsx`) file.
 
 ### Request
 
-- **Content-Type:** `multipart/form-data`
-- **Form Field:** `file` (Excel file)
+* **Content-Type:** `multipart/form-data`
+* **Form Field:** `file` (Excel file)
 
 ### Excel Format (Sheet: `Users`)
 
@@ -369,10 +432,10 @@ Imports users in bulk from an Excel (`.xlsx`) file.
 
 ### Import Rules
 
-- The **first row** is treated as the **header** and will be skipped.
-- If a `role` or `branch` name cannot be found → that row will be **skipped**.
-- If the `email` already exists → the user is considered a duplicate and the row will be **skipped**.
-- The default password for all imported users is set to `"default123"` (should be changed by users later).
+* The **first row** is treated as the **header** and will be skipped.
+* If a `role` or `branch` name cannot be found → that row will be **skipped**.
+* If the `email` already exists → the user is considered a duplicate and the row will be **skipped**.
+* The default password for all imported users is set to `"default123"` (should be changed by users later).
 
 ### Response
 
@@ -380,4 +443,7 @@ Imports users in bulk from an Excel (`.xlsx`) file.
 {
   "message": "Import completed successfully"
 }
+```
+
+```
 ```

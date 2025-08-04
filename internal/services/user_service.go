@@ -656,7 +656,6 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 	return result, total, int64(len(result)), nil
 }
 
-
 func (s *userService) RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		user, err := s.userRepo.GetByUUID(userUUID)
