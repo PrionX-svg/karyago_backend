@@ -39,6 +39,7 @@ type UserService interface {
 	) ([]response.UserWithEmployeeResponse, int64, int64, error)
 	UpdateUser(userUUID string, req request.UserEmployeeReq, modifierID uint) (response.UserWithEmployeeResponse, error)
 	UpdateEmployeeDepartment(userUUID string, departmentUUID string, modifierID uint) error
+	RemoveEmployeeFromDepartment(userUUID string, departmentUUID string, modifierID uint) error
 	DeleteUser(userUUID, companyUUID, reason string) error
 	RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error
 }
@@ -655,7 +656,6 @@ func (s *userService) GetUsersWithEmployeeDataTable(
 	return result, total, int64(len(result)), nil
 }
 
-
 func (s *userService) RehireEmployee(userUUID, companyUUID string, req request.RehireEmployeeReq, modifierID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		user, err := s.userRepo.GetByUUID(userUUID)
@@ -868,6 +868,40 @@ func (s *userService) UpdateEmployeeDepartment(userUUID string, departmentUUID s
 
 		if err := s.employeeRepo.Update(employee); err != nil {
 			return fmt.Errorf("failed to update employee department: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (s *userService) RemoveEmployeeFromDepartment(userUUID string, departmentUUID string, modifierID uint) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		user, err := s.userRepo.GetByUUID(userUUID)
+		if err != nil {
+			return fmt.Errorf("user not found: %w", err)
+		}
+
+		employee, err := s.employeeRepo.FindByUserID(user.ID)
+		if err != nil {
+			return fmt.Errorf("employee not found: %w", err)
+		}
+
+		if employee.TerminatedAt != nil {
+			return fmt.Errorf("cannot update department for terminated employee")
+		}
+
+		if departmentUUID != "" {
+			_, err := s.departmentRepo.FindByUUID(departmentUUID)
+			if err != nil {
+				return fmt.Errorf("department not found: %w", err)
+			}
+		}
+
+		employee.DepartmentID = nil
+		employee.ModifyBy = modifierID
+
+		if err := s.employeeRepo.Update(employee); err != nil {
+			return fmt.Errorf("failed to remove employee from department: %w", err)
 		}
 
 		return nil
