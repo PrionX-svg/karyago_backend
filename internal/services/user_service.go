@@ -840,12 +840,7 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 
 func (s *userService) UpdateEmployeeDepartment(userUUID string, departmentUUID string, modifierID uint) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
-		user, err := s.userRepo.GetByUUID(userUUID)
-		if err != nil {
-			return fmt.Errorf("user not found: %w", err)
-		}
-
-		employee, err := s.employeeRepo.FindByUserID(user.ID)
+		employee, err := s.employeeRepo.FindByUUID(userUUID)
 		if err != nil {
 			return fmt.Errorf("employee not found: %w", err)
 		}
