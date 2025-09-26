@@ -4,6 +4,7 @@ import (
 	"hris_backend/database"
 	"hris_backend/pkg"
 	"hris_backend/pkg/r2"
+	"hris_backend/routes/attendance"
 	"hris_backend/routes/auth"
 	"hris_backend/routes/branch"
 	"hris_backend/routes/company"
@@ -91,5 +92,6 @@ func SetupRoutes(app *fiber.App) {
 	workarea.SetupEventWorkAreaRoutes(v1, db)
 	eventshift.SetupEventShiftRoutes(v1, db)
 	eventuser.SetupEventUserRoutes(v1, db)
+	attendance.SetupAttendanceRoutes(v1, db)
 
 }
