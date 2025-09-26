@@ -32,6 +32,7 @@ func MigrationAll() {
 		&models.EventWorkArea{},
 		&models.EventShift{},
 		&models.EventUser{},
+		&models.Attendance{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)
