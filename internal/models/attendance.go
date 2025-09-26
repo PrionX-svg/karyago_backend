@@ -19,7 +19,7 @@ type Attendance struct {
 
 	Is_homeOffice bool `json:"Is_home_office" gorm:"not null;default:false"`
 
-	Notes     *string   `json:"Notes" gorm:"type:varchar(400)"`
+	Notes     *string   `json:"notes" gorm:"type:varchar(400)"`
 	CreatedBy *uint     `json:"created_by"`
 	UpdatedBy *uint     `json:"updated_by"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
