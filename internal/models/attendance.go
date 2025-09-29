@@ -17,7 +17,7 @@ type Attendance struct {
 	ClockOutLat *float64   `json:"clock_out_lat" gorm:"type:decimal(10,7)"`
 	ClockOutLng *float64   `json:"clock_out_lng" gorm:"type:decimal(10,7)"`
 
-	Is_homeOffice bool `json:"Is_home_office" gorm:"not null;default:false"`
+	Is_homeOffice bool `json:"is_home_office" gorm:"not null;default:false"`
 
 	Notes     *string   `json:"notes" gorm:"type:varchar(400)"`
 	CreatedBy *uint     `json:"created_by"`

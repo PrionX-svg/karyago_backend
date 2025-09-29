@@ -34,8 +34,6 @@ func parseDate(s string) (time.Time, error) {
 	return time.Parse("2006-01-02", s)
 }
 
-/* ===================== Actions ===================== */
-
 func (h *attendanceHandler) ClockIn(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)
 	if !ok || userID == 0 {
@@ -53,20 +51,21 @@ func (h *attendanceHandler) ClockIn(c *fiber.Ctx) error {
 	}
 
 	workDate, err := parseDate(req.WorkDate)
-	if err != nil { return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date") }
+	if err != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date")
+	}
 
 	at := time.Now().UTC()
 	if req.At != nil && *req.At != "" {
-		if atParsed, e := time.Parse(time.RFC3339, *req.At); e == nil { at = atParsed }
+		if atParsed, e := time.Parse(time.RFC3339, *req.At); e == nil {
+			at = atParsed
+		}
 	}
 
-	att, err := h.svc.ClockIn(userID, req.CompanyUUID, at)
+	att, err := h.svc.ClockIn(userID, req.CompanyUUID, workDate, at)
 	if err != nil {
-		return pkg.Error(c, fiber.StatusBadRequest, err.Error())
+		return pkg.Error(c, 400, err.Error())
 	}
-	// pastikan WorkDate diset sesuai req (repo EnsureForDay pakai workDate)
-	// kalau kamu ingin pakai at.Local untuk WorkDate, ubah service repo agar gunakan workDate yang sama.
-	att.WorkDate = workDate
 
 	return pkg.Success(c, att, "clock-in success")
 }
@@ -86,17 +85,22 @@ func (h *attendanceHandler) ClockOut(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil || req.WorkDate == "" {
 		return pkg.Error(c, fiber.StatusBadRequest, "invalid payload")
 	}
-	_, err := parseDate(req.WorkDate)
-	if err != nil { return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date") }
+	workDate, err := time.Parse("2006-01-02", req.WorkDate)
+	if err != nil {
+		return pkg.Error(c, 400, "invalid work_date")
+	}
 
 	at := time.Now().UTC()
 	if req.At != nil && *req.At != "" {
-		if atParsed, e := time.Parse(time.RFC3339, *req.At); e == nil { at = atParsed }
+		if t, e := time.Parse(time.RFC3339, *req.At); e == nil {
+			at = t
+		}
 	}
 
-	att, err := h.svc.ClockOut(userID, req.CompanyUUID, at)
+	att, err := h.svc.ClockOut(userID, req.CompanyUUID, workDate, at)
+
 	if err != nil {
-		return pkg.Error(c, fiber.StatusBadRequest, err.Error())
+		return pkg.Error(c, 400, err.Error())
 	}
 	return pkg.Success(c, att, "clock-out success")
 }
@@ -117,7 +121,9 @@ func (h *attendanceHandler) ToggleHomeOffice(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "invalid payload")
 	}
 	workDate, err := parseDate(req.WorkDate)
-	if err != nil { return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date") }
+	if err != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date")
+	}
 
 	att, err := h.svc.ToggleHomeOffice(userID, req.CompanyUUID, workDate, req.IsHome)
 	if err != nil {
@@ -142,7 +148,9 @@ func (h *attendanceHandler) SaveNotes(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "invalid payload")
 	}
 	workDate, err := parseDate(req.WorkDate)
-	if err != nil { return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date") }
+	if err != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date")
+	}
 
 	att, err := h.svc.SaveNotes(userID, req.CompanyUUID, workDate, req.Notes)
 	if err != nil {
@@ -164,7 +172,9 @@ func (h *attendanceHandler) GetByDate(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "work_date is required")
 	}
 	workDate, err := parseDate(workDateStr)
-	if err != nil { return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date") }
+	if err != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date")
+	}
 
 	var companyUUID *string
 	if v := c.Query("company_uuid"); v != "" {

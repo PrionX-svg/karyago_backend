@@ -111,7 +111,7 @@ func (r *attendanceRepository) SetHomeOffice(employeeID, companyID uint, workDat
 		return nil, ErrAlreadyClockedOut
 	}
 	att.Is_homeOffice = isHomeOffice
-	if err := r.db.Model(att).Update("is_homeOfiice", att.Is_homeOffice).Error; err != nil {
+	if err := r.db.Model(att).Update("is_home_office", att.Is_homeOffice).Error; err != nil {
 		return nil, err
 	}
 	return att, nil
