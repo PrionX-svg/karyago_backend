@@ -1,0 +1,332 @@
+HRM – EMPLOYEE DATA MANAGEMENT
+Dokumentasi untuk Pembelajaran Chatbot AI (Format .TXT)
+Versi: 1.0
+Tanggal: 01 October 2025 00:00 UTC+07:00
+Platform: Website (web-based)
+Tanggal pendirian aplikasi: Februari 2025
+Bahasa utama: Indonesia (ID)
+
+=====================================================================
+RINGKASAN
+=====================================================================
+Sistem HRM-Employee Data Management adalah aplikasi berbasis web yang membantu perusahaan mengelola data karyawan, absensi, dan komunikasi cepat melalui Chatbot AI. Akses dan tampilan sistem disesuaikan dengan peran (role-based): Owner/Admin dan Employee. Alur utama: perusahaan mendaftar (register), verifikasi email via OTP, login, lalu menggunakan fitur sesuai peran.
+
+Fitur kunci:
+- Dashboard berbasis role (Admin vs Employee).
+- Manage Employee (create/add, read, update, terminate).
+- Attendance (clock in sekali, clock out sekali per hari; toggle WFO/WFH; notes; request edit attendance).
+- Chatbot AI sebagai asisten tanya jawab cepat dan kontekstual.
+
+=====================================================================
+PERAN & HAK AKSES (RBAC)
+=====================================================================
+Peran:
+1) Owner/Admin
+   - Membuat/menambahkan akun employee.
+   - Membaca dan mengubah data employee (update).
+   - Menandai status terminate untuk employee (offboarding).
+   - Mengelola data Company (department dan department group).
+   - Melihat dashboard admin (statistik absensi, notifikasi request edit, ringkasan aktif/terminated).
+   - Menyetujui/menolak request edit attendance.
+   - Mengakses detail informasi employee (aktif / terminated).
+2) Employee
+   - Melihat profil sendiri.
+   - Melakukan attendance: clock in sekali & clock out sekali per hari.
+   - Mengatur toggle lokasi kerja: Home Office (WFH) atau Office (WFO).
+   - Menambahkan catatan (notes) saat attendance.
+   - Mengirim request edit attendance jika ada kendala/lupa.
+   - Melihat informasi ringkas pada dashboard employee.
+3) Sistem (Layanan Latar Belakang)
+   - Mengirim OTP verifikasi email saat registrasi.
+   - Mencatat audit log.
+   - Mengirim notifikasi (email/in-app) untuk status request edit.
+
+Catatan keamanan:
+- Pengguna hanya dapat mengakses data sesuai peran.
+- Akses ke data sensitif dibatasi (mis. hanya Admin yang dapat melihat seluruh data employee).
+
+=====================================================================
+FITUR UTAMA DAN DESKRIPSI
+=====================================================================
+1) Dashboard (Role-Based)
+   - Admin:
+     * Kartu ringkasan: jumlah employee aktif, jumlah terminated, total department & group.
+     * Status absensi hari ini: daftar employee yang sudah/ belum attendance.
+     * Antrian request edit attendance (baru, menunggu, disetujui/ditolak).
+     * Tautan cepat: tambah employee, kelola department, lihat laporan ringkas.
+   - Employee:
+     * Status absensi hari ini (clock in/out, durasi kerja).
+     * Toggle WFO/WFH hari ini (Home Office/Office).
+     * Riwayat singkat attendance minggu berjalan.
+     * Pengumuman atau informasi penting dari perusahaan.
+     * Akses cepat untuk mengajukan request edit attendance.
+
+2) Manage Employee (CRUD + Terminate)
+   - Create/Add: Admin menambahkan akun employee setelah Company terverifikasi.
+   - Read: Admin dapat melihat daftar & detail employee.
+   - Update: Admin memperbarui info profil, department, status, dll.
+   - Terminate: Admin menandai employee sebagai terminated (nonaktif); akun tidak bisa login, tetapi data historis tetap tersimpan untuk audit.
+   - (Opsional) Rehire: Admin dapat mengaktifkan kembali (jika kebijakan perusahaan mengizinkan).
+
+3) Attendance
+   - Clock In/Clock Out:
+     * Employee hanya boleh 1x clock in dan 1x clock out per hari kalender.
+     * Sistem menolak clock in ganda atau clock out ganda pada hari yang sama.
+   - Toggle Lokasi Kerja:
+     * Home Office (WFH) atau Office (WFO) dapat diaktif/nonaktifkan sebelum atau saat clock in.
+   - Notes:
+     * Employee dapat menulis catatan saat attendance (mis. “Meeting onsite” / “Gangguan internet”).
+   - Request Edit Attendance:
+     * Jika lupa clock in/clock out atau terjadi kendala, employee dapat mengajukan permintaan edit.
+     * Admin meninjau dan memutuskan: setujui atau tolak dengan alasan.
+     * Riwayat keputusan tersimpan (audit).
+
+4) Chatbot AI
+   - Asisten tanya jawab cepat untuk panduan penggunaan, kebijakan absensi, definisi istilah, status permintaan, dan navigasi menu.
+   - Konteks-aware: jawaban menyesuaikan peran (Admin vs Employee).
+   - Aman: Chatbot hanya memaparkan data yang diizinkan oleh peran/otorisasi pengguna.
+
+=====================================================================
+ALUR APLIKASI (FLOW)
+=====================================================================
+1) Register Company
+   - Owner/Admin mengisi data perusahaan dan struktur organisasi awal (department & department group).
+   - Sistem mengirim OTP ke email yang didaftarkan.
+   - Status akun company: “pending_verification”.
+
+2) Verifikasi Email via OTP
+   - Owner/Admin memasukkan kode OTP yang dikirim ke email.
+   - Jika benar dan belum kedaluwarsa, status menjadi “verified”.
+   - Jika salah/expired, sistem menolak dan menawarkan kirim ulang OTP.
+
+3) Login
+   - Hanya pengguna dengan email terdaftar & terverifikasi yang dapat login.
+   - Setelah login:
+     * Admin diarahkan ke dashboard admin.
+     * Employee diarahkan ke dashboard employee.
+
+4) Setelah Login – Admin
+   - Mengatur data Company: tambah/ubah department & department group.
+   - Manage Employee: buat akun baru, update data, terminate, cari & lihat detail.
+   - Monitoring Absensi: melihat siapa yang sudah/ belum attendance hari ini.
+   - Memproses Request Edit Attendance: setujui/tolak dengan alasan.
+   - Laporan Ringkas: rekap mingguan/bulanan (opsional).
+
+5) Setelah Login – Employee
+   - Melihat profil sendiri.
+   - Attendance: clock in (sekali) dan clock out (sekali) per hari.
+   - Mengaktifkan toggle Home Office/Office.
+   - Menulis notes saat attendance (opsional).
+   - Mengajukan request edit attendance bila lupa atau ada kendala.
+   - Melihat ringkasan pada dashboard (riwayat singkat, status hari ini).
+
+=====================================================================
+ATURAN BISNIS KUNCI
+=====================================================================
+- Satu hari kalender = maksimal 1x clock in + 1x clock out per employee.
+- Jika employee mencoba clock in kedua kali pada hari yang sama, sistem menolak dan mengarahkan untuk request edit jika perlu.
+- Clock out tanpa clock in tidak diizinkan; arahkan untuk request edit.
+- Toggle WFH/WFO memengaruhi atribut attendance hari itu (untuk pelaporan).
+- Request edit harus menyertakan alasan dan, jika perlu, bukti pendukung (opsional).
+- Admin wajib memberikan alasan saat menolak request edit.
+- Employee berstatus terminated tidak dapat login; data historis dipertahankan.
+- Data department dan department group harus konsisten; employee harus terkait minimal ke satu department.
+- Zona waktu default: Asia/Jakarta (UTC+7).
+
+=====================================================================
+MODEL DATA (RINGKAS)
+=====================================================================
+Entitas inti (ringkas, contoh field):
+- Company: id, name, email_owner, status_verification, created_at.
+- DepartmentGroup: id, company_id, name, description, created_at.
+- Department: id, company_id, group_id, name, created_at.
+- User: id, company_id, role (ADMIN/EMPLOYEE), email, password_hash, verified, status (ACTIVE/TERMINATED), created_at.
+- EmployeeProfile: user_id, full_name, employee_code, position, department_id, phone, address, start_date, end_date, notes.
+- Attendance: id, user_id, date, clock_in_at, clock_out_at, location_mode (WFH/WFO), notes, status (IN_PROGRESS/COMPLETED), source (web/mobile), created_at, updated_at.
+- AttendanceEditRequest: id, attendance_id (nullable jika tidak ada), user_id, date, requested_change (clock_in_at/clock_out_at/location/notes), reason, status (PENDING/APPROVED/REJECTED), reviewer_id, reviewed_at, reviewer_note, created_at.
+- OTP: id, user_id OR company_email, code, expires_at, used_at.
+- AuditLog: id, actor_id, action, entity, entity_id, payload, created_at.
+
+=====================================================================
+STATUS & STATE MACHINE (ATTENDANCE)
+=====================================================================
+- IN_PROGRESS: setelah clock in berhasil dan belum clock out.
+- COMPLETED: setelah clock out berhasil di hari yang sama.
+- EDIT_PENDING: ketika ada request edit terkait yang statusnya PENDING.
+- EDITED: perubahan disetujui dan diterapkan.
+Transisi umum:
+NONE -> IN_PROGRESS (clock in)
+IN_PROGRESS -> COMPLETED (clock out)
+ANY -> EDIT_PENDING (request edit dibuat)
+EDIT_PENDING -> EDITED (disetujui) atau kembali ke status sebelumnya (ditolak)
+
+=====================================================================
+PROSEDUR OPERASIONAL (SOP) RINGKAS
+=====================================================================
+A. Admin menambah employee
+   1) Buka Manage Employee > Tambah.
+   2) Isi nama, email, department, dan data wajib.
+   3) Simpan: sistem mengirim email aktivasi/verifikasi bila diperlukan.
+B. Admin terminate employee
+   1) Buka detail employee > Terminate.
+   2) Tambahkan alasan; konfirmasi.
+   3) Sistem memutus akses login; status menjadi TERMINATED.
+C. Employee attendance harian
+   1) Pilih mode WFO/WFH (opsional atur sebelum clock in).
+   2) Clock in: sistem mencatat waktu & status IN_PROGRESS.
+   3) Clock out: sistem mencatat waktu & menutup attendance (COMPLETED).
+D. Request edit attendance oleh employee
+   1) Buka Riwayat > pilih tanggal > Ajukan Edit.
+   2) Isi perubahan yang diminta (mis. jam clock in) + alasan.
+   3) Admin meninjau: setujui/tolak; sistem kirim notifikasi.
+
+=====================================================================
+CHATBOT AI – KOMPETENSI & INTENT
+=====================================================================
+Tujuan: membantu pengguna (Admin/Employee) menemukan informasi dan menjalankan langkah-langkah umum dengan cepat.
+
+Daftar intent (contoh):
+- INTENT_HELP: bantuan umum & navigasi.
+- INTENT_CLOCK_IN: cara melakukan clock in.
+- INTENT_CLOCK_OUT: cara melakukan clock out.
+- INTENT_TOGGLE_WFH_WFO: cara mengatur mode kerja.
+- INTENT_REQUEST_EDIT: cara mengajukan edit attendance.
+- INTENT_STATUS_REQUEST: cek status request edit.
+- INTENT_ADD_EMPLOYEE: langkah tambah employee (Admin).
+- INTENT_TERMINATE_EMPLOYEE: langkah terminate (Admin).
+- INTENT_VIEW_DASHBOARD: penjelasan kartu dashboard.
+- INTENT_POLICY_ATTENDANCE: kebijakan/aturan absensi.
+- INTENT_PROFILE_VIEW: cara melihat/memperbarui profil.
+- INTENT_APP_INFO: informasi umum aplikasi (pendirian Februari 2025, platform web).
+- INTENT_DEPARTMENT_INFO: kelola department & group (Admin).
+
+Contoh mapping entity & sinonim:
+- location_mode: {{WFH: ["WFH","Home Office","rumah"], WFO: ["WFO","Office","kantor"]}}
+- role: {{ADMIN: ["admin","owner","pemilik"], EMPLOYEE: ["employee","karyawan","staff"]}}
+- request_status: {{PENDING:["pending","menunggu"], APPROVED:["approved","disetujui"], REJECTED:["rejected","ditolak"]}}
+
+=====================================================================
+TEMPLATE RESPON CHATBOT (SINGKAT)
+=====================================================================
+- Sukses umum: "Berhasil. Ada lagi yang bisa saya bantu?"
+- Error hak akses: "Maaf, Anda tidak memiliki hak akses untuk tindakan ini."
+- Validasi gagal: "Data tidak lengkap atau tidak valid. Mohon periksa kembali."
+- Tidak ditemukan: "Data tidak ditemukan."
+- OTP: "Kode OTP tidak valid atau telah kedaluwarsa. Coba kirim ulang."
+- Request edit dikirim: "Permintaan edit Anda telah dikirim dan menunggu persetujuan Admin."
+- Request edit disetujui: "Permintaan edit Anda disetujui."
+- Request edit ditolak: "Permintaan edit Anda ditolak. Alasan: {{alasan}}."
+
+=====================================================================
+CONTOH QA (DATA LATIH) – INDONESIA
+=====================================================================
+Q: Apa itu HRM-Employee Data Management?
+A: Aplikasi web untuk mengelola data karyawan, absensi, dan tanya jawab cepat via Chatbot AI dengan tampilan sesuai peran.
+
+Q: Kapan aplikasi ini didirikan?
+A: Aplikasi didirikan pada Februari 2025.
+
+Q: Siapa saja role yang tersedia?
+A: Owner/Admin dan Employee. Admin mengelola data perusahaan & karyawan, Employee fokus pada profil dan absensi harian.
+
+Q: Bagaimana cara register perusahaan?
+A: Isi data company pada halaman Register. Sistem mengirim OTP ke email Anda. Masukkan OTP untuk verifikasi, lalu login.
+
+Q: Saya tidak menerima OTP, apa yang harus dilakukan?
+A: Cek folder spam dan pastikan email benar. Jika tetap tidak ada, gunakan fitur kirim ulang OTP.
+
+Q: Bagaimana cara login?
+A: Setelah email terverifikasi, buka halaman Login dan masukkan email & kata sandi yang terdaftar.
+
+Q: Apa yang bisa dilakukan Admin setelah login?
+A: Mengelola department & group, menambah/update/terminate karyawan, memantau absensi, dan memproses request edit.
+
+Q: Apa yang bisa dilakukan Employee setelah login?
+A: Melihat profil, clock in/out sekali per hari, menyalakan toggle WFH/WFO, menulis notes, dan mengajukan request edit.
+
+Q: Apakah clock in bisa dilakukan lebih dari sekali?
+A: Tidak. Sistem hanya mengizinkan satu kali clock in per hari kalender.
+
+Q: Saya lupa clock out, bagaimana solusinya?
+A: Ajukan Request Edit Attendance untuk tanggal tersebut dan jelaskan alasannya. Admin akan meninjau.
+
+Q: Apa itu toggle Home Office/Office?
+A: Penanda lokasi kerja harian. Pilih Home Office (WFH) atau Office (WFO) sebelum/saat clock in untuk pelaporan yang akurat.
+
+Q: Bagaimana cara menambah karyawan baru?
+A: Admin masuk ke Manage Employee > Tambah, isi data wajib, lalu simpan. Sistem mengirim informasi aktivasi/verifikasi bila diperlukan.
+
+Q: Bagaimana cara terminate karyawan?
+A: Admin buka detail karyawan > Terminate, berikan alasan, konfirmasi. Akun tidak bisa login, data historis tetap ada.
+
+Q: Di mana melihat daftar karyawan yang belum attendance?
+A: Di dashboard Admin terdapat ringkasan siapa yang sudah/ belum attendance hari ini.
+
+Q: Bagaimana cara mengecek status request edit saya?
+A: Buka menu Request/Edit pada dashboard atau tanya Chatbot: "Status request edit saya untuk tanggal 10/09?"
+
+Q: Apakah Chatbot bisa memberikan data pribadi karyawan lain?
+A: Tidak. Chatbot menghormati hak akses; Employee hanya melihat data miliknya sendiri.
+
+Q: Apakah sistem mendukung catatan pada attendance?
+A: Ya. Anda dapat menambahkan notes pada saat clock in atau clock out.
+
+Q: Apakah sistem ini berbasis mobile?
+A: Aplikasi ini berbasis website. Dukungan mobile browser tersedia; aplikasi mobile native opsional di masa depan.
+
+=====================================================================
+TELEMETRI, AUDIT & KEAMANAN (RINGKAS)
+=====================================================================
+- AuditLog untuk semua tindakan sensitif (create/update/terminate/approve/reject).
+- Enkripsi kata sandi (hash + salt); transport aman (HTTPS).
+- Pembatasan sesi & timeout otomatis (opsional).
+- Verifikasi email via OTP saat registrasi.
+- RBAC ketat pada endpoint & tampilan.
+
+=====================================================================
+NOTIFIKASI & LAPORAN
+=====================================================================
+- Notifikasi email/in-app untuk request edit (dibuat/disetujui/ditolak).
+- Laporan ringkas absensi harian/mingguan/bulanan (opsional).
+- Dashboard metrik cepat: tingkat kehadiran, jumlah request edit, top issue.
+
+=====================================================================
+KASUS TEPI (EDGE CASE)
+=====================================================================
+- OTP kedaluwarsa atau salah berulang kali.
+- Clock out melewati tengah malam (shift lintas hari) – kebijakan dapat dikonfigurasi.
+- Perubahan department saat hari berjalan – dampak ke laporan harian.
+- Email karyawan duplikat.
+- Karyawan terminated mencoba login.
+- Permintaan edit tanpa alasan yang jelas – validasi wajib alasan.
+
+=====================================================================
+KAMUS ISTILAH SINGKAT
+=====================================================================
+- WFH: Work From Home (Home Office).
+- WFO: Work From Office (kantor).
+- OTP: One Time Password untuk verifikasi email.
+- Terminate: menonaktifkan akun karyawan.
+- Request Edit Attendance: permohonan perubahan data absensi.
+
+=====================================================================
+STRUKTUR DATA LATIH (CONTOH RINGKAS)
+=====================================================================
+[INTENT] INTENT_CLOCK_IN
+[UTTERANCE] "Bagaimana cara clock in?"
+[RESPONSE] "Buka halaman Attendance lalu tekan 'Clock In'. Anda hanya dapat clock in sekali per hari."
+
+[INTENT] INTENT_REQUEST_EDIT
+[UTTERANCE] "Saya lupa clock out, apa yang harus dilakukan?"
+[RESPONSE] "Ajukan Request Edit Attendance untuk tanggal terkait dan jelaskan alasannya. Admin akan meninjau."
+
+[INTENT] INTENT_APP_INFO
+[UTTERANCE] "Aplikasi ini berdiri sejak kapan?"
+[RESPONSE] "Aplikasi didirikan pada Februari 2025 dan berbasis web."
+
+=====================================================================
+CATATAN
+=====================================================================
+Dokumen ini dipakai sebagai data belajar Chatbot AI agar mampu menjawab pertanyaan pengguna dan memandu langkah operasional sesuai peran. Penjelasan di atas bersifat acuan; detail implementasi (mis. batas waktu request edit, kebijakan lintas hari) dapat dikonfigurasi sesuai kebutuhan perusahaan.
+
+-- Akhir Dokumen --

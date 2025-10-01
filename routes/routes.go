@@ -7,6 +7,7 @@ import (
 	"hris_backend/routes/attendance"
 	"hris_backend/routes/auth"
 	"hris_backend/routes/branch"
+	"hris_backend/routes/chatbot"
 	"hris_backend/routes/company"
 	"hris_backend/routes/company_detail_shift"
 	"hris_backend/routes/department"
@@ -93,5 +94,5 @@ func SetupRoutes(app *fiber.App) {
 	eventshift.SetupEventShiftRoutes(v1, db)
 	eventuser.SetupEventUserRoutes(v1, db)
 	attendance.SetupAttendanceRoutes(v1, db)
-
+	chatbot.SetupChatbotRoutes(v1, os.Getenv("CHATBOT_API_KEY"))
 }
