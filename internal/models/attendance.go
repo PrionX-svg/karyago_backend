@@ -4,7 +4,7 @@ import "time"
 
 type Attendance struct {
 	ID         uint      `json:"id" gorm:"primaryKey;autoIncrement"`
-	UUID       string    `json:"uuid" gorm:"type:char(36);not null;uniqueIndex"`
+	UUID       string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	EmployeeID uint      `json:"employee_id" gorm:"not null;index:idx_emp_workdate,unique"`
 	CompanyID  uint      `json:"company_id" gorm:"not null;index:idx_company_workdate"`
 	WorkDate   time.Time `json:"work_date" gorm:"type:date;not null;index:idx_emp_workdate,unique;index:idx_company_workdate"`

@@ -50,18 +50,13 @@ func (h *attendanceHandler) ClockIn(c *fiber.Ctx) error {
 		return pkg.Error(c, fiber.StatusBadRequest, "invalid payload")
 	}
 
-	workDate, err := parseDate(req.WorkDate)
-	if err != nil {
-		return pkg.Error(c, fiber.StatusBadRequest, "invalid work_date")
-	}
+	workDate, err := time.Parse("2006-01-02", req.WorkDate)
+    if err != nil { return pkg.Error(c, 400, "invalid work_date") }
 
-	at := time.Now().UTC()
-	if req.At != nil && *req.At != "" {
-		if atParsed, e := time.Parse(time.RFC3339, *req.At); e == nil {
-			at = atParsed
-		}
-	}
-
+    at := time.Now().UTC()
+    if req.At != nil && *req.At != "" {
+        if t, e := time.Parse(time.RFC3339, *req.At); e == nil { at = t }
+    }
 	att, err := h.svc.ClockIn(userID, req.CompanyUUID, workDate, at)
 	if err != nil {
 		return pkg.Error(c, 400, err.Error())
