@@ -1,6 +1,6 @@
 package request
 
 type ChatbotRequest struct {
-	Model   string `json:"model" validate:"required"`
+	Model   string `json:"model"`
 	Message string `json:"message" validate:"required"`
 }
