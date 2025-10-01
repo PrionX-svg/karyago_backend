@@ -43,15 +43,18 @@ func NewChatbotService(apiKey string, companyFilePath string) ChatbotServices {
 }
 
 func (s *chatbotServices) Ask(req request.ChatbotRequest) (response.ChatbotResponse, error) {
-
 	if err := pkg.Validate.Struct(req); err != nil {
 		return response.ChatbotResponse{}, err
+	}
+
+	model := req.Model
+	if model == "" {
+		model = "x-ai/grok-4-fast:free"
 	}
 
 	messages := []map[string]string{}
 
 	if s.knowledge != "" {
-
 		messages = append(messages, map[string]string{
 			"role": "system",
 			"content": "Kamu adalah asisten perusahaan. " +
@@ -67,7 +70,7 @@ func (s *chatbotServices) Ask(req request.ChatbotRequest) (response.ChatbotRespo
 	})
 
 	payload := map[string]interface{}{
-		"model":    req.Model,
+		"model":    model,
 		"messages": messages,
 	}
 
