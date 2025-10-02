@@ -2,10 +2,11 @@ package repositories
 
 import (
 	"errors"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"hris_backend/internal/models"
 )
@@ -44,26 +45,27 @@ func NewAttendanceRepository(db *gorm.DB) AttendanceRepository {
 
 // EnsureForDay membuat (atau mengambil) record unik per (employee_id, work_date).
 func (r *attendanceRepository) EnsureForDay(employeeID, companyID uint, workDate time.Time) (*models.Attendance, error) {
-	att := models.Attendance{
+	var att models.Attendance
+
+	if err := r.db.Where("employee_id = ? AND work_date = ?", employeeID, workDate).
+		First(&att).Error; err == nil {
+		return &att, nil
+	}
+
+	att = models.Attendance{
 		EmployeeID: employeeID,
 		CompanyID:  companyID,
-		WorkDate:   workDate, // DATE (lokal)
+		WorkDate:   workDate,
+		UUID: uuid.NewString(),
 	}
-
-	// upsert: kalau sudah ada, DoNothing
-	if err := r.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "employee_id"}, {Name: "work_date"}},
-		DoNothing: true,
-	}).Create(&att).Error; err != nil {
-		return nil, err
-	}
-
-	if att.ID == 0 {
-		if err := r.db.
-			Where("employee_id = ? AND work_date = ?", employeeID, workDate).
-			First(&att).Error; err != nil {
-			return nil, err
+	if err := r.db.Create(&att).Error; err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "Error 400") {
+			if err2 := r.db.Where("employee_id = ? AND work_date = ?", employeeID, workDate).
+				First(&att).Error; err2 == nil {
+				return &att, nil
+			}
 		}
+		return nil, err
 	}
 	return &att, nil
 }
