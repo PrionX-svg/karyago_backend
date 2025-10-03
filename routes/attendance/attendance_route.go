@@ -27,6 +27,7 @@ func SetupAttendanceRoutes(router fiber.Router, db *gorm.DB) {
 	att.Use(middlewares.JWTMiddleware)
 
 	// Actions
+	att.Get("/calendar", attHandler.ListCalendar)
 	att.Post("/clock-in", attHandler.ClockIn)
 	att.Post("/clock-out", attHandler.ClockOut)
 	att.Patch("/toggle-homeOffice", attHandler.ToggleHomeOffice)
