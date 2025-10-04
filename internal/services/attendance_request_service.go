@@ -213,8 +213,8 @@ func (s *attendanceEditService) Reject(userID uint, reqID uint, note string) err
 	}
 	if s.notify != nil {
 		if email, _ := s.empRepo.GetUserEmailByEmployeeID(req.EmployeeID); email != nil && *email != "" {
-			_ = s.notify.SendEmail(*email, "Attendance Edit Approved",
-				fmt.Sprintf("Permintaan edit %s telah disetujui.", req.WorkDate.Format("2006-01-02")))
+			_ = s.notify.SendEmail(*email, "Attendance Edit Rejected",
+				fmt.Sprintf("Permintaan edit %s ditolak.", req.WorkDate.Format("2006-01-02")))
 		}
 	}
 	return nil
