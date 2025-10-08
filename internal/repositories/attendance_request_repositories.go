@@ -18,7 +18,7 @@ type AttendanceEditRepository interface {
 	ListMine(employeeID uint, status *models.EditRequestStatus, from, to *time.Time) ([]models.AttendanceEditRequest, error)
 
 	// Supervisor view (with pagination)
-	ListForSupervisor(companyID uint, status *models.EditRequestStatus, from, to *time.Time, q *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error)
+	ListAllEmployee(companyID uint, status *models.EditRequestStatus, from, to *time.Time, q *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error)
 
 	// Approval updates (Approve MUST be called within a transaction)
 	Approve(tx *gorm.DB, reqID uint, reviewerID uint, note *string) (*models.AttendanceEditRequest, error)
@@ -65,7 +65,7 @@ func (r *attendanceEditRepository) ListMine(employeeID uint, status *models.Edit
 	return rows, err
 }
 
-func (r *attendanceEditRepository) ListForSupervisor(companyID uint, status *models.EditRequestStatus, from, to *time.Time, qtext *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error) {
+func (r *attendanceEditRepository) ListAllEmployee(companyID uint, status *models.EditRequestStatus, from, to *time.Time, qtext *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error) {
 	q := r.db.Model(&models.AttendanceEditRequest{}).Where("company_id = ?", companyID)
 
 	if status != nil && *status != "" {

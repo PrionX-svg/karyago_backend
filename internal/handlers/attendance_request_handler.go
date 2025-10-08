@@ -94,7 +94,7 @@ func (h *AttendanceEditHandler) ListMine(c *fiber.Ctx) error {
 	return pkg.Success(c, rows, "ok")
 }
 
-func (h *AttendanceEditHandler) ListForSupervisor(c *fiber.Ctx) error {
+func (h *AttendanceEditHandler) ListAllEmployee(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)
 	if !ok || userID == 0 {
 		return pkg.Error(c, fiber.StatusUnauthorized, "unauthorized")
@@ -121,7 +121,7 @@ func (h *AttendanceEditHandler) ListForSupervisor(c *fiber.Ctx) error {
 	limit := c.QueryInt("limit", 50)
 	offset := c.QueryInt("offset", 0)
 
-	rows, total, err := h.svc.ListForSupervisor(userID, status, from, to, q, limit, offset)
+	rows, total, err := h.svc.ListAllEmployee(userID, status, from, to, q, limit, offset)
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}

@@ -46,7 +46,7 @@ func SetupAttendanceRoutes(router fiber.Router, db *gorm.DB) {
 	// Supervisor/HR
 	att.Get("/edit-requests",
 		middlewares.RequirePermission("attendance.edit.view_all"),
-		editAttHandler.ListForSupervisor,
+		editAttHandler.ListAllEmployee,
 	)
 	att.Post("/edit-requests/:id/approve",
 		middlewares.RequirePermission("attendance.edit.approve"),

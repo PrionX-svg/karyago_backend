@@ -26,7 +26,7 @@ type CreateEditReq struct {
 type AttendanceEditService interface {
 	Create(userID uint, p CreateEditReq) (uint, error)
 	ListMine(userID uint, status *models.EditRequestStatus, from, to *time.Time) ([]models.AttendanceEditRequest, error)
-	ListForSupervisor(userID uint, status *models.EditRequestStatus, from, to *time.Time, q *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error)
+	ListAllEmployee(userID uint, status *models.EditRequestStatus, from, to *time.Time, q *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error)
 	Approve(userID uint, reqID uint, note *string) error
 	Reject(userID uint, reqID uint, note string) error
 }
@@ -129,12 +129,12 @@ func (s *attendanceEditService) ListMine(userID uint, status *models.EditRequest
 	return s.editRepo.ListMine(emp.ID, status, from, to)
 }
 
-func (s *attendanceEditService) ListForSupervisor(userID uint, status *models.EditRequestStatus, from, to *time.Time, q *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error) {
+func (s *attendanceEditService) ListAllEmployee(userID uint, status *models.EditRequestStatus, from, to *time.Time, q *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error) {
 	reviewer, err := s.getEmployee(userID)
 	if err != nil || reviewer.CompanyID == nil {
 		return nil, 0, fmt.Errorf("forbidden")
 	}
-	return s.editRepo.ListForSupervisor(*reviewer.CompanyID, status, from, to, q, limit, offset)
+	return s.editRepo.ListAllEmployee(*reviewer.CompanyID, status, from, to, q, limit, offset)
 }
 
 func (s *attendanceEditService) Approve(userID uint, reqID uint, note *string) error {
