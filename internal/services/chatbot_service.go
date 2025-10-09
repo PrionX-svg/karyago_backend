@@ -49,7 +49,7 @@ func (s *chatbotServices) Ask(req request.ChatbotRequest) (response.ChatbotRespo
 
 	model := req.Model
 	if model == "" {
-		model = "deepseek/deepseek-chat-v3.1:free"
+		model = "x-ai/grok-code-fast-1"
 	}
 
 	messages := []map[string]string{}

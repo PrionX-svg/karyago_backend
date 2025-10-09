@@ -1,4 +1,4 @@
-HRM – EMPLOYEE DATA MANAGEMENT
+ArbeitsHub – EMPLOYEE DATA MANAGEMENT
 Dokumentasi untuk Pembelajaran Chatbot AI (Format .TXT)
 Versi: 1.0
 Tanggal: 01 October 2025 00:00 UTC+07:00
@@ -9,7 +9,7 @@ Bahasa utama: Indonesia (ID)
 =====================================================================
 RINGKASAN
 =====================================================================
-Sistem HRM-Employee Data Management adalah aplikasi berbasis web yang membantu perusahaan mengelola data karyawan, absensi, dan komunikasi cepat melalui Chatbot AI. Akses dan tampilan sistem disesuaikan dengan peran (role-based): Owner/Admin dan Employee. Alur utama: perusahaan mendaftar (register), verifikasi email via OTP, login, lalu menggunakan fitur sesuai peran.
+Sistem ArbeitsHub-Employee Data Management adalah aplikasi berbasis web yang membantu perusahaan mengelola data karyawan, absensi, dan komunikasi cepat melalui Chatbot AI. Akses dan tampilan sistem disesuaikan dengan peran (role-based): Owner/Admin dan Employee. Alur utama: perusahaan mendaftar (register), verifikasi email via OTP, login, lalu menggunakan fitur sesuai peran.
 
 Fitur kunci:
 - Dashboard berbasis role (Admin vs Employee).
@@ -220,7 +220,7 @@ TEMPLATE RESPON CHATBOT (SINGKAT)
 =====================================================================
 CONTOH QA (DATA LATIH) – INDONESIA
 =====================================================================
-Q: Apa itu HRM-Employee Data Management?
+Q: Apa itu ArbeitsHub-Employee Data Management?
 A: Aplikasi web untuk mengelola data karyawan, absensi, dan tanya jawab cepat via Chatbot AI dengan tampilan sesuai peran.
 
 Q: Kapan aplikasi ini didirikan?

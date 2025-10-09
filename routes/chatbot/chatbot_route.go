@@ -15,5 +15,5 @@ func SetupChatbotRoutes(router fiber.Router, apiKey string) {
 	chat := router.Group("/chatbot")
 	chat.Use(middlewares.JWTMiddleware)
 
-	chat.Post("/ask", middlewares.RequirePermission("chatbot.ask"), chatbotHandler.Ask)
+	chat.Post("/ask", chatbotHandler.Ask)
 }

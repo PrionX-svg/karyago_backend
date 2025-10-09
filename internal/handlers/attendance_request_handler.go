@@ -91,7 +91,24 @@ func (h *AttendanceEditHandler) ListMine(c *fiber.Ctx) error {
 	if err != nil {
 		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
 	}
-	return pkg.Success(c, rows, "ok")
+
+	// 🔧 Tambahkan mapping biar field waktu jelas
+	var resp []fiber.Map
+	for _, r := range rows {
+		resp = append(resp, fiber.Map{
+			"id":                      r.ID,
+			"work_date":               r.WorkDate.Format("2006-01-02"),
+			"request_type":            r.RequestType,
+			"reason":                  r.Reason,
+			"status":                  r.Status,
+			"proposed_clock_in_at":    r.ProposedClockInAt,
+			"proposed_clock_out_at":   r.ProposedClockOutAt,
+			"proposed_is_home_office": r.ProposedIsHomeOffice,
+			"created_at":              r.CreatedAt,
+		})
+	}
+
+	return pkg.Success(c, resp, "ok")
 }
 
 func (h *AttendanceEditHandler) ListAllEmployee(c *fiber.Ctx) error {

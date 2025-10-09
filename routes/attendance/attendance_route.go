@@ -34,14 +34,8 @@ func SetupAttendanceRoutes(router fiber.Router, db *gorm.DB) {
 	att.Patch("/notes", attHandler.SaveNotes)
 
 	// Employee
-	att.Post("/edit-requests",
-		middlewares.RequirePermission("attendance.edit.create"),
-		editAttHandler.Create,
-	)
-	att.Get("/edit-requests/my",
-		middlewares.RequirePermission("attendance.edit.view_self"),
-		editAttHandler.ListMine,
-	)
+	att.Post("/edit-requests", editAttHandler.Create)
+	att.Get("/edit-requests/my", editAttHandler.ListMine)
 
 	// Supervisor/HR
 	att.Get("/edit-requests",
