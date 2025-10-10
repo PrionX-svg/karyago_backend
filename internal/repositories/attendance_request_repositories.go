@@ -66,7 +66,10 @@ func (r *attendanceEditRepository) ListMine(employeeID uint, status *models.Edit
 }
 
 func (r *attendanceEditRepository) ListAllEmployee(companyID uint, status *models.EditRequestStatus, from, to *time.Time, qtext *string, limit, offset int) ([]models.AttendanceEditRequest, int64, error) {
-	q := r.db.Model(&models.AttendanceEditRequest{}).Where("company_id = ?", companyID)
+	q := r.db.Model(&models.AttendanceEditRequest{}).
+		Preload("Employee.User").       
+		Preload("Employee.Department").
+		Where("company_id = ?", companyID)
 
 	if status != nil && *status != "" {
 		q = q.Where("status = ?", *status)

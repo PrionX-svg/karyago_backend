@@ -14,11 +14,12 @@ import (
 
 type AttendanceService interface {
 	// Core actions
+	ListAllEmployeeAttendance(companyUUID *string, from, to time.Time) ([]models.Attendance, error)
 	CalendarDay(userID uint, companyUUIDOpt *string, from, to time.Time) (*models.Attendance, error)
 	ToggleHomeOffice(userID uint, companyUUID *string, workDate time.Time, isHome bool) (*models.Attendance, error)
 	SaveNotes(userID uint, companyUUID *string, workDate time.Time, notes *string) (*models.Attendance, error)
-	ClockIn(userID uint, companyUUID *string, workDate time.Time, at time.Time) (*models.Attendance, error)
-	ClockOut(userID uint, companyUUID *string, workDate time.Time, at time.Time) (*models.Attendance, error)
+	ClockIn(userID uint, companyUUID *string, workDate, at time.Time) (*models.Attendance, error)
+	ClockOut(userID uint, companyUUID *string, workDate, at time.Time) (*models.Attendance, error)
 
 	// Queries
 	GetByDate(userID uint, companyUUID *string, workDate time.Time) (*models.Attendance, error)
@@ -64,6 +65,23 @@ func (s *attendanceService) CalendarDay(
 		return nil, err
 	}
 	return s.attRepo.FindByEmployeeAndDate(empID, from)
+}
+
+func (s *attendanceService) ListAllEmployeeAttendance(companyUUID *string, from, to time.Time) ([]models.Attendance, error) {
+	if companyUUID == nil {
+		return nil, errors.New("company_uuid required")
+	}
+
+	var list []models.Attendance
+	err := s.db.
+		Joins("JOIN employees ON employees.id = attendances.employee_id").
+		Where("attendances.company_id = (SELECT id FROM companies WHERE uuid = ?)", *companyUUID).
+		Where("attendances.work_date BETWEEN ? AND ?", from, to).
+		Preload("Employee.User").Preload("Employee.Department").
+		Order("attendances.work_date ASC").
+		Find(&list).Error
+
+	return list, err
 }
 
 func (s *attendanceService) ListCalendar(
@@ -171,7 +189,8 @@ func (s *attendanceService) ToggleHomeOffice(userID uint, companyUUID *string, w
 	if err != nil {
 		return nil, err
 	}
-	return s.attRepo.SetHomeOffice(empID, compID, workDate, isHome)
+
+	return s.attRepo.SetHomeOffice(empID, compID, userID, workDate, isHome)
 }
 
 // Notes autosave (bisa diubah sampai clock-out)
@@ -180,7 +199,7 @@ func (s *attendanceService) SaveNotes(userID uint, companyUUID *string, workDate
 	if err != nil {
 		return nil, err
 	}
-	return s.attRepo.UpdateNotes(empID, compID, workDate, notes, &userID)
+	return s.attRepo.UpdateNotes(empID, compID, userID, workDate, notes, nil)
 }
 
 // Clock-in (idempotent per employee+work_date)
@@ -189,7 +208,7 @@ func (s *attendanceService) ClockIn(userID uint, companyUUID *string, workDate t
 	if err != nil {
 		return nil, err
 	}
-	return s.attRepo.ClockIn(empID, compID, workDate, at)
+	return s.attRepo.ClockIn(empID, compID, userID, workDate, at)
 }
 
 // Clock-out (mengunci toggle & notes)
@@ -198,7 +217,7 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 	if err != nil {
 		return nil, err
 	}
-	return s.attRepo.ClockOut(empID, workDate, at)
+	return s.attRepo.ClockOut(empID, userID, workDate, at)
 }
 
 func (s *attendanceService) GetByDate(userID uint, companyUUID *string, workDate time.Time) (*models.Attendance, error) {

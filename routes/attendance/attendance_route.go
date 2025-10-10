@@ -37,7 +37,7 @@ func SetupAttendanceRoutes(router fiber.Router, db *gorm.DB) {
 	att.Post("/edit-requests", editAttHandler.Create)
 	att.Get("/edit-requests/my", editAttHandler.ListMine)
 
-	// Supervisor/HR
+	// Admin/Supervisor/HR
 	att.Get("/edit-requests",
 		middlewares.RequirePermission("attendance.edit.view_all"),
 		editAttHandler.ListAllEmployee,
@@ -52,6 +52,7 @@ func SetupAttendanceRoutes(router fiber.Router, db *gorm.DB) {
 	)
 
 	// Queries
+	att.Get("/list-all", attHandler.ListAllEmployeeAttendance)
 	att.Get("/", attHandler.GetByDate)      // ?work_date=YYYY-MM-DD&company_uuid=...
 	att.Get("/range", attHandler.ListRange) // ?from=YYYY-MM-DD&to=YYYY-MM-DD&company_uuid=...
 }

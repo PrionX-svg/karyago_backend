@@ -18,19 +18,19 @@ var (
 
 type AttendanceRepository interface {
 	// Pastikan ada 1 record untuk (employee_id, work_date). Dipanggil otomatis oleh ClockIn/SetHomeOffice/UpdateNotes.
-	EnsureForDay(employeeID, companyID uint, workDate time.Time) (*models.Attendance, error)
+	EnsureForDay(employeeID, companyID uint, userID uint, workDate time.Time) (*models.Attendance, error)
 
 	// Set jam masuk. Idempotent: kalau sudah ada ClockInAt, kembalikan ErrAlreadyClockedIn.
-	ClockIn(employeeID, companyID uint, workDate time.Time, at time.Time) (*models.Attendance, error)
+	ClockIn(employeeID, companyID uint, userID uint, workDate time.Time, at time.Time) (*models.Attendance, error)
 
 	// Set jam keluar. Kalau sudah clock-out, balikan ErrAlreadyClockedOut.
-	ClockOut(employeeID uint, workDate time.Time, at time.Time) (*models.Attendance, error)
+	ClockOut(employeeID uint, userID uint, workDate time.Time, at time.Time) (*models.Attendance, error)
 
 	// Toggle Home Office / In Office. Boleh diubah selama BELUM clock-out.
-	SetHomeOffice(employeeID, companyID uint, workDate time.Time, isHomeOffice bool) (*models.Attendance, error)
+	SetHomeOffice(employeeID, companyID uint, userID uint, workDate time.Time, isHomeOffice bool) (*models.Attendance, error)
 
 	// Update notes bebas (tanpa approval). Boleh diubah selama BELUM clock-out.
-	UpdateNotes(employeeID, companyID uint, workDate time.Time, notes *string, updatedBy *uint) (*models.Attendance, error)
+	UpdateNotes(employeeID, companyID uint, userID uint, workDate time.Time, notes *string, updatedBy *uint) (*models.Attendance, error)
 
 	// Query util
 	FindByEmployeeAndDate(employeeID uint, workDate time.Time) (*models.Attendance, error)
@@ -44,7 +44,7 @@ func NewAttendanceRepository(db *gorm.DB) AttendanceRepository {
 }
 
 // EnsureForDay membuat (atau mengambil) record unik per (employee_id, work_date).
-func (r *attendanceRepository) EnsureForDay(employeeID, companyID uint, workDate time.Time) (*models.Attendance, error) {
+func (r *attendanceRepository) EnsureForDay(employeeID uint, companyID uint, userID uint, workDate time.Time) (*models.Attendance, error) {
 	var att models.Attendance
 
 	if err := r.db.Where("employee_id = ? AND work_date = ?", employeeID, workDate).
@@ -55,6 +55,7 @@ func (r *attendanceRepository) EnsureForDay(employeeID, companyID uint, workDate
 	att = models.Attendance{
 		EmployeeID: employeeID,
 		CompanyID:  companyID,
+		UserID:     userID,
 		WorkDate:   workDate,
 		UUID: uuid.NewString(),
 	}
@@ -70,8 +71,8 @@ func (r *attendanceRepository) EnsureForDay(employeeID, companyID uint, workDate
 	return &att, nil
 }
 
-func (r *attendanceRepository) ClockIn(employeeID, companyID uint, workDate time.Time, at time.Time) (*models.Attendance, error) {
-	att, err := r.EnsureForDay(employeeID, companyID, workDate)
+func (r *attendanceRepository) ClockIn(employeeID, companyID uint, userID uint, workDate time.Time, at time.Time) (*models.Attendance, error) {
+	att, err := r.EnsureForDay(employeeID, companyID, userID, workDate)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +86,7 @@ func (r *attendanceRepository) ClockIn(employeeID, companyID uint, workDate time
 	return att, nil
 }
 
-func (r *attendanceRepository) ClockOut(employeeID uint, workDate time.Time, at time.Time) (*models.Attendance, error) {
+func (r *attendanceRepository) ClockOut(employeeID uint, userID uint, workDate time.Time, at time.Time) (*models.Attendance, error) {
 	var att models.Attendance
 	if err := r.db.
 		Where("employee_id = ? AND work_date = ?", employeeID, workDate).
@@ -104,8 +105,8 @@ func (r *attendanceRepository) ClockOut(employeeID uint, workDate time.Time, at 
 	return &att, nil
 }
 
-func (r *attendanceRepository) SetHomeOffice(employeeID, companyID uint, workDate time.Time, isHomeOffice bool) (*models.Attendance, error) {
-	att, err := r.EnsureForDay(employeeID, companyID, workDate)
+func (r *attendanceRepository) SetHomeOffice(employeeID, companyID uint, userID uint, workDate time.Time, isHomeOffice bool) (*models.Attendance, error) {
+	att, err := r.EnsureForDay(employeeID, companyID, userID, workDate)
 	if err != nil {
 		return nil, err
 	}
@@ -119,8 +120,8 @@ func (r *attendanceRepository) SetHomeOffice(employeeID, companyID uint, workDat
 	return att, nil
 }
 
-func (r *attendanceRepository) UpdateNotes(employeeID, companyID uint, workDate time.Time, notes *string, updatedBy *uint) (*models.Attendance, error) {
-	att, err := r.EnsureForDay(employeeID, companyID, workDate)
+func (r *attendanceRepository) UpdateNotes(employeeID, companyID uint, userID uint, workDate time.Time, notes *string, updatedBy *uint) (*models.Attendance, error) {
+	att, err := r.EnsureForDay(employeeID, companyID, userID, workDate)
 	if err != nil {
 		return nil, err
 	}
@@ -153,6 +154,15 @@ func (r *attendanceRepository) ListByEmployeeBetween(employeeID uint, from, to t
 	var list []models.Attendance
 	err := r.db.
 		Where("employee_id = ? AND work_date BETWEEN ? AND ?", employeeID, from, to).
+		Order("work_date ASC").
+		Find(&list).Error
+	return list, err
+}
+
+func (r *attendanceRepository) ListAllEmployeeBetween(companyID uint, from, to time.Time) ([]models.Attendance, error) {
+	var list []models.Attendance
+	err := r.db.
+		Where("company_id = ? AND work_date BETWEEN ? AND ?", companyID, from, to).
 		Order("work_date ASC").
 		Find(&list).Error
 	return list, err

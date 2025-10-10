@@ -11,6 +11,7 @@ import (
 
 type AttendanceHandler interface {
 	// actions
+	ListAllEmployeeAttendance(c *fiber.Ctx) error
 	ListCalendar(c *fiber.Ctx) error
 	ClockIn(c *fiber.Ctx) error
 	ClockOut(c *fiber.Ctx) error
@@ -34,6 +35,39 @@ func parseDate(s string) (time.Time, error) {
 	// format: YYYY-MM-DD (mengikuti WorkDate DATE)
 	return time.Parse("2006-01-02", s)
 }
+
+func (h *attendanceHandler) ListAllEmployeeAttendance(c *fiber.Ctx) error {
+	userID, ok := c.Locals("user_id").(uint)
+	if !ok || userID == 0 {
+		return pkg.Error(c, fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	var companyUUID *string
+	if v := c.Query("company_uuid"); v != "" {
+		companyUUID = &v
+	} else {
+		return pkg.Error(c, fiber.StatusBadRequest, "company_uuid is required")
+	}
+
+	fromStr := c.Query("from")
+	toStr := c.Query("to")
+	if fromStr == "" || toStr == "" {
+		return pkg.Error(c, fiber.StatusBadRequest, "from and to required")
+	}
+
+	from, err1 := time.Parse("2006-01-02", fromStr)
+	to, err2 := time.Parse("2006-01-02", toStr)
+	if err1 != nil || err2 != nil {
+		return pkg.Error(c, fiber.StatusBadRequest, "invalid date format")
+	}
+
+	rows, err := h.svc.ListAllEmployeeAttendance(companyUUID, from, to)
+	if err != nil {
+		return pkg.Error(c, 500, err.Error())
+	}
+	return pkg.Success(c, rows, "ok")
+}
+
 
 func (h *attendanceHandler) ListCalendar(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)

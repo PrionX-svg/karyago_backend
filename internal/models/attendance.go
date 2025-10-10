@@ -6,6 +6,7 @@ type Attendance struct {
 	ID         uint      `json:"id" gorm:"primaryKey;autoIncrement"`
 	UUID       string    `gorm:"type:char(36);uniqueIndex" json:"uuid"`
 	EmployeeID uint      `json:"employee_id" gorm:"not null;index:idx_emp_workdate,unique"`
+	UserID     uint      `json:"user_id" gorm:"not null"` // denormalized for easier join with users table
 	CompanyID  uint      `json:"company_id" gorm:"not null;index:idx_company_workdate"`
 	WorkDate   time.Time `json:"work_date" gorm:"type:date;not null;index:idx_emp_workdate,unique;index:idx_company_workdate"`
 
@@ -24,4 +25,7 @@ type Attendance struct {
 	UpdatedBy *uint     `json:"updated_by"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
+	User User `json:"user" gorm:"foreignKey:UserID;references:ID"`
 }

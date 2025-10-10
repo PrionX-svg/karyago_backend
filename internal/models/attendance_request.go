@@ -38,4 +38,6 @@ type AttendanceEditRequest struct {
 	ReviewNote  *string           `json:"review_note" gorm:"type:text"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	Employee   Employee `gorm:"foreignKey:EmployeeID" json:"employee"`
 }

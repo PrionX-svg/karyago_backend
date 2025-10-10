@@ -149,7 +149,7 @@ func (s *attendanceEditService) Approve(userID uint, reqID uint, note *string) e
 		}
 
 		// Pastikan ada attendance di tanggal tsb
-		att, err := s.attRepo.EnsureForDay(req.EmployeeID, req.CompanyID, req.WorkDate)
+		att, err := s.attRepo.EnsureForDay(req.EmployeeID, req.CompanyID, req.ID , req.WorkDate)
 		if err != nil {
 			return err
 		}
