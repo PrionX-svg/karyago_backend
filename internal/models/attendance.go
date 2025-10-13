@@ -18,6 +18,12 @@ type Attendance struct {
 	ClockOutLat *float64   `json:"clock_out_lat" gorm:"type:decimal(10,7)"`
 	ClockOutLng *float64   `json:"clock_out_lng" gorm:"type:decimal(10,7)"`
 
+	IsOvertime     bool     `json:"is_overtime" gorm:"not null;default:false"`
+	OverTimeHours  *float64 `json:"overtime_hours" gorm:"type:decimal(5,2)"`
+	OverTimeReason *string  `json:"overtime_reason" gorm:"type:varchar(255)"`
+
+	TotalWorkHours *float64 `json:"total_work_hours" gorm:"type:decimal(5,2)"`
+
 	Is_homeOffice bool `json:"is_home_office" gorm:"not null;default:false"`
 
 	Notes     *string   `json:"notes" gorm:"type:varchar(400)"`
@@ -27,5 +33,5 @@ type Attendance struct {
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
-	User User `json:"user" gorm:"foreignKey:UserID;references:ID"`
+	User     User     `json:"user" gorm:"foreignKey:UserID;references:ID"`
 }

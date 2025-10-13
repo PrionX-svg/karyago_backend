@@ -98,8 +98,29 @@ func (r *attendanceRepository) ClockOut(employeeID uint, userID uint, workDate t
 	}
 	att.ClockOutAt = &at
 
+	// Hitung total jam dan lembur
+	if att.ClockOutAt != nil {
+		duration := at.Sub(*att.ClockInAt).Hours()
+		att.TotalWorkHours = &duration
+		if duration > 9 {
+			att.IsOvertime = true
+			overtime := duration - 9
+			att.OverTimeHours = &overtime
+		} else {
+			att.IsOvertime = false
+			att.OverTimeHours = nil
+		}
+	}
+
+	updates := map[string]any{
+		"clock_out_at":     att.ClockOutAt,
+		"total_work_hours": att.TotalWorkHours,
+		"is_overtime":      att.IsOvertime,
+		"overtime_hours":   att.OverTimeHours,
+	}
+
 	// Setelah clock-out, toggle & notes “terkunci” (aturan ada di SetHomeOffice/UpdateNotes).
-	if err := r.db.Model(&att).Update("clock_out_at", att.ClockOutAt).Error; err != nil {
+	if err := r.db.Model(&att).Updates(updates).Error; err != nil {
 		return nil, err
 	}
 	return &att, nil
