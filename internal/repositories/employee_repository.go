@@ -18,6 +18,7 @@ type EmployeeRepository interface {
 	FindTerminatedByUserIDAndCompanyID(userID, companyID uint) (*models.Employee, error)
 	Update(employee *models.Employee) error
 	DeleteByID(id uint) error
+	GetUserEmailByEmployeeID(employeeID uint) (*string, error)
 }
 
 type employeeRepository struct {
@@ -30,6 +31,22 @@ func NewEmployeeRepository(db *gorm.DB) EmployeeRepository {
 
 func (r *employeeRepository) Create(employee *models.Employee) error {
 	return r.db.Create(employee).Error
+}
+
+func (r *employeeRepository) GetUserEmailByEmployeeID(employeeID uint) (*string, error) {
+	var row struct {
+		Email *string
+	}
+	err := r.db.
+		Table("employees AS e").
+		Select("u.email AS email").
+		Joins("JOIN users u ON u.id = e.user_id").
+		Where("e.id = ?", employeeID).
+		Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	return row.Email, nil
 }
 
 func (r *employeeRepository) FindByID(id uint) (*models.Employee, error) {

@@ -65,10 +65,11 @@ func (r *companyRepositories) GetByUUID(uuid string) (*models.Company, error) {
 	return &company, err
 }
 
-func (r *companyRepositories) GetByUserUUID(uuid string) (*models.Company, error) {
+func (r *companyRepositories) GetByUserUUID(userUUID string) (*models.Company, error) {
 	var user models.User
 	ErrUserNotFound := errors.New("user-not-found")
-	if err := r.db.Select("id").Where("uuid = ?", uuid).First(&user).Error; err != nil {
+
+	if err := r.db.Select("id").Where("uuid = ?", userUUID).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
 		}
@@ -76,6 +77,7 @@ func (r *companyRepositories) GetByUserUUID(uuid string) (*models.Company, error
 	}
 
 	var company models.Company
+	// Cari company yang dimiliki user
 	err := r.db.
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "uuid", "first_name", "last_name")
@@ -83,8 +85,18 @@ func (r *companyRepositories) GetByUserUUID(uuid string) (*models.Company, error
 		Where("user_id = ?", user.ID).
 		First(&company).Error
 
+	// Kalau tidak ditemukan, cari company tempat dia bekerja
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+		err = r.db.
+			Preload("User", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "uuid", "first_name", "last_name")
+			}).
+			Joins("JOIN employees ON employees.company_id = companies.id").
+			Where("employees.user_id = ?", user.ID).
+			First(&company).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 	}
 
 	return &company, err
@@ -128,12 +140,31 @@ func (r *companyRepositories) FindAllByUserUUID(userUUID string) ([]*models.Comp
 		return nil, fmt.Errorf("user-not-found")
 	}
 
-	var companies []*models.Company
-	err := r.db.Preload("User").
-		Where("created_by = ?", user.ID).
-		Find(&companies).Error
+	var ownedCompanies []*models.Company
+	if err := r.db.Preload("User").Where("user_id = ?", user.ID).Find(&ownedCompanies).Error; err != nil {
+		return nil, err
+	}
 
-	return companies, err
+	var employeeCompanies []*models.Company
+	if err := r.db.Preload("User").
+		Joins("JOIN employees ON employees.company_id = companies.id").
+		Where("employees.user_id = ?", user.ID).
+		Find(&employeeCompanies).Error; err != nil {
+		return nil, err
+	}
+
+	// merge tanpa duplikat
+	companyMap := map[uint]*models.Company{}
+	for _, c := range append(ownedCompanies, employeeCompanies...) {
+		companyMap[c.ID] = c
+	}
+
+	var companies []*models.Company
+	for _, c := range companyMap {
+		companies = append(companies, c)
+	}
+
+	return companies, nil
 }
 
 func (r *companyRepositories) Delete(targetCompany *models.Company) error {

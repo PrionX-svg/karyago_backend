@@ -22,4 +22,6 @@ type Employee struct {
 	User    *User    `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Company *Company `gorm:"foreignKey:CompanyID" json:"company,omitempty"`
 	Branch  *Branch  `gorm:"foreignKey:BranchID" json:"branch,omitempty"`
+	Department *Department `gorm:"foreignKey:DepartmentID" json:"department,omitempty"`
+
 }
