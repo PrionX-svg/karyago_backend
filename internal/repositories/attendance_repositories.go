@@ -16,6 +16,8 @@ var (
 	ErrAlreadyClockedOut = errors.New("already clocked out for this date")
 )
 
+const CrossDayCutoffHour = 4 // jam 4 pagi
+
 type AttendanceRepository interface {
 	// Pastikan ada 1 record untuk (employee_id, work_date). Dipanggil otomatis oleh ClockIn/SetHomeOffice/UpdateNotes.
 	EnsureForDay(employeeID, companyID uint, userID uint, workDate time.Time) (*models.Attendance, error)
@@ -31,6 +33,8 @@ type AttendanceRepository interface {
 
 	// Update notes bebas (tanpa approval). Boleh diubah selama BELUM clock-out.
 	UpdateNotes(employeeID, companyID uint, userID uint, workDate time.Time, notes *string, updatedBy *uint) (*models.Attendance, error)
+
+	GetByEmployeeAndDate(employeeID uint, workDate time.Time) (*models.Attendance, error)
 
 	// Query util
 	FindByEmployeeAndDate(employeeID uint, workDate time.Time) (*models.Attendance, error)
@@ -57,7 +61,7 @@ func (r *attendanceRepository) EnsureForDay(employeeID uint, companyID uint, use
 		CompanyID:  companyID,
 		UserID:     userID,
 		WorkDate:   workDate,
-		UUID: uuid.NewString(),
+		UUID:       uuid.NewString(),
 	}
 	if err := r.db.Create(&att).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "Error 400") {
@@ -95,6 +99,15 @@ func (r *attendanceRepository) ClockOut(employeeID uint, userID uint, workDate t
 	}
 	if att.ClockOutAt != nil {
 		return nil, ErrAlreadyClockedOut
+	}
+
+	clockIn := att.ClockInAt
+	if clockIn != nil {
+		// Jika clock out melewati hari berikutnya tapi masih sebelum cutoff
+		if at.Day() != clockIn.Day() && at.Hour() < CrossDayCutoffHour {
+			// Tetap anggap clock-out milik work_date sebelumnya
+			att.WorkDate = clockIn.Truncate(24 * time.Hour)
+		}
 	}
 	att.ClockOutAt = &at
 
@@ -160,6 +173,17 @@ func (r *attendanceRepository) UpdateNotes(employeeID, companyID uint, userID ui
 		return nil, err
 	}
 	return att, nil
+}
+
+func (r *attendanceRepository) GetByEmployeeAndDate(employeeID uint, workDate time.Time) (*models.Attendance, error) {
+	var att models.Attendance
+	if err := r.db.
+		Where("employee_id = ? AND work_date = ?", employeeID, workDate).
+		Preload("User").
+		First(&att).Error; err != nil {
+		return nil, err
+	}
+	return &att, nil
 }
 
 func (r *attendanceRepository) FindByEmployeeAndDate(employeeID uint, workDate time.Time) (*models.Attendance, error) {

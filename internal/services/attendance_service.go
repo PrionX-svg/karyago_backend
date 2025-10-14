@@ -21,6 +21,12 @@ type AttendanceService interface {
 	ClockIn(userID uint, companyUUID *string, workDate, at time.Time) (*models.Attendance, error)
 	ClockOut(userID uint, companyUUID *string, workDate, at time.Time) (*models.Attendance, error)
 
+	// For chatbot
+	ListOvertime(companyUUID string) ([]models.Attendance, error)
+	ListUnclocked(companyUUID string) ([]models.Attendance, error)
+
+	GetDefaultCompanyUUID() (*string, error)
+
 	// Queries
 	GetByDate(userID uint, companyUUID *string, workDate time.Time) (*models.Attendance, error)
 	ListRange(userID uint, companyUUID *string, from, to time.Time) ([]models.Attendance, error)
@@ -32,6 +38,14 @@ type attendanceService struct {
 	empRepo     repositories.EmployeeRepository
 	userRepo    repositories.UserRepository
 	companyRepo repositories.CompanyRepositories
+}
+
+func (s *attendanceService) GetDefaultCompanyUUID() (*string, error) {
+	var company models.Company
+	if err := s.db.First(&company).Error; err != nil {
+		return nil, err
+	}
+	return &company.UUID, nil
 }
 
 type CalendarDay struct {
@@ -72,16 +86,35 @@ func (s *attendanceService) ListAllEmployeeAttendance(companyUUID *string, from,
 		return nil, errors.New("company_uuid required")
 	}
 
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	fromLocal := from.In(loc)
+	toLocal := to.In(loc)
+
 	var list []models.Attendance
+
 	err := s.db.
-		Joins("JOIN employees ON employees.id = attendances.employee_id").
-		Where("attendances.company_id = (SELECT id FROM companies WHERE uuid = ?)", *companyUUID).
-		Where("attendances.work_date BETWEEN ? AND ?", from, to).
-		Preload("Employee.User").Preload("Employee.Department").
+		Table("employees").
+		Select(`
+			attendances.*,
+			employees.id as employee_id,
+			employees.company_id,
+			employees.user_id
+		`).
+		Joins(`
+			LEFT JOIN attendances 
+			ON attendances.employee_id = employees.id 
+			AND attendances.work_date BETWEEN ? AND ?
+		`, fromLocal, toLocal).
+		Where("employees.company_id = (SELECT id FROM companies WHERE uuid = ?)", *companyUUID).
+		Preload("Employee.User").
 		Order("attendances.work_date ASC").
 		Find(&list).Error
 
-	return list, err
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 func (s *attendanceService) ListCalendar(
@@ -160,6 +193,30 @@ func (s *attendanceService) ListCalendar(
 	return out, nil
 }
 
+// For chatbot
+func (s *attendanceService) ListOvertime(companyUUID string) ([]models.Attendance, error) {
+	var list []models.Attendance
+	err := s.db.
+		Joins("JOIN employees ON employees.id = attendances.employee_id").
+		Where("attendances.company_id = (SELECT id FROM companies WHERE uuid = ?)", companyUUID).
+		Where("attendances.is_overtime = TRUE").
+		Preload("Employee.User").
+		Order("work_date DESC").
+		Find(&list).Error
+	return list, err
+}
+
+func (s *attendanceService) ListUnclocked(companyUUID string) ([]models.Attendance, error) {
+	var list []models.Attendance
+	err := s.db.
+		Joins("JOIN employees ON employees.id = attendances.employee_id").
+		Where("attendances.company_id = (SELECT id FROM companies WHERE uuid = ?)", companyUUID).
+		Where("attendances.clock_out_at IS NULL").
+		Preload("Employee.User").
+		Find(&list).Error
+	return list, err
+}
+
 // resolve employeeID & companyID dari user serta optional companyUUID (kalau multi-company)
 func (s *attendanceService) resolveActor(userID uint, companyUUID *string) (employeeID, companyID uint, err error) {
 	emp, err := s.empRepo.FindByUserID(userID)
@@ -217,7 +274,59 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 	if err != nil {
 		return nil, err
 	}
-	return s.attRepo.ClockOut(empID, userID, workDate, at)
+	// Cross-day cutoff rule (misal: 04:00 pagi WIB)
+	const CrossDayCutoffHour = 4
+
+	// Ambil data attendance dari repo (include ClockInAt)
+	att, err := s.attRepo.GetByEmployeeAndDate(empID, workDate)
+	if err != nil {
+		return nil, err
+	}
+
+	// 🕒 Kalau clock out lewat tengah malam tapi sebelum cutoff (04:00),
+	// tetap dianggap hari sebelumnya
+	if att.ClockInAt != nil && at.Day() != att.ClockInAt.Day() && at.Hour() < CrossDayCutoffHour {
+		workDate = att.ClockInAt.Truncate(24 * time.Hour)
+	}
+
+	// Jalankan clock-out di repository
+	att, err = s.attRepo.ClockOut(empID, userID, workDate, at)
+	if err != nil {
+		return nil, err
+	}
+
+	//Kirim email notifikasi kalau lembur
+	if att.IsOvertime {
+		go func(a *models.Attendance) {
+			subject := fmt.Sprintf("Overtime Alert: %s", a.WorkDate.Format("02 Jan 2006"))
+			body := fmt.Sprintf(`
+				<h2 style="color:#ff6600;">KARYAGO Overtime Notification</h2>
+				<p><b>%s</b> melakukan lembur pada <b>%s</b>.</p>
+				<ul>
+					<li>Clock In: %s</li>
+					<li>Clock Out: %s</li>
+					<li>Total Jam: %.2f</li>
+					<li>Lembur: %.2f jam</li>
+				</ul>
+				<p>Silakan review lembur ini di dashboard admin.</p>
+			`,
+				a.User.FirstName+" "+a.User.LastName,
+				a.WorkDate.Format("02 Jan 2006"),
+				a.ClockInAt.Format("15:04"),
+				a.ClockOutAt.Format("15:04"),
+				*a.TotalWorkHours,
+				*a.OverTimeHours,
+			)
+
+			// Ambil email supervisor (sementara hardcoded)
+			responsibleEmail := "oliviasalma06@gmail.com"
+			if err := pkg.SendEmail(responsibleEmail, subject, body); err != nil {
+				fmt.Println("❌ Failed to send overtime email:", err)
+			}
+		}(att)
+	}
+
+	return att, nil
 }
 
 func (s *attendanceService) GetByDate(userID uint, companyUUID *string, workDate time.Time) (*models.Attendance, error) {

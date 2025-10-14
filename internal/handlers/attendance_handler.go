@@ -94,6 +94,37 @@ func (h *attendanceHandler) ListCalendar(c *fiber.Ctx) error {
 	return pkg.Success(c, items, "ok")
 }
 
+// For chatbot
+// GET /api/attendance/overtime?company_uuid=...
+func (h *attendanceHandler) ListOvertime(c *fiber.Ctx) error {
+	companyUUID := c.Query("company_uuid")
+	if companyUUID == "" {
+		return pkg.Error(c, 400, "company_uuid required")
+	}
+
+	list, err := h.svc.ListOvertime(companyUUID)
+	if err != nil {
+		return pkg.Error(c, 500, err.Error())
+	}
+
+	return pkg.Success(c, list, "ok")
+}
+
+// GET /api/attendance/unclocked?company_uuid=...
+func (h *attendanceHandler) ListUnclocked(c *fiber.Ctx) error {
+	companyUUID := c.Query("company_uuid")
+	if companyUUID == "" {
+		return pkg.Error(c, 400, "company_uuid required")
+	}
+
+	list, err := h.svc.ListUnclocked(companyUUID)
+	if err != nil {
+		return pkg.Error(c, 500, err.Error())
+	}
+
+	return pkg.Success(c, list, "ok")
+}
+
 
 func (h *attendanceHandler) ClockIn(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(uint)

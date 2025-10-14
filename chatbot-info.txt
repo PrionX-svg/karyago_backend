@@ -1,4 +1,4 @@
-ArbeitsHub – EMPLOYEE DATA MANAGEMENT
+KARYAGO – EMPLOYEE DATA MANAGEMENT
 Dokumentasi untuk Pembelajaran Chatbot AI (Format .TXT)
 Versi: 1.0
 Tanggal: 01 October 2025 00:00 UTC+07:00
@@ -9,7 +9,7 @@ Bahasa utama: Indonesia (ID)
 =====================================================================
 RINGKASAN
 =====================================================================
-Sistem ArbeitsHub-Employee Data Management adalah aplikasi berbasis web yang membantu perusahaan mengelola data karyawan, absensi, dan komunikasi cepat melalui Chatbot AI. Akses dan tampilan sistem disesuaikan dengan peran (role-based): Owner/Admin dan Employee. Alur utama: perusahaan mendaftar (register), verifikasi email via OTP, login, lalu menggunakan fitur sesuai peran.
+Sistem KARYAGO-Employee Data Management adalah aplikasi berbasis web yang membantu perusahaan mengelola data karyawan, absensi, dan komunikasi cepat melalui Chatbot AI. Akses dan tampilan sistem disesuaikan dengan peran (role-based): Owner/Admin dan Employee. Alur utama: perusahaan mendaftar (register), verifikasi email via OTP, login, lalu menggunakan fitur sesuai peran.
 
 Fitur kunci:
 - Dashboard berbasis role (Admin vs Employee).
@@ -39,7 +39,7 @@ Peran:
 3) Sistem (Layanan Latar Belakang)
    - Mengirim OTP verifikasi email saat registrasi.
    - Mencatat audit log.
-   - Mengirim notifikasi (email/in-app) untuk status request edit.
+   - Mengirim notifikasi (email) untuk status request edit.
 
 Catatan keamanan:
 - Pengguna hanya dapat mengakses data sesuai peran.
@@ -80,11 +80,20 @@ FITUR UTAMA DAN DESKRIPSI
      * Jika lupa clock in/clock out atau terjadi kendala, employee dapat mengajukan permintaan edit.
      * Admin meninjau dan memutuskan: setujui atau tolak dengan alasan.
      * Riwayat keputusan tersimpan (audit).
+   - Cross-day Cutoff:
+      * Jika karyawan melakukan clock out lewat tengah malam (sebelum jam 04:00 pagi), sistem tetap menghitungnya sebagai hari sebelumnya.
+      * Lembur (overtime) terdeteksi otomatis bila total jam kerja melebihi 9 jam.
+      * Supervisor akan menerima notifikasi email jika ada lembur.
+
 
 4) Chatbot AI
    - Asisten tanya jawab cepat untuk panduan penggunaan, kebijakan absensi, definisi istilah, status permintaan, dan navigasi menu.
    - Konteks-aware: jawaban menyesuaikan peran (Admin vs Employee).
    - Aman: Chatbot hanya memaparkan data yang diizinkan oleh peran/otorisasi pengguna.
+   - Chatbot kini terhubung langsung dengan data attendance.
+      * Chatbot dapat memberikan informasi lembur minggu ini, karyawan yang belum clock out, atau rekap attendance harian.
+      * Chatbot tidak menampilkan data pribadi tanpa izin peran (role-based).
+
 
 =====================================================================
 ALUR APLIKASI (FLOW)
@@ -220,7 +229,7 @@ TEMPLATE RESPON CHATBOT (SINGKAT)
 =====================================================================
 CONTOH QA (DATA LATIH) – INDONESIA
 =====================================================================
-Q: Apa itu ArbeitsHub-Employee Data Management?
+Q: Apa itu KARYAGO-Employee Data Management?
 A: Aplikasi web untuk mengelola data karyawan, absensi, dan tanya jawab cepat via Chatbot AI dengan tampilan sesuai peran.
 
 Q: Kapan aplikasi ini didirikan?
@@ -289,6 +298,9 @@ NOTIFIKASI & LAPORAN
 - Notifikasi email/in-app untuk request edit (dibuat/disetujui/ditolak).
 - Laporan ringkas absensi harian/mingguan/bulanan (opsional).
 - Dashboard metrik cepat: tingkat kehadiran, jumlah request edit, top issue.
+- Lembur terdeteksi otomatis, dengan cutoff pukul 04:00 pagi (Asia/Jakarta).
+- Clock out setelah pukul 04:00 dianggap shift hari berikutnya.
+
 
 =====================================================================
 KASUS TEPI (EDGE CASE)
@@ -323,6 +335,25 @@ STRUKTUR DATA LATIH (CONTOH RINGKAS)
 [INTENT] INTENT_APP_INFO
 [UTTERANCE] "Aplikasi ini berdiri sejak kapan?"
 [RESPONSE] "Aplikasi didirikan pada Februari 2025 dan berbasis web."
+
+[INTENT] INTENT_OVERTIME
+[UTTERANCE] "Siapa yang lembur minggu ini?"
+[RESPONSE] "Sistem akan menampilkan daftar karyawan yang melakukan lembur (jam kerja > 9 jam) dalam seminggu terakhir."
+
+[INTENT] INTENT_UNCLOCKED
+[UTTERANCE] "Siapa yang belum clock out hari ini?"
+[RESPONSE] "Sistem menampilkan karyawan yang sudah clock in tetapi belum melakukan clock out pada hari ini."
+
+[INTENT] INTENT_EMAIL_NOTIFY
+[UTTERANCE] "Apakah admin dapat notifikasi kalau ada lembur?"
+[RESPONSE] "Ya, sistem mengirim email otomatis ke supervisor jika ada karyawan lembur."
+
+[INTENT] Attendance Unclocked
+[EXAMPLE QUESTION] Siapa yang belum absen hari ini?
+[EXAMPLE QUESTION] Siapa yang belum presensi hari ini?
+[EXAMPLE ANSWER] Sistem akan menampilkan daftar karyawan yang belum melakukan clock-in atau clock-out hari ini.
+
+
 
 =====================================================================
 CATATAN

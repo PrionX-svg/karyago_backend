@@ -5,8 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"hris_backend/pkg"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func JWTMiddleware(c *fiber.Ctx) error {
@@ -30,7 +31,7 @@ func JWTMiddleware(c *fiber.Ctx) error {
 	c.Locals("email", claims.Email)
 	c.Locals("role", claims.Role)
 	c.Locals("role_id", uint(roleID))
-
+	
 	if claims.ExpiresAt != nil {
 		timeRemaining := time.Until(claims.ExpiresAt.Time)
 		if timeRemaining < 30*time.Minute {
@@ -45,7 +46,7 @@ func JWTMiddleware(c *fiber.Ctx) error {
 				HTTPOnly: true,
 				Secure:   os.Getenv("APP_ENV") == "production",
 				Path:     "/",
-				Expires:  time.Now().Add(1 * time.Hour), 
+				Expires:  time.Now().Add(1 * time.Hour),
 			})
 		}
 	}

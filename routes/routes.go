@@ -95,6 +95,6 @@ func SetupRoutes(app *fiber.App) {
 	eventshift.SetupEventShiftRoutes(v1, db)
 	eventuser.SetupEventUserRoutes(v1, db)
 	attendance.SetupAttendanceRoutes(v1, db)
-	chatbot.SetupChatbotRoutes(v1, os.Getenv("CHATBOT_API_KEY"))
+	chatbot.SetupChatbotRoutes(v1, os.Getenv("CHATBOT_API_KEY"), db)
 	employee.SetupEmployeeProfileRoutes(v1, db)
 }

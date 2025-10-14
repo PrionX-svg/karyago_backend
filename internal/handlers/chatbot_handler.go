@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"hris_backend/internal/request"
 	"hris_backend/internal/services"
-	"hris_backend/pkg"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,15 +21,58 @@ func NewChatbotHandler(chatbotServices services.ChatbotServices) ChatbotHandler 
 }
 
 func (h *chatbotHandler) Ask(c *fiber.Ctx) error {
-	var chatbotReq request.ChatbotRequest
-	if err := c.BodyParser(&chatbotReq); err != nil {
-		return pkg.Error(c, fiber.StatusBadRequest, "Failed to parse chatbot request")
+	var req request.ChatbotRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	resp, err := h.chatbotServices.Ask(chatbotReq)
+	// Ambil dari JWT middleware
+	uidVal := c.Locals("user_id")
+	roleVal := c.Locals("role_id")
+
+	// Hati-hati: kadang number dari JWT masuk sebagai float64
+	var userID uint
+	switch v := uidVal.(type) {
+	case uint:
+		userID = v
+	case int:
+		userID = uint(v)
+	case float64:
+		userID = uint(v)
+	default:
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+
+	// 🔧 Konversi role ke string (support angka dari JWT)
+	var role string
+	switch v := roleVal.(type) {
+	case string:
+		role = v
+	case uint:
+		m := map[int]string{
+			1: "admin",
+			2: "assistant",
+			3: "owner",
+		}
+		role = m[int(v)]
+	case float64: // JWT decode sebagai float64
+		m := map[int]string{
+			1: "admin",
+			2: "assistant",
+			3: "owner",
+		}
+		role = m[int(v)]
+	default:
+		role = "employee"
+	}
+
+	fmt.Println("🧩 user_id:", userID)
+	fmt.Println("🧩 role (mapped):", role)
+
+	// Jalankan service chatbot
+	resp, err := h.chatbotServices.Ask(req, userID, role)
 	if err != nil {
-		return pkg.Error(c, fiber.StatusInternalServerError, err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	return pkg.Success(c, resp, "Chatbot response retrieved successfully")
+	return c.JSON(resp)
 }
