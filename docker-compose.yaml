@@ -1,0 +1,19 @@
+services:
+  hris_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: latest
+    container_name: hris_api
+    ports:
+      - "8084:8080"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - db_net
+
+networks:
+  db_net:
+    external: true
