@@ -240,10 +240,10 @@ func (s *attendanceEditService) Approve(userID uint, reqID uint, note *string) e
 								- Clock In: %v<br/>
 								- Clock Out: %v<br/>
 								- Home Office: %v<br/><br/>
-								You can review your attendance record in the HR system.
+								You can review your attendance record in the KARYAGO system.
 							</div>
 							<div class="footer">
-								This is an automated email from the HR system. Please do not reply.
+								This is an automated email from the KARYAGO system. Please do not reply.
 							</div>
 						</div>
 					</body>
@@ -329,10 +329,10 @@ func (s *attendanceEditService) Reject(userID uint, reqID uint, note string) err
 						Your attendance edit request for <span class="highlight">%s</span> has been <span class="highlight">rejected</span>.<br/><br/>
 						<strong>Reviewer Note:</strong><br/>
 						<p style="margin:8px 0; padding: 10px; background-color:#f8d7da; border-left: 4px solid #e53935; border-radius: 4px;">%s</p><br/>
-						Please contact your manager or HR for further clarification.
+						Please contact your Supervisor or HR for further clarification.
 					</div>
 					<div class="footer">
-						This is an automated email from the HR system. Please do not reply.
+						This is an automated email from the KARYAGO system. Please do not reply.
 					</div>
 				</div>
 			</body>

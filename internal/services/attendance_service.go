@@ -298,19 +298,22 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 	//Kirim email notifikasi kalau lembur
 	if att.IsOvertime {
 		go func(a *models.Attendance) {
+			// pastikan user sudah ke-load
+			s.db.Preload("Employee.User").First(&a, a.ID)
 			subject := fmt.Sprintf("Overtime Alert: %s", a.WorkDate.Format("02 Jan 2006"))
 			body := fmt.Sprintf(`
 				<h2 style="color:#ff6600;">KARYAGO Overtime Notification</h2>
-				<p><b>%s</b> melakukan lembur pada <b>%s</b>.</p>
+				<p><b>%s %s</b> melakukan lembur pada <b>%s</b>.</p>
 				<ul>
 					<li>Clock In: %s</li>
 					<li>Clock Out: %s</li>
 					<li>Total Jam: %.2f</li>
 					<li>Lembur: %.2f jam</li>
 				</ul>
-				<p>Silakan review lembur ini di dashboard admin.</p>
+				<p>Silakan dicek lembur ini di attendance list.</p>
 			`,
-				a.User.FirstName+" "+a.User.LastName,
+				a.Employee.User.FirstName,
+				a.Employee.User.LastName,
 				a.WorkDate.Format("02 Jan 2006"),
 				a.ClockInAt.Format("15:04"),
 				a.ClockOutAt.Format("15:04"),
