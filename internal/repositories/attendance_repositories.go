@@ -118,10 +118,10 @@ func (r *attendanceRepository) ClockOut(employeeID uint, userID uint, workDate t
 		if duration > 8 {
 			att.IsOvertime = true
 			overtime := duration - 8
-			att.OverTimeHours = &overtime
+			att.OvertimeHours = &overtime
 		} else {
 			att.IsOvertime = false
-			att.OverTimeHours = nil
+			att.OvertimeHours = nil
 		}
 	}
 
@@ -129,7 +129,7 @@ func (r *attendanceRepository) ClockOut(employeeID uint, userID uint, workDate t
 		"clock_out_at":     att.ClockOutAt,
 		"total_work_hours": att.TotalWorkHours,
 		"is_overtime":      att.IsOvertime,
-		"overtime_hours":   att.OverTimeHours,
+		"overtime_hours":   att.OvertimeHours,
 	}
 
 	// Setelah clock-out, toggle & notes “terkunci” (aturan ada di SetHomeOffice/UpdateNotes).

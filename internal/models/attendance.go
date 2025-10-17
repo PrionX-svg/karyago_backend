@@ -19,8 +19,8 @@ type Attendance struct {
 	ClockOutLng *float64   `json:"clock_out_lng" gorm:"type:decimal(10,7)"`
 
 	IsOvertime     bool     `json:"is_overtime" gorm:"not null;default:false"`
-	OverTimeHours  *float64 `json:"overtime_hours" gorm:"type:decimal(5,2)"`
-	OverTimeReason *string  `json:"overtime_reason" gorm:"type:varchar(255)"`
+	OvertimeHours  *float64 `json:"overtime_hours" gorm:"column:overtime_hours;type:decimal(5,2)"`
+	OvertimeReason *string  `json:"overtime_reason" gorm:"column:overtime_reason;type:varchar(255)"`
 
 	TotalWorkHours *float64 `json:"total_work_hours" gorm:"type:decimal(5,2)"`
 

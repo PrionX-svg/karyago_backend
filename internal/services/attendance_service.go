@@ -318,7 +318,7 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 				a.ClockInAt.Format("15:04"),
 				a.ClockOutAt.Format("15:04"),
 				*a.TotalWorkHours,
-				*a.OverTimeHours,
+				*a.OvertimeHours,
 			)
 
 			// Ambil email supervisor (sementara hardcoded)
