@@ -3,6 +3,7 @@ package main
 import (
 	"hris_backend/database"
 	"hris_backend/internal/seeders"
+	"hris_backend/pkg"
 	"hris_backend/routes"
 	"log"
 
@@ -21,6 +22,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	pkg.StartEmailWorker()
 
 	routes.SetupRoutes(app)
 

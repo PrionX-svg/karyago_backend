@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -152,6 +151,7 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) (r
 			return fmt.Errorf("failed to create employee: %w", err)
 		}
 
+		// Applies FIFO
 		otp := &models.OTP{
 			UUID:      uuid.NewString(),
 			Target:    user.Email,
@@ -159,32 +159,106 @@ func (s *userService) CreateUser(req request.UserEmployeeReq, creatorID uint) (r
 			Purpose:   "create user & employee",
 			IsUsed:    false,
 			ExpiresAt: time.Now().Add(5 * time.Minute),
+			CreatedAt: time.Now(),
 		}
 
 		if err := s.otpRepo.Create(otp); err != nil {
 			return fmt.Errorf("failed to create OTP: %w", err)
 		}
 
-		go func(email, name, token string) {
-			verificationLink := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), token)
-			body := fmt.Sprintf(`
-				<html>
-					<body>
-						<p>Hi %s,</p>
-						<p>Welcome! Please verify your email address to activate your account:</p>
-						<p><a href="%s">Verify your Email</a></p>
-						<p>This link will expire in 5 minutes.</p>
-						<p>If you didn't register, you can ignore this email.</p>
-						<br/>
-						<p>Regards,<br/>The Team</p>
-					</body>
-				</html>
-			`, name, verificationLink)
+		fmt.Printf("[INFO] OTP created: UUID=%s, email=%s\n", otp.UUID, user.Email)
 
-			if err := pkg.SendEmail(email, "Email Verification", body); err != nil {
-				log.Printf("failed to send email: %v", err)
-			}
-		}(user.Email, user.FirstName, otp.UUID)
+		// Kirim email verifikasi (FIFO queue + eksplisit verificationLink)
+		verificationLink := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), otp.UUID)
+
+		body := fmt.Sprintf(`
+			<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+			<title>Email Verification</title>
+			<style>
+				body {
+					font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+					background-color: #f9fafb;
+					margin: 0;
+					padding: 0;
+				}
+				.container {
+					max-width: 600px;
+					margin: 40px auto;
+					background: #ffffff;
+					border-radius: 8px;
+					box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+					padding: 40px;
+				}
+				h2 {
+					color: #111827;
+					font-size: 22px;
+					margin-bottom: 12px;
+				}
+				p {
+					color: #374151;
+					font-size: 15px;
+					line-height: 1.6;
+				}
+				.button {
+					display: inline-block;
+					background-color: #2563eb;
+					color: #ffffff !important;
+					padding: 12px 24px;
+					margin-top: 24px;
+					border-radius: 6px;
+					text-decoration: none;
+					font-weight: 500;
+				}
+				.footer {
+					margin-top: 32px;
+					border-top: 1px solid #e5e7eb;
+					padding-top: 16px;
+					font-size: 13px;
+					color: #6b7280;
+				}
+				.link {
+					word-break: break-all;
+					color: #2563eb;
+					text-decoration: none;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<h2>Hi %s 👋,</h2>
+				<p>Welcome to <strong>KARYAGO</strong>! Before you can start exploring, we just need to verify your email address.</p>
+				<p>Click the button below to confirm your account:</p>
+
+				<a href="%s" class="button">Verify Your Email</a>
+
+				<p style="margin-top: 24px;">If the button above doesn't work, you can also copy and paste this link into your browser:</p>
+				<p><a href="%s" class="link">%s</a></p>
+
+				<p>This verification link will expire in <strong>5 minutes</strong>.</p>
+
+				<p>If you didn't sign up for this account, you can safely ignore this email.</p>
+
+				<div class="footer">
+					<p>Best regards,<br/><strong>The KARYAGO Team</strong></p>
+					<p>&copy; %d KARYAGO. All rights reserved.</p>
+				</div>
+			</div>
+		</body>
+		</html>
+		`, user.FirstName, verificationLink, verificationLink, verificationLink, time.Now().Year())
+
+		// Baru di sini email dikirim, setelah link & body siap
+		pkg.EnqueueEmail(pkg.EmailJob{
+			To:      user.Email,
+			Subject: "Email Verification | KARYAGO",
+			Body:    body,
+		})
+
+		fmt.Printf("[INFO] Enqueued email job for user: %s\n", user.Email)
 
 		result = response.UserWithEmployeeResponse{
 			UserUUID:     user.UUID,
@@ -764,6 +838,9 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 			}
 		}
 
+		//Simpan email lama untuk deteksi perubahan
+		oldEmail := user.Email
+
 		user.FirstName = req.FirstName
 		user.LastName = req.LastName
 		user.Phone = req.Phone
@@ -778,6 +855,115 @@ func (s *userService) UpdateUser(userUUID string, req request.UserEmployeeReq, m
 				return fmt.Errorf("failed to hash password: %w", err)
 			}
 			user.Password = hashedPassword
+		}
+
+		// ✅ Jika email berubah → kirim ulang link verifikasi (styled HTML)
+		if oldEmail != req.Email {
+			otp := &models.OTP{
+				UUID:      uuid.NewString(),
+				Target:    req.Email,
+				Code:      pkg.GenerateOTPCode(6),
+				Purpose:   "update email verification",
+				IsUsed:    false,
+				ExpiresAt: time.Now().Add(5 * time.Minute),
+				CreatedAt: time.Now(),
+			}
+
+			fmt.Printf("[INFO] OTP created (email update): UUID=%s, new_email=%s\n", otp.UUID, req.Email)
+
+			if err := s.otpRepo.Create(otp); err != nil {
+				return fmt.Errorf("failed to create OTP for new email: %w", err)
+			}
+
+			verificationLink := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), otp.UUID)
+
+			body := fmt.Sprintf(`
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+				<title>Verify Your New Email</title>
+				<style>
+					body {
+						font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+						background-color: #f9fafb;
+						margin: 0;
+						padding: 0;
+					}
+					.container {
+						max-width: 600px;
+						margin: 40px auto;
+						background: #ffffff;
+						border-radius: 8px;
+						box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+						padding: 40px;
+					}
+					h2 {
+						color: #111827;
+						font-size: 22px;
+						margin-bottom: 12px;
+					}
+					p {
+						color: #374151;
+						font-size: 15px;
+						line-height: 1.6;
+					}
+					.button {
+						display: inline-block;
+						background-color: #2563eb;
+						color: #ffffff !important;
+						padding: 12px 24px;
+						margin-top: 24px;
+						border-radius: 6px;
+						text-decoration: none;
+						font-weight: 500;
+					}
+					.footer {
+						margin-top: 32px;
+						border-top: 1px solid #e5e7eb;
+						padding-top: 16px;
+						font-size: 13px;
+						color: #6b7280;
+					}
+					.link {
+						word-break: break-all;
+						color: #2563eb;
+						text-decoration: none;
+					}
+				</style>
+			</head>
+			<body>
+				<div class="container">
+					<h2>Hi %s 👋,</h2>
+					<p>We noticed you've updated your email address for <strong>KARYAGO</strong>.</p>
+					<p>To complete this change, please verify your new email by clicking the button below:</p>
+
+					<a href="%s" class="button">Verify New Email</a>
+
+					<p style="margin-top: 24px;">If the button above doesn't work, you can also copy and paste this link into your browser:</p>
+					<p><a href="%s" class="link">%s</a></p>
+
+					<p>This verification link will expire in <strong>5 minutes</strong>.</p>
+
+					<p>If you didn’t request this change, please contact your administrator.</p>
+
+					<div class="footer">
+						<p>Best regards,<br/><strong>The KARYAGO Team</strong></p>
+						<p>&copy; %d KARYAGO. All rights reserved.</p>
+					</div>
+				</div>
+			</body>
+			</html>
+			`, user.FirstName, verificationLink, verificationLink, verificationLink, time.Now().Year())
+
+			pkg.EnqueueEmail(pkg.EmailJob{
+				To:      req.Email,
+				Subject: "Verify Your New Email | KARYAGO",
+				Body:    body,
+			})
+
+			fmt.Printf("[INFO] Enqueued email verification for updated email: %s\n", req.Email)
 		}
 
 		employee.RoleID = role.ID
