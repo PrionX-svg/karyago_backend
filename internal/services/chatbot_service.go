@@ -200,9 +200,9 @@ func (s *chatbotServices) getOvertimeSummary() string {
 	var sb strings.Builder
 	sb.WriteString("Daftar karyawan lembur minggu ini:\n")
 	for _, a := range list {
-		if a.IsOvertime && a.OverTimeHours != nil {
+		if a.IsOvertime && a.OvertimeHours != nil {
 			name := fmt.Sprintf("%s %s", a.Employee.User.FirstName, a.Employee.User.LastName)
-			sb.WriteString(fmt.Sprintf("- %s (%s): %.1f jam lembur\n", name, a.WorkDate.Format("02 Jan 2006"), *a.OverTimeHours))
+			sb.WriteString(fmt.Sprintf("- %s (%s): %.1f jam lembur\n", name, a.WorkDate.Format("02 Jan 2006"), *a.OvertimeHours))
 		}
 	}
 
