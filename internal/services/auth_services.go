@@ -96,21 +96,86 @@ func (s *authService) Register(request request.UserRequest) error {
 	go func(email, name, token string) {
 		verificationLink := fmt.Sprintf("%s/en/activation?token=%s", os.Getenv("FRONTEND_URL"), token)
 		body := fmt.Sprintf(`
-			<html>
-				<body>
-					<p>Hi %s,</p>
-					<p>Thank you for registering with us!</p>
-					<p>Please verify your email through the link below:</p>
-					<a href="%s">Verify your Email</a>
-					<p>This link will expire in 5 minutes.</p>
-					<p>If you didn't request this, please ignore this email.</p>
-					<br/>
-					<p>Regards,<br/>The Team</p>
-				</body>
-			</html>
-		`, name, verificationLink)
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+			<title>Email Verification</title>
+			<style>
+				body {
+					font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+					background-color: #f9fafb;
+					margin: 0;
+					padding: 0;
+				}
+				.container {
+					max-width: 600px;
+					margin: 40px auto;
+					background: #ffffff;
+					border-radius: 8px;
+					box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+					padding: 40px;
+				}
+				h2 {
+					color: #111827;
+					font-size: 22px;
+					margin-bottom: 12px;
+				}
+				p {
+					color: #374151;
+					font-size: 15px;
+					line-height: 1.6;
+				}
+				.button {
+					display: inline-block;
+					background-color: #2563eb;
+					color: #ffffff !important;
+					padding: 12px 24px;
+					margin-top: 24px;
+					border-radius: 6px;
+					text-decoration: none;
+					font-weight: 500;
+				}
+				.footer {
+					margin-top: 32px;
+					border-top: 1px solid #e5e7eb;
+					padding-top: 16px;
+					font-size: 13px;
+					color: #6b7280;
+				}
+				.link {
+					word-break: break-all;
+					color: #2563eb;
+					text-decoration: none;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<h2>Hi %s 👋,</h2>
+				<p>Thank you for joining <strong>Karyago</strong>! Before you can start exploring, we just need to verify your email address.</p>
+				<p>Click the button below to confirm your account:</p>
+				
+				<a href="%s" class="button">Verify Your Email</a>
 
-		if err := pkg.SendEmail(email, "Email Verification", body); err != nil {
+				<p style="margin-top: 24px;">If the button above doesn't work, you can also copy and paste this link into your browser:</p>
+				<p><a href="%s" class="link">%s</a></p>
+
+				<p>This verification link will expire in <strong>5 minutes</strong>.</p>
+
+				<p>If you didn't sign up for this account, you can safely ignore this email.</p>
+
+				<div class="footer">
+					<p>Best regards,<br/><strong>The Karyago Team</strong></p>
+					<p>&copy; %d Karyago. All rights reserved.</p>
+				</div>
+			</div>
+		</body>
+		</html>
+	`, name, verificationLink, verificationLink, verificationLink, time.Now().Year())
+
+		if err := pkg.SendEmail(email, "Verify Your Email | Karyago", body); err != nil {
 			log.Printf("failed to send email: %v", err)
 		}
 	}(newUser.Email, newUser.FirstName, otp.UUID)
