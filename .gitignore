@@ -2,3 +2,7 @@
 .air.toml
 tmp/main
 tmp/*
+main.tf
+/terraform.tfstate
+/.terraform.tfstate.lock.info
+/.terraform.lock.hcl
