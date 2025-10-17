@@ -115,9 +115,9 @@ func (r *attendanceRepository) ClockOut(employeeID uint, userID uint, workDate t
 	if att.ClockOutAt != nil {
 		duration := at.Sub(*att.ClockInAt).Hours()
 		att.TotalWorkHours = &duration
-		if duration > 9 {
+		if duration > 8 {
 			att.IsOvertime = true
-			overtime := duration - 9
+			overtime := duration - 8
 			att.OverTimeHours = &overtime
 		} else {
 			att.IsOvertime = false

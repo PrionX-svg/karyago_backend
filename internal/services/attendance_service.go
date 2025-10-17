@@ -322,7 +322,7 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 			)
 
 			// Ambil email supervisor (sementara hardcoded)
-			responsibleEmail := "oliviasalma06@gmail.com"
+			responsibleEmail := "timotius.mario@createit.co.id"
 			if err := pkg.SendEmail(responsibleEmail, subject, body); err != nil {
 				fmt.Println("❌ Failed to send overtime email:", err)
 			}
