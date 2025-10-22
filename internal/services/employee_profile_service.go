@@ -42,6 +42,7 @@ type EmployeeProfileResponse struct {
 	TaxID       *string `json:"tax_id,omitempty"`
 	SocialID    *string `json:"social_id,omitempty"`
 	Company     *string `json:"company,omitempty"`
+	CompanyUUID *string `json:"company_uuid,omitempty"` //new changes
 	EmployeeID  *string `json:"employee_id,omitempty"`
 	Department  *string `json:"department,omitempty"`
 	Branch      *string `json:"branch,omitempty"`
@@ -66,7 +67,7 @@ func (s *employeeProfileService) GetMyProfile(userID uint) (*EmployeeProfileResp
 	)
 
 	if employee.CompanyID != nil {
-		company, _ = s.companyRepo.GetByUserID(*employee.CompanyID)
+		company, _ = s.companyRepo.GetByUserUUID(user.UUID) //made changes in here
 	}
 	if employee.DepartmentID != nil {
 		department, _ = s.deptRepo.FindByID(*employee.DepartmentID)
@@ -82,6 +83,7 @@ func (s *employeeProfileService) GetMyProfile(userID uint) (*EmployeeProfileResp
 		Phone:      user.Phone,
 		Gender:     user.Gender,
 		Company:    getString(company, func(c *models.Company) string { return c.Name }),
+		CompanyUUID: getString(company, func(c *models.Company) string { return c.UUID }), // 🔥 new changes
 		Department: getString(department, func(d *models.Department) string { return d.Name }),
 		Branch:     getString(branch, func(b *models.Branch) string { return b.Name }),
 	}
