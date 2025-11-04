@@ -16,7 +16,7 @@ func SetupChatbotRoutes(router fiber.Router, apiKey string, db *gorm.DB) {
 	userRepo := repositories.NewUserRepository(db)
 	companyRepo := repositories.NewCompanyRepository(db)
 	attendanceService := services.NewAttendanceService(db, attRepo, empRepo, userRepo, companyRepo)
-	chatbotService := services.NewChatbotService(apiKey, "../../chatbot-info.txt", attendanceService)
+	chatbotService := services.NewChatbotService(apiKey, "./chatbot-info.txt", attendanceService)
 	chatbotHandler := handlers.NewChatbotHandler(chatbotService)
 
 	chat := router.Group("/chatbot")
