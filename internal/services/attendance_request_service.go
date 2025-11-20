@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -138,123 +139,108 @@ func (s *attendanceEditService) ListAllEmployee(userID uint, status *models.Edit
 }
 
 func (s *attendanceEditService) Approve(userID uint, reqID uint, note *string) error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	var overtimeAtt *models.Attendance
+
+	txErr := s.db.Transaction(func(tx *gorm.DB) error {
 		req, err := s.editRepo.FindByID(reqID)
 		if err != nil || req == nil || req.Status != models.EditStatusPending {
 			return fmt.Errorf("invalid request")
 		}
+
 		reviewer, err := s.getEmployee(userID)
 		if err != nil || reviewer.CompanyID == nil || *reviewer.CompanyID != req.CompanyID {
 			return fmt.Errorf("forbidden")
 		}
 
-		// Pastikan ada attendance di tanggal tsb
+		// Pastikan attendance untuk hari tersebut sudah ada / dibuat
 		att, err := s.attRepo.EnsureForDay(req.EmployeeID, req.CompanyID, req.ID, req.WorkDate)
 		if err != nil {
 			return err
 		}
 
-		// Terapkan perubahan sesuai tipe
-		if req.RequestType == models.EditReqClockIn || req.RequestType == models.EditReqBoth || req.RequestType == models.EditReqBothPlusFlag {
-			if req.ProposedClockInAt != nil {
-				att.ClockInAt = req.ProposedClockInAt
-				if err := tx.Model(att).Update("clock_in_at", att.ClockInAt).Error; err != nil {
-					return err
-				}
-			}
+		loc, _ := time.LoadLocation("Asia/Jakarta")
+
+		// Terapkan perubahan berdasarkan tipe request
+		updateFields := map[string]any{}
+		if req.ProposedClockInAt != nil {
+			updateFields["clock_in_at"] = req.ProposedClockInAt
+			att.ClockInAt = req.ProposedClockInAt
 		}
-		if req.RequestType == models.EditReqClockOut || req.RequestType == models.EditReqBoth || req.RequestType == models.EditReqBothPlusFlag {
-			if req.ProposedClockOutAt != nil {
-				att.ClockOutAt = req.ProposedClockOutAt
-				if err := tx.Model(att).Update("clock_out_at", att.ClockOutAt).Error; err != nil {
-					return err
-				}
-			}
+		if req.ProposedClockOutAt != nil {
+			updateFields["clock_out_at"] = req.ProposedClockOutAt
+			att.ClockOutAt = req.ProposedClockOutAt
 		}
-		if req.RequestType == models.EditReqHomeFlag || req.RequestType == models.EditReqBothPlusFlag {
-			if req.ProposedIsHomeOffice != nil {
-				att.Is_homeOffice = *req.ProposedIsHomeOffice
-				if err := tx.Model(att).Update("is_home_office", att.Is_homeOffice).Error; err != nil {
-					return err
-				}
+		if req.ProposedIsHomeOffice != nil {
+			updateFields["is_home_office"] = *req.ProposedIsHomeOffice
+			att.Is_homeOffice = *req.ProposedIsHomeOffice
+		}
+
+		if len(updateFields) > 0 {
+			if err := tx.Model(att).Updates(updateFields).Error; err != nil {
+				return err
 			}
 		}
 
-		// Set status APPROVED
+		// Recalculate overtime
+		if err := s.recalculateOvertime(tx, att); err != nil {
+			return err
+		}
+
+		if att.IsOvertime {
+			overtimeAtt = att
+		}
+
+		// Update status request menjadi APPROVED
 		if _, err := s.editRepo.Approve(tx, req.ID, userID, note); err != nil {
 			return err
 		}
 
-		// Notifikasi email
+		// Kirim notifikasi ke karyawan
 		if s.notify != nil {
 			if email, _ := s.empRepo.GetUserEmailByEmployeeID(req.EmployeeID); email != nil && *email != "" {
+				clockIn := "-"
+				if att.ClockInAt != nil {
+					clockIn = att.ClockInAt.In(loc).Format("15:04")
+				}
+
+				clockOut := "-"
+				if att.ClockOutAt != nil {
+					clockOut = att.ClockOutAt.In(loc).Format("15:04")
+				}
 				subject := "Attendance Edit Approved"
 				body := fmt.Sprintf(`
 					<html>
-					<head>
-						<style>
-							body {
-								font-family: Arial, sans-serif;
-								background-color: #f4f4f4;
-								color: #333;
-								padding: 0;
-								margin: 0;
-							}
-							.container {
-								max-width: 600px;
-								margin: 40px auto;
-								background-color: #ffffff;
-								padding: 20px 30px;
-								border-radius: 8px;
-								box-shadow: 0 0 10px rgba(0,0,0,0.1);
-							}
-							.header {
-								font-size: 20px;
-								font-weight: bold;
-								color: #1a73e8;
-								margin-bottom: 20px;
-							}
-							.content {
-								font-size: 16px;
-								line-height: 1.5;
-							}
-							.footer {
-								margin-top: 30px;
-								font-size: 14px;
-								color: #666;
-								text-align: center;
-							}
-							.highlight {
-								font-weight: bold;
-								color: #1a73e8;
-							}
-						</style>
-					</head>
-					<body>
-						<div class="container">
-							<div class="header">Attendance Edit Approved</div>
-							<div class="content">
-								Hello,<br/><br/>
-								Your attendance edit request for <span class="highlight">%s</span> has been <span class="highlight">approved</span>.<br/><br/>
-								<strong>Details:</strong><br/>
-								- Clock In: %v<br/>
-								- Clock Out: %v<br/>
-								- Home Office: %v<br/><br/>
-								You can review your attendance record in the KARYAGO system.
-							</div>
-							<div class="footer">
-								This is an automated email from the KARYAGO system. Please do not reply.
-							</div>
-						</div>
+					<body style="font-family:Arial,sans-serif">
+						<h3 style="color:#1a73e8;">Attendance Edit Approved</h3>
+						<p>Your attendance edit request for <b>%s</b> has been approved.</p>
+						<ul>
+							<li>Clock In: %v</li>
+							<li>Clock Out: %v</li>
+							<li>Home Office: %v</li>
+						</ul>
+						<p>Please review your updated record in KARYAGO.</p>
 					</body>
-					</html>
-        		`, req.WorkDate.Format("2006-01-02"), att.ClockInAt, att.ClockOutAt, att.Is_homeOffice)
-
+					</html>`,
+					req.WorkDate.Format("2006-01-02"),
+					clockIn, 
+					clockOut, 
+					att.Is_homeOffice,
+				)
 				_ = s.notify.SendEmail(*email, subject, body)
 			}
 		}
+
 		return nil
 	})
+
+	if txErr == nil && overtimeAtt != nil {
+		go func() {
+			time.Sleep(2 * time.Second)
+			s.notifyAdminsAboutOvertime(overtimeAtt)
+		}()
+	}
+
+	return txErr
 }
 
 func (s *attendanceEditService) Reject(userID uint, reqID uint, note string) error {
@@ -344,4 +330,115 @@ func (s *attendanceEditService) Reject(userID uint, reqID uint, note string) err
 	}
 
 	return nil
+}
+
+func (s *attendanceEditService) recalculateOvertime(tx *gorm.DB, att *models.Attendance) error {
+	var (
+		totalHours   *float64
+		overtimePart *float64
+		isOvertime   bool
+	)
+
+	if att.ClockInAt != nil && att.ClockOutAt != nil {
+		duration := att.ClockOutAt.Sub(*att.ClockInAt).Hours()
+		totalHours = &duration
+		if duration > 8 {
+			isOvertime = true
+			ot := duration - 8
+			overtimePart = &ot
+		}
+	}
+
+	return tx.Model(att).Updates(map[string]any{
+		"total_work_hours": totalHours,
+		"is_overtime":      isOvertime,
+		"overtime_hours":   overtimePart,
+	}).Error
+}
+
+func (s *attendanceEditService) notifyAdminsAboutOvertime(att *models.Attendance) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("⚠️ recovered from panic in notifyAdminsAboutOvertime:", r)
+		}
+	}()
+
+	var detailed models.Attendance
+	if err := s.db.Preload("Employee.User").First(&detailed, att.ID).Error; err != nil {
+		fmt.Println("⚠️ failed to load attendance for overtime notification:", err)
+		return
+	}
+
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+
+	emails, err := s.getAdminEmails(detailed.CompanyID)
+	if err != nil || len(emails) == 0 {
+		fmt.Println("⚠️ no admin email available:", err)
+		return
+	}
+
+	// Safe handling untuk waktu & jam kerja
+	clockIn := "-"
+	if detailed.ClockInAt != nil {
+		clockIn = detailed.ClockInAt.In(loc).Format("15:04")
+	}
+	clockOut := "-"
+	if detailed.ClockOutAt != nil {
+		clockOut = detailed.ClockOutAt.In(loc).Format("15:04")
+	}
+
+	totalHours := 0.0
+	if detailed.TotalWorkHours != nil {
+		totalHours = *detailed.TotalWorkHours
+	}
+	overtimeHours := 0.0
+	if detailed.OvertimeHours != nil {
+		overtimeHours = *detailed.OvertimeHours
+	}
+
+	subject := fmt.Sprintf("Overtime Alert: %s", detailed.WorkDate.Format("02 Jan 2006"))
+	body := fmt.Sprintf(`
+		<h2 style="color:#ff6600;">KARYAGO Overtime Notification</h2>
+		<p><b>%s %s</b> melakukan lembur pada <b>%s</b>.</p>
+		<ul>
+			<li>Clock In: %s</li>
+			<li>Clock Out: %s</li>
+			<li>Total Jam: %.2f</li>
+			<li>Lembur: %.2f jam</li>
+		</ul>
+	`,
+		detailed.Employee.User.FirstName,
+		detailed.Employee.User.LastName,
+		detailed.WorkDate.Format("02 Jan 2006"),
+		clockIn, clockOut, totalHours, overtimeHours,
+	)
+
+	for _, email := range emails {
+		fmt.Printf("[DEBUG] Trying to send overtime email to: '%s'\n", email)
+		if strings.TrimSpace(email) == "" {
+			fmt.Println("⚠️ skipped empty email in admin list")
+			continue
+		}
+		if err := s.notify.SendEmail(email, subject, body); err != nil {
+			fmt.Println("❌ failed to send overtime email to", email, ":", err)
+		} else {
+			fmt.Println("✅ overtime email sent to", email)
+		}
+	}
+
+}
+
+func (s *attendanceEditService) getAdminEmails(companyID uint) ([]string, error) {
+	var emails []string
+
+	const roleID = 1
+
+	err := s.db.
+		Table("employees AS e").
+		Joins("JOIN users u ON u.id = e.user_id").
+		Where("e.company_id = ? AND e.role_id = ? AND e.terminated_at IS NULL", companyID, roleID).
+		Pluck("u.email", &emails).Error
+	fmt.Println("[DEBUG] Admin emails:", emails)
+
+	return emails, err
 }

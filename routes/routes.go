@@ -47,7 +47,7 @@ func SetupRoutes(app *fiber.App) {
 	})
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://karyago.createit.co.id",
+		AllowOrigins:     "https://karyago.createit.co.id, http://localhost:3000",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowMethods:     "GET, POST, PATCH, DELETE, OPTIONS",
 		AllowCredentials: true,
