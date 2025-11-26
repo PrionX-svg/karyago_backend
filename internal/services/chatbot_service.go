@@ -192,6 +192,7 @@ func (s *chatbotServices) getOvertimeSummary() string {
 	from := now.AddDate(0, 0, -7)
 	to := now
 
+	// Mendapatkan data kehadiran karyawan dari minggu lalu
 	list, err := s.attSvc.ListAllEmployeeAttendance(nil, from, to)
 	if err != nil || len(list) == 0 {
 		return "Tidak ada karyawan lembur minggu ini."
@@ -200,17 +201,19 @@ func (s *chatbotServices) getOvertimeSummary() string {
 	var sb strings.Builder
 	sb.WriteString("Daftar karyawan lembur minggu ini:\n")
 	for _, a := range list {
-		if a.IsOvertime && a.OvertimeHours != nil {
+		// Hitung total jam kerja jika ada waktu kerja
+		if a.IsOvertime && *a.TotalWorkHours > 8 {
+			// Tentukan jika karyawan tersebut lembur
 			name := fmt.Sprintf("%s %s", a.Employee.User.FirstName, a.Employee.User.LastName)
-			sb.WriteString(fmt.Sprintf("- %s (%s): %.1f jam lembur\n", name, a.WorkDate.Format("02 Jan 2006"), *a.OvertimeHours))
+			sb.WriteString(fmt.Sprintf("- %s (%s): %.1f jam lembur\n", name, a.WorkDate.Format("02 Jan 2006"), *a.TotalWorkHours-8))
 		}
 	}
 
 	fmt.Println("📦 Data attendance yang dikirim ke OpenRouter:")
 	fmt.Println(sb.String())
 	return sb.String()
-
 }
+
 
 // 🕘 Belum Absen Masuk (Clock In)
 func (s *chatbotServices) getUnclockedInSummary() string {

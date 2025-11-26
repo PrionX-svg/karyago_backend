@@ -14,7 +14,7 @@ Sistem KARYAGO-Employee Data Management adalah aplikasi berbasis web yang memban
 Fitur kunci:
 - Dashboard berbasis role (Admin vs Employee).
 - Manage Employee (create/add, read, update, terminate).
-- Attendance (clock in sekali, clock out sekali per hari; toggle WFO/WFH; notes; request edit attendance).
+- Attendance (clock in sekali, clock out sekali per hari; toggle In Office/Home Office; notes; request edit attendance).
 - Chatbot AI sebagai asisten tanya jawab cepat dan kontekstual.
 
 =====================================================================
@@ -32,7 +32,7 @@ Peran:
 2) Employee
    - Melihat profil sendiri.
    - Melakukan attendance: clock in sekali & clock out sekali per hari.
-   - Mengatur toggle lokasi kerja: Home Office (WFH) atau Office (WFO).
+   - Mengatur toggle lokasi kerja: Home Office (WFH) atau In Office (WFO).
    - Menambahkan catatan (notes) saat attendance.
    - Mengirim request edit attendance jika ada kendala/lupa.
    - Melihat informasi ringkas pada dashboard employee.
@@ -56,7 +56,7 @@ FITUR UTAMA DAN DESKRIPSI
      * Tautan cepat: tambah employee, kelola department, lihat laporan ringkas.
    - Employee:
      * Status absensi hari ini (clock in/out, durasi kerja).
-     * Toggle WFO/WFH hari ini (Home Office/Office).
+     * Toggle In Office/Home Office hari ini.
      * Riwayat singkat attendance minggu berjalan.
      * Pengumuman atau informasi penting dari perusahaan.
      * Akses cepat untuk mengajukan request edit attendance.
@@ -82,7 +82,7 @@ FITUR UTAMA DAN DESKRIPSI
      * Riwayat keputusan tersimpan (audit).
    - Cross-day Cutoff:
       * Jika karyawan melakukan clock out lewat tengah malam (sebelum jam 04:00 pagi), sistem tetap menghitungnya sebagai hari sebelumnya.
-      * Lembur (overtime) terdeteksi otomatis bila total jam kerja melebihi 9 jam.
+      * Lembur (overtime) terdeteksi otomatis bila total jam kerja melebihi 8 jam.
       * Supervisor akan menerima notifikasi email jika ada lembur.
 
 
@@ -135,7 +135,7 @@ ATURAN BISNIS KUNCI
 - Satu hari kalender = maksimal 1x clock in + 1x clock out per employee.
 - Jika employee mencoba clock in kedua kali pada hari yang sama, sistem menolak dan mengarahkan untuk request edit jika perlu.
 - Clock out tanpa clock in tidak diizinkan; arahkan untuk request edit.
-- Toggle WFH/WFO memengaruhi atribut attendance hari itu (untuk pelaporan).
+- Toggle In Office/Home Office memengaruhi atribut attendance hari itu (untuk pelaporan).
 - Request edit harus menyertakan alasan dan, jika perlu, bukti pendukung (opsional).
 - Admin wajib memberikan alasan saat menolak request edit.
 - Employee berstatus terminated tidak dapat login; data historis dipertahankan.
@@ -151,7 +151,7 @@ Entitas inti (ringkas, contoh field):
 - Department: id, company_id, group_id, name, created_at.
 - User: id, company_id, role (ADMIN/EMPLOYEE), email, password_hash, verified, status (ACTIVE/TERMINATED), created_at.
 - EmployeeProfile: user_id, full_name, employee_code, position, department_id, phone, address, start_date, end_date, notes.
-- Attendance: id, user_id, date, clock_in_at, clock_out_at, location_mode (WFH/WFO), notes, status (IN_PROGRESS/COMPLETED), source (web/mobile), created_at, updated_at.
+- Attendance: id, user_id, date, clock_in_at, clock_out_at, location_mode (In Office/Home Office), notes, status (IN_PROGRESS/COMPLETED), source (web/mobile), created_at, updated_at.
 - AttendanceEditRequest: id, attendance_id (nullable jika tidak ada), user_id, date, requested_change (clock_in_at/clock_out_at/location/notes), reason, status (PENDING/APPROVED/REJECTED), reviewer_id, reviewed_at, reviewer_note, created_at.
 - OTP: id, user_id OR company_email, code, expires_at, used_at.
 - AuditLog: id, actor_id, action, entity, entity_id, payload, created_at.
@@ -181,7 +181,7 @@ B. Admin terminate employee
    2) Tambahkan alasan; konfirmasi.
    3) Sistem memutus akses login; status menjadi TERMINATED.
 C. Employee attendance harian
-   1) Pilih mode WFO/WFH (opsional atur sebelum clock in).
+   1) Pilih mode In Office/Home Office (opsional atur sebelum ataupun setelah clock in).
    2) Clock in: sistem mencatat waktu & status IN_PROGRESS.
    3) Clock out: sistem mencatat waktu & menutup attendance (COMPLETED).
 D. Request edit attendance oleh employee
@@ -251,7 +251,7 @@ Q: Apa yang bisa dilakukan Admin setelah login?
 A: Mengelola department & group, menambah/update/terminate karyawan, memantau absensi, dan memproses request edit.
 
 Q: Apa yang bisa dilakukan Employee setelah login?
-A: Melihat profil, clock in/out sekali per hari, menyalakan toggle WFH/WFO, menulis notes, dan mengajukan request edit.
+A: Melihat profil, clock in/out sekali per hari, menyalakan toggle In Office/Home Office, menulis notes, dan mengajukan request edit.
 
 Q: Apakah clock in bisa dilakukan lebih dari sekali?
 A: Tidak. Sistem hanya mengizinkan satu kali clock in per hari kalender.
@@ -259,8 +259,8 @@ A: Tidak. Sistem hanya mengizinkan satu kali clock in per hari kalender.
 Q: Saya lupa clock out, bagaimana solusinya?
 A: Ajukan Request Edit Attendance untuk tanggal tersebut dan jelaskan alasannya. Admin akan meninjau.
 
-Q: Apa itu toggle Home Office/Office?
-A: Penanda lokasi kerja harian. Pilih Home Office (WFH) atau Office (WFO) sebelum/saat clock in untuk pelaporan yang akurat.
+Q: Apa itu toggle In Office/Home Office?
+A: Penanda lokasi kerja harian. Pilih In Office/Home Office sebelum/saat clock in untuk pelaporan yang akurat.
 
 Q: Bagaimana cara menambah karyawan baru?
 A: Admin masuk ke Manage Employee > Tambah, isi data wajib, lalu simpan. Sistem mengirim informasi aktivasi/verifikasi bila diperlukan.
@@ -315,8 +315,8 @@ KASUS TEPI (EDGE CASE)
 =====================================================================
 KAMUS ISTILAH SINGKAT
 =====================================================================
-- WFH: Work From Home (Home Office).
-- WFO: Work From Office (kantor).
+- Home Office: Bekerja dari rumah.
+- In Office: Bekerja di kantor.
 - OTP: One Time Password untuk verifikasi email.
 - Terminate: menonaktifkan akun karyawan.
 - Request Edit Attendance: permohonan perubahan data absensi.
@@ -338,7 +338,7 @@ STRUKTUR DATA LATIH (CONTOH RINGKAS)
 
 [INTENT] INTENT_OVERTIME
 [UTTERANCE] "Siapa yang lembur minggu ini?"
-[RESPONSE] "Sistem akan menampilkan daftar karyawan yang melakukan lembur (jam kerja > 9 jam) dalam seminggu terakhir."
+[RESPONSE] "Sistem akan menampilkan daftar karyawan yang melakukan lembur (jam kerja > 8 jam) dalam seminggu terakhir."
 
 [INTENT] INTENT_UNCLOCKED
 [UTTERANCE] "Siapa yang belum clock out hari ini?"
@@ -346,7 +346,7 @@ STRUKTUR DATA LATIH (CONTOH RINGKAS)
 
 [INTENT] INTENT_EMAIL_NOTIFY
 [UTTERANCE] "Apakah admin dapat notifikasi kalau ada lembur?"
-[RESPONSE] "Ya, sistem mengirim email otomatis ke supervisor jika ada karyawan lembur."
+[RESPONSE] "Ya, sistem mengirim email otomatis ke user terkait jika ada karyawan lembur."
 
 [INTENT] Attendance Unclocked
 [EXAMPLE QUESTION] Siapa yang belum absen hari ini?
