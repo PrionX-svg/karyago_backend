@@ -217,6 +217,21 @@ func (s *attendanceService) ListUnclocked(companyUUID string) ([]models.Attendan
 	return list, err
 }
 
+func (s *attendanceService) getAdminEmails(companyID uint) ([]string, error) {
+	var emails []string
+
+	const roleID = 1
+
+	err := s.db.
+		Table("employees AS e").
+		Joins("JOIN users u ON u.id = e.user_id").
+		Where("e.company_id = ? AND e.role_id = ? AND e.terminated_at IS NULL", companyID, roleID).
+		Pluck("u.email", &emails).Error
+	fmt.Println("[DEBUG] Admin emails:", emails)
+
+	return emails, err
+}
+
 // resolve employeeID & companyID dari user serta optional companyUUID (kalau multi-company)
 func (s *attendanceService) resolveActor(userID uint, companyUUID *string) (employeeID, companyID uint, err error) {
 	emp, err := s.empRepo.FindByUserID(userID)
@@ -295,11 +310,18 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 		return nil, err
 	}
 
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+
 	//Kirim email notifikasi kalau lembur
 	if att.IsOvertime {
 		go func(a *models.Attendance) {
 			// pastikan user sudah ke-load
 			s.db.Preload("Employee.User").First(&a, a.ID)
+			adminEmails, err := s.getAdminEmails(a.CompanyID)
+			if err != nil || len(adminEmails) == 0 {
+				fmt.Println("⚠️ No admin email found:", err)
+				return
+			}
 			subject := fmt.Sprintf("Overtime Alert: %s", a.WorkDate.Format("02 Jan 2006"))
 			body := fmt.Sprintf(`
 				<h2 style="color:#ff6600;">KARYAGO Overtime Notification</h2>
@@ -315,16 +337,16 @@ func (s *attendanceService) ClockOut(userID uint, companyUUID *string, workDate 
 				a.Employee.User.FirstName,
 				a.Employee.User.LastName,
 				a.WorkDate.Format("02 Jan 2006"),
-				a.ClockInAt.Format("15:04"),
-				a.ClockOutAt.Format("15:04"),
+				a.ClockInAt.In(loc).Format("15:04"),
+				a.ClockOutAt.In(loc).Format("15:04"),
 				*a.TotalWorkHours,
 				*a.OvertimeHours,
 			)
 
-			// Ambil email supervisor (sementara hardcoded)
-			responsibleEmail := "timotius.mario@createit.co.id"
-			if err := pkg.SendEmail(responsibleEmail, subject, body); err != nil {
-				fmt.Println("❌ Failed to send overtime email:", err)
+			for _, email := range adminEmails {
+				if err := pkg.SendEmail(email, subject, body); err != nil {
+					fmt.Println("❌ Failed to send overtime email to", email, ":", err)
+				}
 			}
 		}(att)
 	}
