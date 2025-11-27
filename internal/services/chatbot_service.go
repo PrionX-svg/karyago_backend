@@ -63,7 +63,7 @@ func (s *chatbotServices) Ask(req request.ChatbotRequest, userID uint, role stri
 
 	model := req.Model
 	if model == "" {
-		model = "x-ai/grok-code-fast-1"
+		model = "x-ai/grok-4.1-fast:free"
 	}
 
 	//Tambahan: deteksi intent & ambil data attendance
