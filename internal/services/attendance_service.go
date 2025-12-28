@@ -88,7 +88,7 @@ func (s *attendanceService) ListAllEmployeeAttendance(companyUUID *string, from,
 
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	fromLocal := from.In(loc)
-	toLocal := to.In(loc)
+	toLocal := to.In(loc).AddDate(0, 0, 1)
 
 	var list []models.Attendance
 

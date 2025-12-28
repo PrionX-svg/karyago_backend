@@ -16,6 +16,17 @@ import (
 	"hris_backend/pkg"
 )
 
+type TimeRange string
+
+const (
+	ThisWeek  TimeRange = "this_week"
+	LastWeek  TimeRange = "last_week"
+	ThisMonth TimeRange = "this_month"
+	LastMonth TimeRange = "last_month"
+	ThisYear  TimeRange = "this_year"
+	LastYear  TimeRange = "last_year"
+)
+
 type ChatbotServices interface {
 	Ask(req request.ChatbotRequest, userID uint, role string) (response.ChatbotResponse, error)
 }
@@ -63,7 +74,8 @@ func (s *chatbotServices) Ask(req request.ChatbotRequest, userID uint, role stri
 
 	model := req.Model
 	if model == "" {
-		model = "x-ai/grok-4.1-fast:free"
+		// model = "x-ai/grok-code-fast-1"
+		model = "nvidia/nemotron-3-nano-30b-a3b:free"
 	}
 
 	//Tambahan: deteksi intent & ambil data attendance
@@ -72,13 +84,38 @@ func (s *chatbotServices) Ask(req request.ChatbotRequest, userID uint, role stri
 
 	// --- intent & gating ---
 	if strings.Contains(msg, "lembur") {
-		if s.canAccessSensitiveData(role) {
-			preAnswer = s.getOvertimeSummary()
-		} else {
+		if !s.canAccessSensitiveData(role) {
 			return response.ChatbotResponse{
 				Reply: "Maaf, Anda tidak memiliki izin untuk melihat data lembur karyawan lain.",
 			}, nil
 		}
+
+		// Default: minggu ini
+		timeRange := ThisWeek
+
+		// Parsing rentang waktu
+		switch {
+		case strings.Contains(msg, "minggu lalu"),
+			strings.Contains(msg, "pekan lalu"):
+			timeRange = LastWeek
+
+		case strings.Contains(msg, "bulan lalu"),
+			strings.Contains(msg, "bulan kemarin"):
+			timeRange = LastMonth
+
+		case strings.Contains(msg, "bulan ini"):
+			timeRange = ThisMonth
+
+		case strings.Contains(msg, "tahun lalu"),
+			strings.Contains(msg, "tahun kemarin"):
+			timeRange = LastYear
+
+		case strings.Contains(msg, "tahun ini"):
+			timeRange = ThisYear
+		}
+
+		// Ambil data lembur sesuai range
+		preAnswer = s.getOvertimeSummary(timeRange)
 
 	} else if strings.Contains(msg, "belum clock out") ||
 		strings.Contains(msg, "belum absen keluar") ||
@@ -186,36 +223,146 @@ func (s *chatbotServices) Ask(req request.ChatbotRequest, userID uint, role stri
 
 }
 
-// Ambil ringkasan lembur minggu ini
-func (s *chatbotServices) getOvertimeSummary() string {
+func resolveTimeRange(r TimeRange) (time.Time, time.Time) {
 	now := time.Now()
-	from := now.AddDate(0, 0, -7)
-	to := now
+	loc := now.Location()
 
-	// Mendapatkan data kehadiran karyawan dari minggu lalu
-	list, err := s.attSvc.ListAllEmployeeAttendance(nil, from, to)
-	if err != nil || len(list) == 0 {
-		return "Tidak ada karyawan lembur minggu ini."
+	switch r {
+
+	case ThisWeek:
+		from := now.AddDate(0, 0, -7)
+		return from, now
+
+	case LastWeek:
+		to := now.AddDate(0, 0, -7)
+		from := to.AddDate(0, 0, -7)
+		return from, to
+
+	case ThisMonth:
+		from := time.Date(
+			now.Year(), now.Month(), 1,
+			0, 0, 0, 0, loc,
+		)
+		return from, now
+
+	case LastMonth:
+		firstThisMonth := time.Date(
+			now.Year(), now.Month(), 1,
+			0, 0, 0, 0, loc,
+		)
+		to := firstThisMonth.Add(-time.Second)
+		from := time.Date(
+			to.Year(), to.Month(), 1,
+			0, 0, 0, 0, loc,
+		)
+		return from, to
+
+	case ThisYear:
+		from := time.Date(
+			now.Year(), time.January, 1,
+			0, 0, 0, 0, loc,
+		)
+		return from, now
+
+	case LastYear:
+		from := time.Date(
+			now.Year()-1, time.January, 1,
+			0, 0, 0, 0, loc,
+		)
+		to := time.Date(
+			now.Year()-1, time.December, 31,
+			23, 59, 59, 0, loc,
+		)
+		return from, to
 	}
+
+	// fallback aman
+	return now.AddDate(0, 0, -7), now
+}
+
+// Ambil ringkasan lembur minggu ini
+func (s *chatbotServices) getOvertimeSummary(r TimeRange) string {
+	from, to := resolveTimeRange(r)
+
+	companyUUID, err := s.attSvc.GetDefaultCompanyUUID()
+	if err != nil {
+		return "Tidak dapat menentukan perusahaan aktif."
+	}
+
+	list, err := s.attSvc.ListAllEmployeeAttendance(companyUUID, from, to)
 
 	var sb strings.Builder
-	sb.WriteString("Daftar karyawan lembur minggu ini:\n")
-	for _, a := range list {
-		// Hitung total jam kerja jika ada waktu kerja
-		if a.IsOvertime && *a.TotalWorkHours > 8 {
-			// Tentukan jika karyawan tersebut lembur
-			name := fmt.Sprintf("%s %s", a.Employee.User.FirstName, a.Employee.User.LastName)
-			sb.WriteString(fmt.Sprintf("- %s (%s): %.1f jam lembur\n", name, a.WorkDate.Format("02 Jan 2006"), *a.TotalWorkHours-8))
-		}
+
+	//Judul dinamis sesuai rentang waktu
+	switch r {
+	case ThisWeek:
+		sb.WriteString("Daftar karyawan lembur minggu ini:\n")
+	case LastWeek:
+		sb.WriteString("Daftar karyawan lembur minggu lalu:\n")
+	case ThisMonth:
+		sb.WriteString("Daftar karyawan lembur bulan ini:\n")
+	case LastMonth:
+		sb.WriteString("Daftar karyawan lembur bulan lalu:\n")
+	case ThisYear:
+		sb.WriteString("Daftar karyawan lembur tahun ini:\n")
+	case LastYear:
+		sb.WriteString("Daftar karyawan lembur tahun lalu:\n")
+	default:
+		sb.WriteString("Daftar karyawan lembur:\n")
 	}
 
-	fmt.Println("📦 Data attendance yang dikirim ke OpenRouter:")
+	count := 0
+
+	for _, a := range list {
+
+		var overtime float64
+		var isOT bool
+
+		//Kalau overtime sudah dihitung & disimpan
+		if a.IsOvertime && a.OvertimeHours != nil && *a.OvertimeHours > 0 {
+			overtime = *a.OvertimeHours
+			isOT = true
+
+			//FALLBACK untuk data lama
+		} else if a.TotalWorkHours != nil && *a.TotalWorkHours > 8 {
+			overtime = *a.TotalWorkHours - 8
+			isOT = true
+		}
+
+		if !isOT {
+			continue
+		}
+
+		name := "-"
+		if a.Employee.User != nil {
+			name = fmt.Sprintf(
+				"%s %s",
+				a.Employee.User.FirstName,
+				a.Employee.User.LastName,
+			)
+		}
+
+		sb.WriteString(fmt.Sprintf(
+			"- %s (%s): %.1f jam lembur\n",
+			name,
+			a.WorkDate.Format("02 Jan 2006"),
+			overtime,
+		))
+
+		count++
+	}
+
+	if count == 0 {
+		return "Tidak ada karyawan yang melakukan lembur pada periode tersebut."
+	}
+
+	fmt.Println("📦 Data lembur dikirim ke OpenRouter:")
 	fmt.Println(sb.String())
+
 	return sb.String()
 }
 
-
-// 🕘 Belum Absen Masuk (Clock In)
+// Belum Absen Masuk (Clock In)
 func (s *chatbotServices) getUnclockedInSummary() string {
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	now := time.Now().In(loc)
@@ -262,7 +409,7 @@ func (s *chatbotServices) getUnclockedInSummary() string {
 	return sb.String()
 }
 
-// 🕔 Belum Clock Out
+// Belum Clock Out
 func (s *chatbotServices) getUnclockedOutSummary() string {
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	now := time.Now().In(loc)
