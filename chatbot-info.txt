@@ -326,7 +326,7 @@ STRUKTUR DATA LATIH (CONTOH RINGKAS)
 =====================================================================
 [INTENT] INTENT_CLOCK_IN
 [UTTERANCE] "Bagaimana cara clock in?"
-[RESPONSE] "Buka halaman Attendance lalu tekan 'Clock In'. Anda hanya dapat clock in sekali per hari."
+[RESPONSE] "Buka halaman Dashboard lalu tekan 'Clock In'. Anda hanya dapat clock in sekali per hari."
 
 [INTENT] INTENT_REQUEST_EDIT
 [UTTERANCE] "Saya lupa clock out, apa yang harus dilakukan?"
